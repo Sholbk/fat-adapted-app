@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 import "./App.css";
 
 const API_KEY = import.meta.env.VITE_INTERVALS_API_KEY;
 const ATHLETE_ID = import.meta.env.VITE_INTERVALS_ATHLETE_ID;
 const BASE_URL = `https://intervals.icu/api/v1/athlete/${ATHLETE_ID}`;
-const ATHLETICA_ICS = "https://app.athletica.ai/4935a810a4/athletica.ics";
+const ATHLETICA_ICS_RAW = "https://app.athletica.ai/4935a810a4/athletica.ics";
+const ATHLETICA_ICS = import.meta.env.DEV ? ATHLETICA_ICS_RAW : `/api/ics-proxy?url=${encodeURIComponent(ATHLETICA_ICS_RAW)}`;
 
 // ── Helpers ──
 function fmt(d) { return d.toISOString().split("T")[0]; }
@@ -108,6 +110,95 @@ async function searchUSDA(q) {
   });
 }
 
+async function lookupBarcode(code) {
+  const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+  if (!r.ok) return null;
+  const d = await r.json();
+  if (d.status !== 1 || !d.product) return null;
+  const p = d.product, n = p.nutriments || {};
+  return {
+    name: p.product_name || p.generic_name || "Unknown product",
+    fat: Math.round(n.fat_serving || n.fat_100g || 0),
+    protein: Math.round(n.proteins_serving || n.proteins_100g || 0),
+    carbs: Math.round(n.carbohydrates_serving || n.carbohydrates_100g || 0),
+    serving: p.serving_size || "100g",
+  };
+}
+
+function BarcodeScanner({ onScan, onClose }) {
+  const scannerRef = useRef(null);
+  const stoppedRef = useRef(false);
+  const idRef = useRef("barcode-reader-" + Date.now());
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let scanner = null;
+    stoppedRef.current = false;
+
+    const startScanner = async () => {
+      try {
+        scanner = new Html5Qrcode(idRef.current, { verbose: false });
+        scannerRef.current = scanner;
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 8, qrbox: { width: 250, height: 150 } },
+          (code) => {
+            if (stoppedRef.current) return;
+            stoppedRef.current = true;
+            scanner.stop().then(() => { scanner.clear(); }).catch(() => {});
+            onScan(code);
+          },
+          () => {}
+        );
+      } catch (err) {
+        setError("Camera access denied or unavailable. Check permissions.");
+      }
+    };
+
+    startScanner();
+
+    return () => {
+      stoppedRef.current = true;
+      if (scanner) {
+        const s = scanner.getState && scanner.getState();
+        if (s === 2) { // SCANNING
+          scanner.stop().then(() => { scanner.clear(); }).catch(() => {});
+        } else {
+          try { scanner.clear(); } catch {}
+        }
+      }
+    };
+  }, []);
+
+  function handleClose() {
+    stoppedRef.current = true;
+    const scanner = scannerRef.current;
+    if (scanner) {
+      const s = scanner.getState && scanner.getState();
+      if (s === 2) {
+        scanner.stop().then(() => { scanner.clear(); onClose(); }).catch(() => { onClose(); });
+        return;
+      }
+      try { scanner.clear(); } catch {}
+    }
+    onClose();
+  }
+
+  return (
+    <div className="scanner-overlay" onClick={handleClose}>
+      <div className="scanner-box" onClick={e => e.stopPropagation()}>
+        <div className="scanner-head">
+          <span>Scan Barcode</span>
+          <button onClick={handleClose}>×</button>
+        </div>
+        <div id={idRef.current}></div>
+        {error ? <p className="scanner-hint" style={{ color: "#fe00a4" }}>{error}</p>
+          : <p className="scanner-hint">Point camera at a food barcode</p>}
+      </div>
+    </div>
+  );
+}
+
 // ── Small Components ──
 
 function Ring({ value, max, color, label, size = 90 }) {
@@ -133,31 +224,47 @@ function Ring({ value, max, color, label, size = 90 }) {
 function FoodInput({ onAdd, placeholder }) {
   const [name, setName] = useState(""); const [fat, setFat] = useState(""); const [pro, setPro] = useState(""); const [carb, setCarb] = useState("");
   const [results, setResults] = useState([]); const [busy, setBusy] = useState(false); const t = useRef(null);
+  const [scanning, setScanning] = useState(false); const [scanMsg, setScanMsg] = useState("");
   function onN(v) {
     setName(v); clearTimeout(t.current);
     if (v.trim().length < 2) { setResults([]); return; }
     t.current = setTimeout(async () => { setBusy(true); setResults(await searchUSDA(v)); setBusy(false); }, 400);
   }
   function pick(f) { setName(f.name); setFat(String(f.fat)); setPro(String(f.protein)); setCarb(String(f.carbs)); setResults([]); }
+  async function handleScan(code) {
+    setScanning(false); setScanMsg("Looking up barcode...");
+    try {
+      const food = await lookupBarcode(code);
+      if (food) { setName(food.name); setFat(String(food.fat)); setPro(String(food.protein)); setCarb(String(food.carbs)); setScanMsg(""); }
+      else { setScanMsg("Product not found. Try searching manually."); setTimeout(() => setScanMsg(""), 3000); }
+    } catch { setScanMsg("Lookup failed. Try again."); setTimeout(() => setScanMsg(""), 3000); }
+  }
   function submit(e) {
     e.preventDefault(); if (!name.trim()) return;
     onAdd({ id: Date.now(), name: name.trim(), fat: +fat || 0, protein: +pro || 0, carbs: +carb || 0 });
     setName(""); setFat(""); setPro(""); setCarb(""); setResults([]);
   }
   return (
-    <form className="fi" onSubmit={submit}>
-      <div className="fi-s">
-        <input placeholder={placeholder || "Search USDA or type food"} value={name} onChange={e => onN(e.target.value)} onBlur={() => setTimeout(() => setResults([]), 200)} />
-        {(results.length > 0 || busy) && <div className="fi-drop">
-          {busy && <div className="fi-load">Searching...</div>}
-          {results.map((f, i) => <button key={i} type="button" onMouseDown={() => pick(f)}><strong>{f.name}</strong><span>F:{f.fat} P:{f.protein} C:{f.carbs} — {f.serving}</span></button>)}
-        </div>}
-      </div>
-      <input type="number" placeholder="Fat" value={fat} onChange={e => setFat(e.target.value)} className="fi-n" min="0" />
-      <input type="number" placeholder="Pro" value={pro} onChange={e => setPro(e.target.value)} className="fi-n" min="0" />
-      <input type="number" placeholder="Carb" value={carb} onChange={e => setCarb(e.target.value)} className="fi-n" min="0" />
-      <button type="submit" className="fi-btn">+</button>
-    </form>
+    <>
+      <form className="fi" onSubmit={submit}>
+        <div className="fi-s">
+          <input placeholder={placeholder || "Search USDA or type food"} value={name} onChange={e => onN(e.target.value)} onBlur={() => setTimeout(() => setResults([]), 200)} />
+          {(results.length > 0 || busy) && <div className="fi-drop">
+            {busy && <div className="fi-load">Searching...</div>}
+            {results.map((f, i) => <button key={i} type="button" onMouseDown={() => pick(f)}><strong>{f.name}</strong><span>F:{f.fat} P:{f.protein} C:{f.carbs} — {f.serving}</span></button>)}
+          </div>}
+        </div>
+        <input type="number" placeholder="Fat" value={fat} onChange={e => setFat(e.target.value)} className="fi-n" min="0" />
+        <input type="number" placeholder="Pro" value={pro} onChange={e => setPro(e.target.value)} className="fi-n" min="0" />
+        <input type="number" placeholder="Carb" value={carb} onChange={e => setCarb(e.target.value)} className="fi-n" min="0" />
+        <button type="button" className="fi-scan" onClick={() => setScanning(true)} title="Scan barcode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="11" y1="8" x2="11" y2="16"/><line x1="15" y1="8" x2="15" y2="16"/><line x1="19" y1="8" x2="19" y2="16"/></svg>
+        </button>
+        <button type="submit" className="fi-btn">+</button>
+      </form>
+      {scanMsg && <div className="scan-msg">{scanMsg}</div>}
+      {scanning && <BarcodeScanner onScan={handleScan} onClose={() => setScanning(false)} />}
+    </>
   );
 }
 

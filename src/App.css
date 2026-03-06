@@ -147,6 +147,21 @@
 .fi-drop strong { font-size: 0.8rem; text-transform: capitalize; }
 .fi-drop span { font-size: 0.65rem; color: #1e8ad3; font-family: monospace; }
 
+/* ── Barcode Scanner ── */
+.fi-scan { background: #fefefe; border: 1px solid #888888; border-radius: 6px; padding: 0.45rem 0.55rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.fi-scan:hover { background: #e8e8e8; border-color: #043bb1; }
+.fi-scan svg { color: #043bb1; }
+.scan-msg { font-size: 0.75rem; color: #1e8ad3; margin-top: 0.25rem; font-weight: 600; }
+.scanner-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; }
+.scanner-box { background: #fefefe; border-radius: 14px; padding: 1.25rem; width: 340px; max-width: 90vw; }
+.scanner-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.scanner-head span { font-size: 1rem; font-weight: 700; color: #000000; }
+.scanner-head button { background: none; border: none; font-size: 1.4rem; color: #555555; cursor: pointer; padding: 0; line-height: 1; }
+.scanner-head button:hover { color: #fe00a4; }
+#barcode-reader { border-radius: 8px; overflow: hidden; }
+#barcode-reader video { border-radius: 8px; }
+.scanner-hint { font-size: 0.75rem; color: #555555; text-align: center; margin-top: 0.5rem; }
+
 /* ── Entries ── */
 .ent-list { display: flex; flex-direction: column; gap: 0.2rem; margin-bottom: 0.5rem; max-height: 150px; overflow-y: auto; }
 .ent {
