@@ -458,13 +458,13 @@ function App() {
         {page === "log" && <>
           {/* ── Top Cards Row ── */}
           <div className="cards-row">
-            {/* My Daily Macros */}
+            {/* Non-Training Fuel */}
             <div className="card">
-              <h2>My Daily Macros</h2>
-              <MacroRow label="Fat" consumed={all.fat} target={macros.fat} color="#fe00a4" />
-              <MacroRow label="Protein" consumed={all.protein} target={macros.protein} color="#043bb1" />
-              <MacroRow label="Carbs" consumed={all.carbs} target={macros.carbs} color="#10bc10" />
-              <div className="card-cal"><span>{all.cal}</span> / {macros.cal} kcal</div>
+              <h2>Non-Training Fuel</h2>
+              <MacroRow label="Fat" consumed={mealTotals.fat} target={Math.max(macros.fat - fuelRecTotal.fat, 0)} color="#fe00a4" />
+              <MacroRow label="Protein" consumed={mealTotals.protein} target={Math.max(macros.protein - fuelRecTotal.protein, 0)} color="#043bb1" />
+              <MacroRow label="Carbs" consumed={mealTotals.carbs} target={Math.max(macros.carbs - fuelRecTotal.carbs, 0)} color="#10bc10" />
+              <div className="card-cal"><span>{mealTotals.cal}</span> / {Math.max(macros.cal - fuelRecTotal.cal, 0)} kcal</div>
             </div>
 
             {/* My Training Macros */}
@@ -517,12 +517,15 @@ function App() {
             </div>
           </div>
 
-          {/* My Goals Ring */}
-          <div className="goals-row">
-            <Ring value={all.cal} max={macros.cal} color="#1e8ad3" label="Calories" size={120} />
-            <Ring value={all.fat} max={macros.fat} color="#fe00a4" label="Fat" />
-            <Ring value={all.protein} max={macros.protein} color="#043bb1" label="Protein" />
-            <Ring value={all.carbs} max={macros.carbs} color="#10bc10" label="Carbs" />
+          {/* Total Macros */}
+          <div className="goals-section">
+            <h2 className="goals-title">Total Macros</h2>
+            <div className="goals-row">
+              <Ring value={all.cal} max={macros.cal} color="#1e8ad3" label="Calories" size={120} />
+              <Ring value={all.fat} max={macros.fat} color="#fe00a4" label="Fat" />
+              <Ring value={all.protein} max={macros.protein} color="#043bb1" label="Protein" />
+              <Ring value={all.carbs} max={macros.carbs} color="#10bc10" label="Carbs" />
+            </div>
           </div>
 
           {/* ── Meal Sections ── */}

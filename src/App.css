@@ -94,9 +94,10 @@
 .wo-stats strong { font-size: 0.9rem; color: #000000; }
 
 /* ── Goals Ring Row ── */
+.goals-section { background: #fefefe; border: 1px solid #888888; border-radius: 14px; margin-bottom: 1.25rem; padding: 1.25rem; }
+.goals-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: #1e8ad3; font-weight: 700; margin-bottom: 0.75rem; }
 .goals-row {
-  display: flex; justify-content: center; gap: 1.5rem; padding: 1.25rem;
-  background: #fefefe; border: 1px solid #888888; border-radius: 14px; margin-bottom: 1.25rem;
+  display: flex; justify-content: center; gap: 1.5rem;
 }
 .ring { position: relative; display: flex; align-items: center; justify-content: center; }
 .ring-inner { position: absolute; display: flex; flex-direction: column; align-items: center; }
