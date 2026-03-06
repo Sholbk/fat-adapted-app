@@ -681,14 +681,6 @@ function App() {
                   <input type="number" value={draft.goalWeight} onChange={e => updateDraft({ goalWeight: Number(e.target.value) || 0 })} />
                 </label>
               </div>
-              <div className="sett-goal-info">
-                {(() => { const adj = draft.goalWeight < draft.weight ? -500 : draft.goalWeight > draft.weight ? 500 : 0; return <>
-                  {adj === 0 && <span className="sett-badge maintain">Maintain — no calorie adjustment</span>}
-                  {adj < 0 && <span className="sett-badge cut">Weight Loss — 500 kcal deficit applied</span>}
-                  {adj > 0 && <span className="sett-badge gain">Weight Gain — 500 kcal surplus applied</span>}
-                </>; })()}
-                <p>Current: <strong>{draft.weight} lbs</strong> → Goal: <strong>{draft.goalWeight} lbs</strong> ({draft.goalWeight === draft.weight ? "maintain" : draft.goalWeight < draft.weight ? `lose ${draft.weight - draft.goalWeight} lbs` : `gain ${draft.goalWeight - draft.weight} lbs`})</p>
-              </div>
             </div>
 
             <button className="sett-save" onClick={handleSave}>{saved ? "Saved!" : "Save Settings"}</button>
