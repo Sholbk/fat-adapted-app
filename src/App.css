@@ -232,7 +232,8 @@
 .sett-field { display: flex; flex-direction: column; gap: 0.25rem; }
 .sett-field span { font-size: 0.75rem; font-weight: 600; color: #555555; }
 .sett-field input { background: #f0f0f0; border: 1px solid #888888; border-radius: 6px; padding: 0.5rem 0.6rem; color: #000000; font-size: 0.85rem; font-family: inherit; outline: none; transition: border-color 0.15s; }
-.sett-field input:focus { border-color: #043bb1; }
+.sett-field input:focus, .sett-field select:focus { border-color: #043bb1; }
+.sett-field select { background: #f0f0f0; border: 1px solid #888888; border-radius: 6px; padding: 0.5rem 0.6rem; color: #000000; font-size: 0.85rem; font-family: inherit; outline: none; transition: border-color 0.15s; cursor: pointer; }
 .sett-goal-info { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #dddddd; }
 .sett-goal-info p { font-size: 0.8rem; color: #333333; margin-top: 0.5rem; }
 .sett-goal-info strong { color: #000000; }

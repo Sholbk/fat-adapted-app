@@ -71,10 +71,10 @@ const S = {
   anaerobic: { label: "Anaerobic", color: "#fe00a4", target: "Maximize work rate", carbGkg: 3.0, proteinGkg: 2.2, calMul: 1.5, fuel: { pre: "CHO + Protein", during: "Electrolytes, caffeine from ~20 min", post: "CHO + Protein" }, note: "Full carb support for short maximal efforts." },
 };
 
-function calcMacros(type, lbs, heightIn, age, calAdj) {
+function calcMacros(type, lbs, heightIn, age, calAdj, gender) {
   const kg = lbs / 2.205, s = S[type];
   const heightCm = heightIn * 2.54;
-  const bmr = 10 * kg + 6.25 * heightCm - 5 * age - 161;
+  const bmr = 10 * kg + 6.25 * heightCm - 5 * age + (gender === "male" ? 5 : -161);
   const tdee = bmr * 1.55 * s.calMul + (calAdj || 0);
   const p = Math.round(s.proteinGkg * kg), c = Math.round(s.carbGkg * kg);
   return { cal: Math.round(tdee), fat: Math.round(Math.max(tdee - p * 4 - c * 4, 0) / 9), protein: p, carbs: c };
@@ -84,7 +84,7 @@ function getSettings() {
   try { return JSON.parse(localStorage.getItem("ff-settings") || "null"); } catch { return null; }
 }
 function saveSettings(s) { localStorage.setItem("ff-settings", JSON.stringify(s)); }
-const DEFAULT_SETTINGS = { weight: 213, startDate: new Date().toISOString().slice(0, 10), height: 65, age: 35, goalWeight: 213 };
+const DEFAULT_SETTINGS = { weight: 213, startDate: new Date().toISOString().slice(0, 10), height: 65, age: 35, gender: "female", goalWeight: 213 };
 
 async function apiFetch(ep) {
   const r = await fetch(`${BASE_URL}/${ep}`, { headers: { Authorization: `Basic ${btoa(`API_KEY:${API_KEY}`)}`, Accept: "application/json" } });
@@ -333,7 +333,7 @@ function App() {
   const dayWorkouts = planned.filter(w => w.date === date);
   const sType = getSessionTypeFromWorkouts(dayWorkouts, load);
   const session = S[sType];
-  const macros = calcMacros(sType, W, settings.height, settings.age, calAdj);
+  const macros = calcMacros(sType, W, settings.height, settings.age, calAdj, settings.gender);
 
   // Recommended training fuel macros (pre/during/post) based on session type & body weight
   const kg = W / 2.205;
@@ -669,6 +669,13 @@ function App() {
                 <label className="sett-field">
                   <span>Age</span>
                   <input type="number" value={draft.age} onChange={e => updateDraft({ age: Number(e.target.value) || 0 })} />
+                </label>
+                <label className="sett-field">
+                  <span>Gender</span>
+                  <select value={draft.gender || "female"} onChange={e => updateDraft({ gender: e.target.value })}>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                  </select>
                 </label>
               </div>
             </div>
