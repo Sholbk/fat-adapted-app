@@ -123,7 +123,9 @@
 .fi input::placeholder { color: #999999; }
 .fi-s { flex: 2; min-width: 130px; position: relative; }
 .fi-s input { width: 100%; }
-.fi-q { flex: 0.7; min-width: 40px; }
+.fi-q { flex: 0.6; min-width: 40px; }
+.fi-unit { flex: 0.7; min-width: 55px; background: #f0f0f0; border: 1px solid #888888; border-radius: 6px; padding: 0.5rem 0.3rem; color: #000000; font-size: 0.75rem; font-family: inherit; outline: none; cursor: pointer; }
+.fi-unit:focus { border-color: #043bb1; }
 .fi-n { flex: 1; min-width: 50px; }
 .fi-n::-webkit-outer-spin-button, .fi-n::-webkit-inner-spin-button { -webkit-appearance: none; }
 .fi-btn {
@@ -147,6 +149,7 @@
 .fi-drop button:hover { background: #e8e8e8; }
 .fi-drop strong { font-size: 0.8rem; text-transform: capitalize; }
 .fi-drop span { font-size: 0.65rem; color: #1e8ad3; font-family: monospace; }
+.fi-drop em { font-style: normal; font-size: 0.55rem; background: #e8e8e8; color: #555555; padding: 0.1rem 0.3rem; border-radius: 3px; margin-left: 0.3rem; }
 
 /* ── Barcode Scanner ── */
 .fi-scan { background: #fefefe; border: 1px solid #888888; border-radius: 6px; padding: 0.45rem 0.55rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }

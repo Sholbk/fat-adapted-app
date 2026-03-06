@@ -106,8 +106,26 @@ async function searchUSDA(q) {
   const d = await r.json();
   return (d.foods || []).map((f) => {
     const g = (n) => { const x = f.foodNutrients?.find((x) => x.nutrientName === n); return x ? Math.round(x.value) : 0; };
-    return { name: f.description, fat: g("Total lipid (fat)"), protein: g("Protein"), carbs: g("Carbohydrate, by difference"), serving: f.servingSize ? `${f.servingSize}${f.servingSizeUnit || "g"}` : "100g" };
+    return { name: f.description, fat: g("Total lipid (fat)"), protein: g("Protein"), carbs: g("Carbohydrate, by difference"), serving: f.servingSize ? `${f.servingSize}${f.servingSizeUnit || "g"}` : "100g", src: "USDA" };
   });
+}
+
+async function searchOFF(q) {
+  try {
+    const r = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=5`);
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.products || []).filter(p => p.product_name).map(p => {
+      const n = p.nutriments || {};
+      return { name: p.product_name, fat: Math.round(n.fat_100g || 0), protein: Math.round(n.proteins_100g || 0), carbs: Math.round(n.carbohydrates_100g || 0), serving: p.serving_size || "100g", src: "OFF" };
+    });
+  } catch { return []; }
+}
+
+async function searchAllFoods(q) {
+  const [usda, off] = await Promise.all([searchUSDA(q), searchOFF(q)]);
+  const seen = new Set();
+  return [...usda, ...off].filter(f => { const k = f.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 8);
 }
 
 async function lookupBarcode(code) {
@@ -222,40 +240,59 @@ function Ring({ value, max, color, label, size = 90 }) {
 }
 
 function FoodInput({ onAdd, placeholder }) {
-  const [name, setName] = useState(""); const [qty, setQty] = useState("1"); const [fat, setFat] = useState(""); const [pro, setPro] = useState(""); const [carb, setCarb] = useState("");
+  const [name, setName] = useState(""); const [amt, setAmt] = useState("1"); const [unit, setUnit] = useState("item");
+  const [fat, setFat] = useState(""); const [pro, setPro] = useState(""); const [carb, setCarb] = useState("");
   const [results, setResults] = useState([]); const [busy, setBusy] = useState(false); const t = useRef(null);
   const [scanning, setScanning] = useState(false); const [scanMsg, setScanMsg] = useState("");
+  const baseFat = useRef(0), basePro = useRef(0), baseCarb = useRef(0);
   function onN(v) {
     setName(v); clearTimeout(t.current);
     if (v.trim().length < 2) { setResults([]); return; }
-    t.current = setTimeout(async () => { setBusy(true); setResults(await searchUSDA(v)); setBusy(false); }, 400);
+    t.current = setTimeout(async () => { setBusy(true); setResults(await searchAllFoods(v)); setBusy(false); }, 400);
   }
-  function pick(f) { setName(f.name); setFat(String(f.fat)); setPro(String(f.protein)); setCarb(String(f.carbs)); setResults([]); }
+  function pick(f) {
+    setName(f.name); setFat(String(f.fat)); setPro(String(f.protein)); setCarb(String(f.carbs)); setResults([]);
+    baseFat.current = f.fat; basePro.current = f.protein; baseCarb.current = f.carbs;
+  }
   async function handleScan(code) {
     setScanning(false); setScanMsg("Looking up barcode...");
     try {
       const food = await lookupBarcode(code);
-      if (food) { setName(food.name); setFat(String(food.fat)); setPro(String(food.protein)); setCarb(String(food.carbs)); setScanMsg(""); }
+      if (food) { setName(food.name); setFat(String(food.fat)); setPro(String(food.protein)); setCarb(String(food.carbs)); setScanMsg(""); baseFat.current = food.fat; basePro.current = food.protein; baseCarb.current = food.carbs; }
       else { setScanMsg("Product not found. Try searching manually."); setTimeout(() => setScanMsg(""), 3000); }
     } catch { setScanMsg("Lookup failed. Try again."); setTimeout(() => setScanMsg(""), 3000); }
   }
   function submit(e) {
     e.preventDefault(); if (!name.trim()) return;
-    const q = Math.max(+qty || 1, 0.1);
-    onAdd({ id: Date.now(), name: q !== 1 ? `${name.trim()} (x${q})` : name.trim(), fat: Math.round((+fat || 0) * q), protein: Math.round((+pro || 0) * q), carbs: Math.round((+carb || 0) * q) });
-    setName(""); setQty("1"); setFat(""); setPro(""); setCarb(""); setResults([]);
+    const a = Math.max(+amt || 1, 0.1);
+    const label = a !== 1 ? `${name.trim()} (${a} ${unit})` : `${name.trim()} (1 ${unit})`;
+    onAdd({ id: Date.now(), name: label, fat: Math.round((+fat || 0) * a), protein: Math.round((+pro || 0) * a), carbs: Math.round((+carb || 0) * a) });
+    setName(""); setAmt("1"); setUnit("item"); setFat(""); setPro(""); setCarb(""); setResults([]);
+    baseFat.current = 0; basePro.current = 0; baseCarb.current = 0;
   }
   return (
     <>
       <form className="fi" onSubmit={submit}>
         <div className="fi-s">
-          <input placeholder={placeholder || "Search USDA or type food"} value={name} onChange={e => onN(e.target.value)} onBlur={() => setTimeout(() => setResults([]), 200)} />
+          <input placeholder={placeholder || "Search food..."} value={name} onChange={e => onN(e.target.value)} onBlur={() => setTimeout(() => setResults([]), 200)} />
           {(results.length > 0 || busy) && <div className="fi-drop">
-            {busy && <div className="fi-load">Searching...</div>}
-            {results.map((f, i) => <button key={i} type="button" onMouseDown={() => pick(f)}><strong>{f.name}</strong><span>F:{f.fat} P:{f.protein} C:{f.carbs} — {f.serving}</span></button>)}
+            {busy && <div className="fi-load">Searching USDA + Open Food Facts...</div>}
+            {results.map((f, i) => <button key={i} type="button" onMouseDown={() => pick(f)}><strong>{f.name}</strong><span>F:{f.fat} P:{f.protein} C:{f.carbs} — {f.serving} <em>{f.src}</em></span></button>)}
           </div>}
         </div>
-        <input type="number" placeholder="Qty" value={qty} onChange={e => setQty(e.target.value)} className="fi-q" min="0.1" step="0.1" />
+        <input type="number" placeholder="Amt" value={amt} onChange={e => setAmt(e.target.value)} className="fi-q" min="0.1" step="0.1" />
+        <select value={unit} onChange={e => setUnit(e.target.value)} className="fi-unit">
+          <option value="item">item</option>
+          <option value="oz">oz</option>
+          <option value="g">g</option>
+          <option value="cup">cup</option>
+          <option value="tbsp">tbsp</option>
+          <option value="tsp">tsp</option>
+          <option value="lb">lb</option>
+          <option value="ml">ml</option>
+          <option value="slice">slice</option>
+          <option value="scoop">scoop</option>
+        </select>
         <input type="number" placeholder="Fat" value={fat} onChange={e => setFat(e.target.value)} className="fi-n" min="0" />
         <input type="number" placeholder="Pro" value={pro} onChange={e => setPro(e.target.value)} className="fi-n" min="0" />
         <input type="number" placeholder="Carb" value={carb} onChange={e => setCarb(e.target.value)} className="fi-n" min="0" />
