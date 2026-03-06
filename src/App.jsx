@@ -38,7 +38,7 @@ function classifyWorkout(summary) {
   if (s.includes("threshold") || s.includes("strength endurance") || s.includes("se ")) return "threshold";
   if (s.includes("tempo")) return "upperTempo";
   if (s.includes("aerobic") || s.includes("steady") || s.includes("development")) return "endurance";
-  if (s.includes("strength") || s.includes("weight training") || s.includes("conditioning")) return "lowerTempo";
+  if (s.includes("strength") || s.includes("weight training") || s.includes("conditioning") || s.includes("s&c") || s.includes("gym")) return "endurance";
   if (s.includes("run off the bike") || s.includes("rob")) return "upperTempo";
   return "endurance";
 }
@@ -385,11 +385,12 @@ function App() {
     const trainCarb = Math.round(totalCarb * 0.4);
     const trainPro = Math.round(totalPro * 0.25);
     if (["endurance", "lowerTempo"].includes(t)) {
-      // Fat-adapted: minimal carbs pre/during, small post
-      return { pre: { carbs: 0, protein: Math.round(trainPro * 0.4), fat: 15 }, during: { carbs: Math.round(trainCarb * 0.3), protein: 0, fat: 10 }, post: { carbs: Math.round(trainCarb * 0.7), protein: Math.round(trainPro * 0.6), fat: 5 } };
+      // Fat-adapted: minimal carbs pre, fat-based during, protein-only post (no carbs post per Plews)
+      return { pre: { carbs: 0, protein: Math.round(trainPro * 0.4), fat: 15 }, during: { carbs: 0, protein: 0, fat: 15 }, post: { carbs: 0, protein: Math.round(trainPro * 0.6), fat: 5 } };
     }
     if (t === "upperTempo") {
-      return { pre: { carbs: Math.round(trainCarb * 0.25), protein: Math.round(trainPro * 0.4), fat: 10 }, during: { carbs: Math.round(trainCarb * 0.4), protein: 0, fat: 5 }, post: { carbs: Math.round(trainCarb * 0.35), protein: Math.round(trainPro * 0.6), fat: 5 } };
+      // Pre: low-moderate CHO. During: fat-based early, CHO after ~60 min. Post: protein only
+      return { pre: { carbs: Math.round(trainCarb * 0.3), protein: Math.round(trainPro * 0.4), fat: 10 }, during: { carbs: Math.round(trainCarb * 0.7), protein: 0, fat: 5 }, post: { carbs: 0, protein: Math.round(trainPro * 0.6), fat: 5 } };
     }
     // threshold, vo2max, anaerobic — full carb support
     return { pre: { carbs: Math.round(trainCarb * 0.3), protein: Math.round(trainPro * 0.4), fat: 5 }, during: { carbs: Math.round(trainCarb * 0.45), protein: 0, fat: 0 }, post: { carbs: Math.round(trainCarb * 0.25), protein: Math.round(trainPro * 0.6), fat: 5 } };
