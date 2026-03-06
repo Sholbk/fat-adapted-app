@@ -123,6 +123,7 @@
 .fi input::placeholder { color: #999999; }
 .fi-s { flex: 2; min-width: 130px; position: relative; }
 .fi-s input { width: 100%; }
+.fi-q { flex: 0.7; min-width: 40px; }
 .fi-n { flex: 1; min-width: 50px; }
 .fi-n::-webkit-outer-spin-button, .fi-n::-webkit-inner-spin-button { -webkit-appearance: none; }
 .fi-btn {

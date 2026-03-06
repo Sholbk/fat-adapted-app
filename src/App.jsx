@@ -222,7 +222,7 @@ function Ring({ value, max, color, label, size = 90 }) {
 }
 
 function FoodInput({ onAdd, placeholder }) {
-  const [name, setName] = useState(""); const [fat, setFat] = useState(""); const [pro, setPro] = useState(""); const [carb, setCarb] = useState("");
+  const [name, setName] = useState(""); const [qty, setQty] = useState("1"); const [fat, setFat] = useState(""); const [pro, setPro] = useState(""); const [carb, setCarb] = useState("");
   const [results, setResults] = useState([]); const [busy, setBusy] = useState(false); const t = useRef(null);
   const [scanning, setScanning] = useState(false); const [scanMsg, setScanMsg] = useState("");
   function onN(v) {
@@ -241,8 +241,9 @@ function FoodInput({ onAdd, placeholder }) {
   }
   function submit(e) {
     e.preventDefault(); if (!name.trim()) return;
-    onAdd({ id: Date.now(), name: name.trim(), fat: +fat || 0, protein: +pro || 0, carbs: +carb || 0 });
-    setName(""); setFat(""); setPro(""); setCarb(""); setResults([]);
+    const q = Math.max(+qty || 1, 0.1);
+    onAdd({ id: Date.now(), name: q !== 1 ? `${name.trim()} (x${q})` : name.trim(), fat: Math.round((+fat || 0) * q), protein: Math.round((+pro || 0) * q), carbs: Math.round((+carb || 0) * q) });
+    setName(""); setQty("1"); setFat(""); setPro(""); setCarb(""); setResults([]);
   }
   return (
     <>
@@ -254,6 +255,7 @@ function FoodInput({ onAdd, placeholder }) {
             {results.map((f, i) => <button key={i} type="button" onMouseDown={() => pick(f)}><strong>{f.name}</strong><span>F:{f.fat} P:{f.protein} C:{f.carbs} — {f.serving}</span></button>)}
           </div>}
         </div>
+        <input type="number" placeholder="Qty" value={qty} onChange={e => setQty(e.target.value)} className="fi-q" min="0.1" step="0.1" />
         <input type="number" placeholder="Fat" value={fat} onChange={e => setFat(e.target.value)} className="fi-n" min="0" />
         <input type="number" placeholder="Pro" value={pro} onChange={e => setPro(e.target.value)} className="fi-n" min="0" />
         <input type="number" placeholder="Carb" value={carb} onChange={e => setCarb(e.target.value)} className="fi-n" min="0" />
