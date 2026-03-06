@@ -101,7 +101,7 @@ function setTLog(d, e) { localStorage.setItem(`ff-train-${d}`, JSON.stringify(e)
 function sum(entries) { return entries.reduce((a, e) => ({ fat: a.fat + e.fat, protein: a.protein + e.protein, carbs: a.carbs + e.carbs, cal: a.cal + e.fat * 9 + e.protein * 4 + e.carbs * 4 }), { fat: 0, protein: 0, carbs: 0, cal: 0 }); }
 
 async function searchUSDA(q) {
-  const r = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=DEMO_KEY&query=${encodeURIComponent(q)}&pageSize=5&dataType=Survey%20(FNDDS),Foundation,SR%20Legacy`);
+  const r = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=MBa8H80xhD5i9nC0RcvTviRh7WKzGn92RafcnMsR&query=${encodeURIComponent(q)}&pageSize=5&dataType=Survey%20(FNDDS),Foundation,SR%20Legacy`);
   if (!r.ok) return [];
   const d = await r.json();
   return (d.foods || []).map((f) => {
