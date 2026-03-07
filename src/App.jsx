@@ -251,29 +251,18 @@ function FoodInput({ onAdd, placeholder }) {
   const [scanning, setScanning] = useState(false); const [scanMsg, setScanMsg] = useState("");
   // Store per-100g values from database picks
   const per100 = useRef(null);
+  // Keep refs in sync so recalcMacros always has latest values
+  const amtRef = useRef(amt); amtRef.current = amt;
+  const unitRef = useRef(unit); unitRef.current = unit;
   function onN(v) {
     setName(v); clearTimeout(t.current); per100.current = null;
     if (v.trim().length < 2) { setResults([]); return; }
     t.current = setTimeout(async () => { setBusy(true); setResults(await searchAllFoods(v)); setBusy(false); }, 400);
   }
-  function pick(f) {
-    setName(f.name); setResults([]);
-    // Store per-100g values and serving size for scaling
-    per100.current = { fat: f.fat100, pro: f.pro100, carb: f.carb100, servingG: f.servingG };
-    // Default to serving size in grams
-    setAmt(String(f.servingG)); setUnit("g");
-    // Show macros for that serving
-    const scale = f.servingG / 100;
-    setFat(String(Math.round(f.fat100 * scale))); setPro(String(Math.round(f.pro100 * scale))); setCarb(String(Math.round(f.carb100 * scale)));
-  }
-  // Recalculate macros when amt or unit changes (if picked from database)
-  function updateAmt(newAmt, newUnit) {
-    if (newAmt !== undefined) setAmt(newAmt);
-    if (newUnit !== undefined) setUnit(newUnit);
+  function recalcMacros(curAmt, curUnit) {
     if (!per100.current) return;
-    const a = +(newAmt !== undefined ? newAmt : amt) || 0;
-    const u = newUnit !== undefined ? newUnit : unit;
-    const gPerUnit = UNIT_TO_G[u];
+    const a = +curAmt || 0;
+    const gPerUnit = UNIT_TO_G[curUnit];
     let totalG;
     if (gPerUnit !== null && gPerUnit !== undefined) {
       totalG = a * gPerUnit;
@@ -285,6 +274,26 @@ function FoodInput({ onAdd, placeholder }) {
     setFat(String(Math.round(per100.current.fat * scale)));
     setPro(String(Math.round(per100.current.pro * scale)));
     setCarb(String(Math.round(per100.current.carb * scale)));
+  }
+  function pick(f) {
+    setName(f.name); setResults([]);
+    // Store per-100g values and serving size for scaling
+    per100.current = { fat: f.fat100, pro: f.pro100, carb: f.carb100, servingG: f.servingG };
+    // Default to 1 serving in grams (use serving size from API, or 1g if none provided)
+    const hasServing = f.servingG !== 100 || f.serving !== "100g";
+    const newAmt = hasServing ? String(f.servingG) : "1";
+    const newUnit = "g";
+    setAmt(newAmt); amtRef.current = newAmt;
+    setUnit(newUnit); unitRef.current = newUnit;
+    recalcMacros(newAmt, newUnit);
+  }
+  function onAmtChange(newAmt) {
+    setAmt(newAmt); amtRef.current = newAmt;
+    recalcMacros(newAmt, unitRef.current);
+  }
+  function onUnitChange(newUnit) {
+    setUnit(newUnit); unitRef.current = newUnit;
+    recalcMacros(amtRef.current, newUnit);
   }
   async function handleScan(code) {
     setScanning(false); setScanMsg("Looking up barcode...");
@@ -319,8 +328,8 @@ function FoodInput({ onAdd, placeholder }) {
             })}
           </div>}
         </div>
-        <input type="number" placeholder="Amt" value={amt} onChange={e => updateAmt(e.target.value, undefined)} className="fi-q" min="0" step="any" />
-        <select value={unit} onChange={e => updateAmt(undefined, e.target.value)} className="fi-unit">
+        <input type="number" placeholder="Amt" value={amt} onChange={e => onAmtChange(e.target.value)} className="fi-q" min="0" step="any" />
+        <select value={unit} onChange={e => onUnitChange(e.target.value)} className="fi-unit">
           <option value="g">g</option>
           <option value="oz">oz</option>
           <option value="lb">lb</option>
