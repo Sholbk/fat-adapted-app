@@ -12,8 +12,10 @@ import Entries from "./components/Entries.jsx";
 import Ring from "./components/Ring.jsx";
 import MacroRow from "./components/MacroRow.jsx";
 
-const ATHLETICA_ICS_RAW = "https://app.athletica.ai/4935a810a4/athletica.ics";
-const ATHLETICA_ICS = import.meta.env.DEV ? ATHLETICA_ICS_RAW : `/api/ics-proxy?url=${encodeURIComponent(ATHLETICA_ICS_RAW)}`;
+function getIcsUrl(raw) {
+  if (!raw) return null;
+  return import.meta.env.DEV ? raw : `/api/ics-proxy?url=${encodeURIComponent(raw)}`;
+}
 
 const MEAL_PLANS = {
   lowCarb: [
@@ -104,7 +106,6 @@ function App() {
   const [date, setDate] = useState(today());
   const [page, setPage] = useState("log");
   const [loading, setLoading] = useState(true);
-  const [icsDone, setIcsDone] = useState(false);
   const [fetched, setFetched] = useState(new Set());
   const [tick, setTick] = useState(0);
   const [settings, setSettings] = useState(() => getSettings() || DEFAULT_SETTINGS);
@@ -123,9 +124,10 @@ function App() {
 
   // Fetch Athletica ICS
   useEffect(() => {
-    if (icsDone) return;
-    fetch(ATHLETICA_ICS).then(r => r.text()).then(t => { setPlanned(parseICS(t)); setIcsDone(true); }).catch(() => { setIcsDone(true); showToast("Couldn't load training plan from Athletica"); });
-  }, []);
+    const icsUrl = getIcsUrl(settings.athleticaUrl);
+    if (!icsUrl) { setPlanned([]); return; }
+    fetch(icsUrl).then(r => r.text()).then(t => { setPlanned(parseICS(t)); }).catch(() => { showToast("Couldn't load training plan from Athletica"); });
+  }, [settings.athleticaUrl]);
 
   // Fetch Intervals.icu wellness (now via server proxy)
   useEffect(() => {
@@ -457,9 +459,13 @@ function App() {
 
             <div className="settings-card">
               <h3>Connections</h3>
+              <label className="sett-field" style={{ marginBottom: "0.75rem" }}>
+                <span>Athletica Calendar URL</span>
+                <input type="url" placeholder="https://app.athletica.ai/…/athletica.ics" value={draft.athleticaUrl || ""} onChange={e => updateDraft({ athleticaUrl: e.target.value })} />
+              </label>
               <div className="conn-list">
                 <div className="conn connected"><div className="conn-info"><strong>Intervals.icu</strong><span>Wellness data, training load, fitness metrics</span></div><span className="conn-status on">Connected</span></div>
-                <div className="conn connected"><div className="conn-info"><strong>Athletica.ai</strong><span>Planned workouts, training plan calendar</span></div><span className="conn-status on">Connected</span></div>
+                <div className={`conn${draft.athleticaUrl ? " connected" : ""}`}><div className="conn-info"><strong>Athletica.ai</strong><span>Planned workouts, training plan calendar</span></div><span className={`conn-status${draft.athleticaUrl ? " on" : ""}`}>{draft.athleticaUrl ? "Connected" : "Not configured"}</span></div>
                 <div className="conn connected"><div className="conn-info"><strong>FatSecret</strong><span>Food search, nutrition data, and barcode lookup</span></div><span className="conn-status on">Connected</span></div>
               </div>
             </div>

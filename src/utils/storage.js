@@ -17,6 +17,7 @@ export const DEFAULT_SETTINGS = {
   goalWeight: 213,
   name: "Stephanie",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  athleticaUrl: "https://app.athletica.ai/4935a810a4/athletica.ics",
 };
 
 export function getLog(d, m) {
