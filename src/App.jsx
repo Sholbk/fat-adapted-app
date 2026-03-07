@@ -1,362 +1,99 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { useState, useEffect } from "react";
 import "./App.css";
 
-const API_KEY = import.meta.env.VITE_INTERVALS_API_KEY;
-const ATHLETE_ID = import.meta.env.VITE_INTERVALS_ATHLETE_ID;
-const BASE_URL = `https://intervals.icu/api/v1/athlete/${ATHLETE_ID}`;
+import { fmt, today, parseICS } from "./utils/parsing.js";
+import { classifyWorkout, getSessionTypeFromWorkouts } from "./utils/classification.js";
+import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
+import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum } from "./utils/storage.js";
+import { apiFetch } from "./utils/api.js";
+
+import FoodInput from "./components/FoodInput.jsx";
+import Entries from "./components/Entries.jsx";
+import Ring from "./components/Ring.jsx";
+import MacroRow from "./components/MacroRow.jsx";
+
 const ATHLETICA_ICS_RAW = "https://app.athletica.ai/4935a810a4/athletica.ics";
 const ATHLETICA_ICS = import.meta.env.DEV ? ATHLETICA_ICS_RAW : `/api/ics-proxy?url=${encodeURIComponent(ATHLETICA_ICS_RAW)}`;
 
-// ── Helpers ──
-function fmt(d) { return d.toISOString().split("T")[0]; }
-function today() { return fmt(new Date()); }
-
-function parseICS(text) {
-  const events = [];
-  const blocks = text.split("BEGIN:VEVENT");
-  for (let i = 1; i < blocks.length; i++) {
-    const block = blocks[i].split("END:VEVENT")[0];
-    const get = (key) => { const m = block.match(new RegExp(`^${key}[^:]*:(.+)`, "m")); return m ? m[1].trim() : ""; };
-    const unfolded = block.replace(/\r?\n[ \t]/g, "");
-    const getU = (key) => { const m = unfolded.match(new RegExp(`^${key}[^:]*:(.+)`, "m")); return m ? m[1].trim() : ""; };
-    const summary = getU("SUMMARY").replace(/\\\\/g, "\\").replace(/\\,/g, ",").replace(/\\"/g, '"');
-    const desc = getU("DESCRIPTION").replace(/\\n/g, "\n").replace(/\\,/g, ",").replace(/\\\\/g, "\\").replace(/\\"/g, '"');
-    const dtRaw = get("DTSTART");
-    const dm = dtRaw.match(/(\d{4})(\d{2})(\d{2})/);
-    if (!dm) continue;
-    const date = `${dm[1]}-${dm[2]}-${dm[3]}`;
-    const durM = desc.match(/Duration:\s*([^\n]+)/);
-    events.push({ date, summary, description: desc, duration: durM ? durM[1].trim() : "" });
-  }
-  return events;
-}
-
-function classifyWorkout(summary) {
-  const s = summary.toLowerCase();
-  if (s.includes("hiit") || s.includes("vo2") || s.includes("interval")) return "vo2max";
-  if (s.includes("threshold") || s.includes("strength endurance") || s.includes("se ")) return "threshold";
-  if (s.includes("tempo")) return "upperTempo";
-  if (s.includes("aerobic") || s.includes("steady") || s.includes("development")) return "endurance";
-  if (s.includes("strength") || s.includes("weight training") || s.includes("conditioning") || s.includes("s&c") || s.includes("gym")) return "endurance";
-  if (s.includes("run off the bike") || s.includes("rob")) return "upperTempo";
-  return "endurance";
-}
-
-function getSessionType(load) {
-  if (!load || load === 0) return "rest";
-  if (load <= 20) return "endurance";
-  if (load <= 40) return "lowerTempo";
-  if (load <= 60) return "upperTempo";
-  if (load <= 85) return "threshold";
-  if (load <= 120) return "vo2max";
-  return "anaerobic";
-}
-
-function getSessionTypeFromWorkouts(workouts, load) {
-  if (workouts.length === 0) return load > 0 ? getSessionType(load) : "rest";
-  const pri = ["anaerobic", "vo2max", "threshold", "upperTempo", "lowerTempo", "endurance", "rest"];
-  let best = "rest";
-  for (const w of workouts) { const t = classifyWorkout(w.summary); if (pri.indexOf(t) < pri.indexOf(best)) best = t; }
-  return best;
-}
-
-const S = {
-  rest: { label: "Rest Day", color: "#1e8ad3", target: "Recovery & repair", carbGkg: 0.5, proteinGkg: 1.6, calMul: 1.0, fuel: { pre: "Protein, healthy fats, low CHO", during: "N/A", post: "Protein" }, note: "Keep carbs low. Prioritize protein and healthy fats for recovery." },
-  endurance: { label: "Endurance", color: "#10bc10", target: "Increase fat oxidation", carbGkg: 0.8, proteinGkg: 1.8, calMul: 1.15, fuel: { pre: "Protein, healthy fats — restrict CHO", during: "Fat-based fuels, electrolytes. CHO only after ~120 min", post: "Protein" }, note: "Restrict carbs to maximize fat oxidation. CHO only after ~2 hours." },
-  lowerTempo: { label: "Lower Tempo", color: "#10bc10", target: "Fat oxidation + sustain intensity", carbGkg: 1.0, proteinGkg: 1.8, calMul: 1.2, fuel: { pre: "Protein, healthy fats — low CHO", during: "Fat-based fuels, electrolytes. CHO after ~90 min", post: "Protein" }, note: "Fat-fueled early, introduce CHO after ~90 min." },
-  upperTempo: { label: "Upper Tempo", color: "#1e8ad3", target: "Fat oxidation + sustain intensity", carbGkg: 1.5, proteinGkg: 2.0, calMul: 1.3, fuel: { pre: "Protein, healthy fats, moderate CHO", during: "Fat-based early, CHO after ~60 min", post: "Protein" }, note: "Low-to-moderate carbs pre. Add CHO after ~60 min." },
-  threshold: { label: "Threshold", color: "#043bb1", target: "Sustain intensity", carbGkg: 2.5, proteinGkg: 2.0, calMul: 1.4, fuel: { pre: "Protein, moderate CHO", during: "CHO, electrolytes, caffeine from ~30 min", post: "CHO + Protein" }, note: "Fuel this session. CHO + electrolytes + caffeine during." },
-  vo2max: { label: "VO2max", color: "#fe00a4", target: "Maximize work rate", carbGkg: 3.0, proteinGkg: 2.2, calMul: 1.5, fuel: { pre: "CHO + Protein — top up glycogen", during: "Electrolytes, caffeine. CHO from ~20 min", post: "CHO + Protein" }, note: "Full glycogen. AMPK not blunted here — fuel for max output." },
-  anaerobic: { label: "Anaerobic", color: "#fe00a4", target: "Maximize work rate", carbGkg: 3.0, proteinGkg: 2.2, calMul: 1.5, fuel: { pre: "CHO + Protein", during: "Electrolytes, caffeine from ~20 min", post: "CHO + Protein" }, note: "Full carb support for short maximal efforts." },
+const MEAL_PLANS = {
+  lowCarb: [
+    { foods: [
+      { name: "Eggs (3) cooked in butter", f: 21, p: 18, c: 2 },
+      { name: "Avocado (½)", f: 15, p: 2, c: 6 },
+      { name: "Smoked salmon (3 oz)", f: 4, p: 16, c: 0 },
+      { name: "Coffee with MCT oil", f: 14, p: 0, c: 0 },
+    ]},
+    { foods: [
+      { name: "Grilled chicken thighs (6 oz)", f: 14, p: 42, c: 0 },
+      { name: "Mixed greens with olive oil (2 tbsp)", f: 28, p: 2, c: 4 },
+      { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
+      { name: "Cheese (1 oz)", f: 9, p: 7, c: 0 },
+    ]},
+    { foods: [
+      { name: "Grass-fed ribeye steak (8 oz)", f: 28, p: 50, c: 0 },
+      { name: "Roasted broccoli with coconut oil", f: 14, p: 4, c: 8 },
+      { name: "Side salad with olive oil", f: 14, p: 2, c: 3 },
+      { name: "Bone broth (1 cup)", f: 1, p: 10, c: 1 },
+    ]},
+    { foods: [
+      { name: "Macadamia nuts (1.5 oz)", f: 32, p: 3, c: 4 },
+      { name: "String cheese (2)", f: 12, p: 14, c: 2 },
+      { name: "Olives (10)", f: 5, p: 0, c: 2 },
+    ]},
+  ],
+  midCarb: [
+    { foods: [
+      { name: "Eggs (3) scrambled with veggies", f: 18, p: 20, c: 4 },
+      { name: "Oatmeal (½ cup) with berries", f: 3, p: 5, c: 20 },
+      { name: "Avocado (½)", f: 15, p: 2, c: 6 },
+      { name: "Turkey sausage (2 links)", f: 8, p: 14, c: 2 },
+    ]},
+    { foods: [
+      { name: "Grilled salmon (6 oz)", f: 18, p: 40, c: 0 },
+      { name: "Sweet potato (1 medium)", f: 0, p: 4, c: 26 },
+      { name: "Mixed greens with olive oil", f: 14, p: 2, c: 4 },
+      { name: "Quinoa (½ cup cooked)", f: 2, p: 4, c: 20 },
+    ]},
+    { foods: [
+      { name: "Chicken breast (6 oz)", f: 4, p: 48, c: 0 },
+      { name: "Brown rice (¾ cup cooked)", f: 1, p: 4, c: 34 },
+      { name: "Roasted vegetables with olive oil", f: 14, p: 3, c: 10 },
+      { name: "Avocado (½)", f: 15, p: 2, c: 6 },
+    ]},
+    { foods: [
+      { name: "Greek yogurt (1 cup)", f: 5, p: 20, c: 8 },
+      { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
+      { name: "Banana (½)", f: 0, p: 1, c: 14 },
+    ]},
+  ],
+  highCarb: [
+    { foods: [
+      { name: "Oatmeal (1 cup) with banana & honey", f: 4, p: 8, c: 52 },
+      { name: "Eggs (3) scrambled", f: 15, p: 18, c: 2 },
+      { name: "Toast with nut butter (1 tbsp)", f: 12, p: 7, c: 15 },
+      { name: "Orange juice (8 oz)", f: 0, p: 2, c: 26 },
+    ]},
+    { foods: [
+      { name: "Rice bowl with salmon (6 oz)", f: 18, p: 40, c: 45 },
+      { name: "Sweet potato (1 large)", f: 0, p: 4, c: 38 },
+      { name: "Avocado (½)", f: 15, p: 2, c: 6 },
+      { name: "Mixed greens with olive oil", f: 14, p: 2, c: 4 },
+    ]},
+    { foods: [
+      { name: "Pasta (2 cups) with chicken (6 oz)", f: 8, p: 52, c: 60 },
+      { name: "Olive oil & parmesan", f: 18, p: 4, c: 2 },
+      { name: "Roasted vegetables", f: 5, p: 3, c: 12 },
+      { name: "Bread roll with butter", f: 8, p: 4, c: 22 },
+    ]},
+    { foods: [
+      { name: "Rice cakes (3) with nut butter", f: 12, p: 7, c: 28 },
+      { name: "Banana", f: 0, p: 1, c: 27 },
+      { name: "Greek yogurt (½ cup)", f: 3, p: 12, c: 4 },
+    ]},
+  ],
 };
 
-function calcMacros(type, lbs, heightIn, age, calAdj, gender) {
-  const kg = lbs / 2.205, s = S[type];
-  const heightCm = heightIn * 2.54;
-  const bmr = 10 * kg + 6.25 * heightCm - 5 * age + (gender === "male" ? 5 : -161);
-  const tdee = bmr * 1.55 * s.calMul + (calAdj || 0);
-  const p = Math.round(s.proteinGkg * kg), c = Math.round(s.carbGkg * kg);
-  return { cal: Math.round(tdee), fat: Math.round(Math.max(tdee - p * 4 - c * 4, 0) / 9), protein: p, carbs: c };
-}
-
-function getSettings() {
-  try { return JSON.parse(localStorage.getItem("ff-settings") || "null"); } catch { return null; }
-}
-function saveSettings(s) { localStorage.setItem("ff-settings", JSON.stringify(s)); }
-const DEFAULT_SETTINGS = { weight: 213, startDate: new Date().toISOString().slice(0, 10), height: 65, age: 35, gender: "female", goalWeight: 213 };
-
-async function apiFetch(ep) {
-  const r = await fetch(`${BASE_URL}/${ep}`, { headers: { Authorization: `Basic ${btoa(`API_KEY:${API_KEY}`)}`, Accept: "application/json" } });
-  if (!r.ok) throw new Error(`API ${r.status}`);
-  return r.json();
-}
-
-// ── Storage ──
-const MEALS = ["breakfast", "lunch", "dinner", "snack"];
-function getLog(d, m) { try { return JSON.parse(localStorage.getItem(`ff-${m}-${d}`) || "[]"); } catch { return []; } }
-function setLog(d, m, e) { localStorage.setItem(`ff-${m}-${d}`, JSON.stringify(e)); }
-function getTLog(d) { try { return JSON.parse(localStorage.getItem(`ff-train-${d}`) || "[]"); } catch { return []; } }
-function setTLog(d, e) { localStorage.setItem(`ff-train-${d}`, JSON.stringify(e)); }
-function sum(entries) { return entries.reduce((a, e) => ({ fat: a.fat + e.fat, protein: a.protein + e.protein, carbs: a.carbs + e.carbs, cal: a.cal + e.fat * 9 + e.protein * 4 + e.carbs * 4 }), { fat: 0, protein: 0, carbs: 0, cal: 0 }); }
-
-// FatSecret API (proxied through Netlify function)
-const FS_BASE = import.meta.env.DEV ? "http://localhost:8888/api/fatsecret" : "/api/fatsecret";
-
-async function searchFoods(q) {
-  try {
-    const r = await fetch(`${FS_BASE}?action=search&q=${encodeURIComponent(q)}`);
-    if (!r.ok) { console.error("FatSecret search error:", r.status, await r.text()); return []; }
-    const data = await r.json();
-    if (data.error) { console.error("FatSecret API error:", data.error); return []; }
-    return Array.isArray(data) ? data : [];
-  } catch (e) { console.error("FatSecret search failed:", e); return []; }
-}
-
-async function getFoodServings(id) {
-  try {
-    const r = await fetch(`${FS_BASE}?action=get&id=${id}`);
-    if (!r.ok) return null;
-    return await r.json();
-  } catch { return null; }
-}
-
-async function lookupBarcode(code) {
-  try {
-    const r = await fetch(`${FS_BASE}?action=barcode&code=${encodeURIComponent(code)}`);
-    if (!r.ok) return null;
-    return await r.json();
-  } catch { return null; }
-}
-
-function BarcodeScanner({ onScan, onClose }) {
-  const scannerRef = useRef(null);
-  const stoppedRef = useRef(false);
-  const idRef = useRef("barcode-reader-" + Date.now());
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let scanner = null;
-    stoppedRef.current = false;
-
-    const startScanner = async () => {
-      try {
-        scanner = new Html5Qrcode(idRef.current, { verbose: false });
-        scannerRef.current = scanner;
-        await scanner.start(
-          { facingMode: "environment" },
-          { fps: 8, qrbox: { width: 250, height: 150 } },
-          (code) => {
-            if (stoppedRef.current) return;
-            stoppedRef.current = true;
-            scanner.stop().then(() => { scanner.clear(); }).catch(() => {});
-            onScan(code);
-          },
-          () => {}
-        );
-      } catch (err) {
-        setError("Camera access denied or unavailable. Check permissions.");
-      }
-    };
-
-    startScanner();
-
-    return () => {
-      stoppedRef.current = true;
-      if (scanner) {
-        const s = scanner.getState && scanner.getState();
-        if (s === 2) { // SCANNING
-          scanner.stop().then(() => { scanner.clear(); }).catch(() => {});
-        } else {
-          try { scanner.clear(); } catch {}
-        }
-      }
-    };
-  }, []);
-
-  function handleClose() {
-    stoppedRef.current = true;
-    const scanner = scannerRef.current;
-    if (scanner) {
-      const s = scanner.getState && scanner.getState();
-      if (s === 2) {
-        scanner.stop().then(() => { scanner.clear(); onClose(); }).catch(() => { onClose(); });
-        return;
-      }
-      try { scanner.clear(); } catch {}
-    }
-    onClose();
-  }
-
-  return (
-    <div className="scanner-overlay" onClick={handleClose}>
-      <div className="scanner-box" onClick={e => e.stopPropagation()}>
-        <div className="scanner-head">
-          <span>Scan Barcode</span>
-          <button onClick={handleClose}>×</button>
-        </div>
-        <div id={idRef.current}></div>
-        {error ? <p className="scanner-hint" style={{ color: "#fe00a4" }}>{error}</p>
-          : <p className="scanner-hint">Point camera at a food barcode</p>}
-      </div>
-    </div>
-  );
-}
-
-// ── Small Components ──
-
-function Ring({ value, max, color, label, size = 90 }) {
-  const pct = max > 0 ? Math.min(value / max, 1) : 0;
-  const r = (size - 10) / 2, circ = 2 * Math.PI * r;
-  return (
-    <div className="ring">
-      <svg width={size} height={size}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#dddddd" strokeWidth="7" />
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="7"
-          strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)} strokeLinecap="round"
-          transform={`rotate(-90 ${size/2} ${size/2})`} style={{ transition: "stroke-dashoffset 0.4s" }} />
-      </svg>
-      <div className="ring-inner">
-        <span className="ring-v">{value}</span>
-        <span className="ring-max">/ {max}</span>
-        <span className="ring-l">{label}</span>
-      </div>
-    </div>
-  );
-}
-
-function FoodInput({ onAdd, placeholder }) {
-  const [name, setName] = useState(""); const [qty, setQty] = useState("1");
-  const [fat, setFat] = useState(""); const [pro, setPro] = useState(""); const [carb, setCarb] = useState("");
-  const [results, setResults] = useState([]); const [busy, setBusy] = useState(false); const t = useRef(null);
-  const [scanning, setScanning] = useState(false); const [scanMsg, setScanMsg] = useState("");
-  const [servings, setServings] = useState([]); const [selServing, setSelServing] = useState(null);
-  // Per-serving base macros for quantity scaling
-  const baseMacros = useRef(null);
-  function onN(v) {
-    setName(v); clearTimeout(t.current); baseMacros.current = null; setServings([]); setSelServing(null);
-    if (v.trim().length < 2) { setResults([]); return; }
-    t.current = setTimeout(async () => { setBusy(true); setResults(await searchFoods(v)); setBusy(false); }, 400);
-  }
-  function scaleToQty(q, base) {
-    if (!base) return;
-    const a = +q || 0;
-    setFat(String(Math.round(base.fat * a)));
-    setPro(String(Math.round(base.protein * a)));
-    setCarb(String(Math.round(base.carbs * a)));
-  }
-  async function pick(f) {
-    setName(f.brand ? `${f.name} (${f.brand})` : f.name); setResults([]);
-    // Fetch detailed servings from FatSecret
-    const detail = await getFoodServings(f.id);
-    if (detail && detail.servings && detail.servings.length > 0) {
-      setServings(detail.servings);
-      const s = detail.servings[0];
-      setSelServing(s);
-      baseMacros.current = { fat: s.fat, protein: s.protein, carbs: s.carbs };
-      setQty("1");
-      setFat(String(Math.round(s.fat))); setPro(String(Math.round(s.protein))); setCarb(String(Math.round(s.carbs)));
-    } else {
-      // Fallback to search result macros
-      setServings([]);
-      baseMacros.current = { fat: f.fat, protein: f.protein, carbs: f.carbs };
-      setSelServing(null); setQty("1");
-      setFat(String(Math.round(f.fat))); setPro(String(Math.round(f.protein))); setCarb(String(Math.round(f.carbs)));
-    }
-  }
-  function onServingChange(idx) {
-    const s = servings[idx];
-    if (!s) return;
-    setSelServing(s);
-    baseMacros.current = { fat: s.fat, protein: s.protein, carbs: s.carbs };
-    const q = qty || "1";
-    scaleToQty(q, baseMacros.current);
-  }
-  function onQtyChange(q) {
-    setQty(q);
-    scaleToQty(q, baseMacros.current);
-  }
-  async function handleScan(code) {
-    setScanning(false); setScanMsg("Looking up barcode...");
-    try {
-      const food = await lookupBarcode(code);
-      if (food) {
-        setName(food.name); setScanMsg("");
-        baseMacros.current = { fat: food.fat, protein: food.protein, carbs: food.carbs };
-        setQty("1"); setServings([]); setSelServing(null);
-        setFat(String(food.fat)); setPro(String(food.protein)); setCarb(String(food.carbs));
-      }
-      else { setScanMsg("Product not found. Try searching manually."); setTimeout(() => setScanMsg(""), 3000); }
-    } catch { setScanMsg("Lookup failed. Try again."); setTimeout(() => setScanMsg(""), 3000); }
-  }
-  function submit(e) {
-    e.preventDefault(); if (!name.trim()) return;
-    const servDesc = selServing ? selServing.desc : "serving";
-    const q = +qty || 1;
-    const label = `${name.trim()} (${q}${q !== 1 ? "x " : " "}${servDesc})`;
-    onAdd({ id: Date.now(), name: label, fat: +fat || 0, protein: +pro || 0, carbs: +carb || 0 });
-    setName(""); setQty("1"); setFat(""); setPro(""); setCarb(""); setResults([]);
-    setServings([]); setSelServing(null); baseMacros.current = null;
-  }
-  return (
-    <>
-      <form className="fi" onSubmit={submit}>
-        <div className="fi-s">
-          <input placeholder={placeholder || "Search food..."} value={name} onChange={e => onN(e.target.value)} onBlur={() => setTimeout(() => setResults([]), 200)} />
-          {(results.length > 0 || busy) && <div className="fi-drop">
-            {busy && <div className="fi-load">Searching FatSecret...</div>}
-            {results.map((f, i) => (
-              <button key={i} type="button" onMouseDown={() => pick(f)}>
-                <strong>{f.brand ? `${f.name} (${f.brand})` : f.name}</strong>
-                <span>F:{Math.round(f.fat)} P:{Math.round(f.protein)} C:{Math.round(f.carbs)} per {f.serving}</span>
-              </button>
-            ))}
-          </div>}
-        </div>
-        <input type="number" placeholder="Qty" value={qty} onChange={e => onQtyChange(e.target.value)} className="fi-q" min="0" step="any" />
-        {servings.length > 0 ? (
-          <select value={servings.indexOf(selServing)} onChange={e => onServingChange(+e.target.value)} className="fi-unit">
-            {servings.map((s, i) => <option key={i} value={i}>{s.desc}</option>)}
-          </select>
-        ) : (
-          <select className="fi-unit" disabled><option>serving</option></select>
-        )}
-        <input type="number" placeholder="Fat" value={fat} onChange={e => { setFat(e.target.value); baseMacros.current = null; }} className="fi-n" min="0" />
-        <input type="number" placeholder="Pro" value={pro} onChange={e => { setPro(e.target.value); baseMacros.current = null; }} className="fi-n" min="0" />
-        <input type="number" placeholder="Carb" value={carb} onChange={e => { setCarb(e.target.value); baseMacros.current = null; }} className="fi-n" min="0" />
-        <button type="button" className="fi-scan" onClick={() => setScanning(true)} title="Scan barcode">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="11" y1="8" x2="11" y2="16"/><line x1="15" y1="8" x2="15" y2="16"/><line x1="19" y1="8" x2="19" y2="16"/></svg>
-        </button>
-        <button type="submit" className="fi-btn">+</button>
-      </form>
-      {scanMsg && <div className="scan-msg">{scanMsg}</div>}
-      {scanning && <BarcodeScanner onScan={handleScan} onClose={() => setScanning(false)} />}
-    </>
-  );
-}
-
-function Entries({ items, onRemove }) {
-  return items.length ? <div className="ent-list">{items.map(e => (
-    <div key={e.id} className="ent"><span className="ent-n">{e.name}</span><span className="ent-m">F:{e.fat} P:{e.protein} C:{e.carbs}</span><button onClick={() => onRemove(e.id)}>×</button></div>
-  ))}</div> : null;
-}
-
-function MacroRow({ label, consumed, target, color }) {
-  const pct = target > 0 ? Math.min(consumed / target * 100, 100) : 0;
-  const left = target - consumed;
-  return (
-    <div className="mrow">
-      <div className="mrow-top"><span className="mrow-dot" style={{ background: color }} /><span className="mrow-label">{label}</span><span className="mrow-val">{consumed}g / {target}g</span></div>
-      <div className="mrow-bar"><div style={{ width: `${pct}%`, background: consumed > target ? "#fe00a4" : color }} /></div>
-      <span className="mrow-left">{left >= 0 ? `${left}g left` : `${Math.abs(left)}g over`}</span>
-    </div>
-  );
-}
-
-// ── App ──
-
 function App() {
-  const now = new Date();
   const [wellness, setWellness] = useState([]);
   const [planned, setPlanned] = useState([]);
   const [date, setDate] = useState(today());
@@ -368,63 +105,51 @@ function App() {
   const [settings, setSettings] = useState(() => getSettings() || DEFAULT_SETTINGS);
   const [draft, setDraft] = useState(() => getSettings() || DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
+
   const W = settings.weight;
   const calAdj = settings.goalWeight < W ? -500 : settings.goalWeight > W ? 500 : 0;
   const refresh = () => setTick(t => t + 1);
+
   function updateDraft(s) { setDraft(d => ({ ...d, ...s })); setSaved(false); }
   function handleSave() { setSettings(draft); saveSettings(draft); setSaved(true); setTimeout(() => setSaved(false), 2000); }
 
   // Fetch Athletica ICS
-  useEffect(() => { if (icsDone) return; fetch(ATHLETICA_ICS).then(r => r.text()).then(t => { setPlanned(parseICS(t)); setIcsDone(true); }).catch(() => setIcsDone(true)); }, []);
+  useEffect(() => {
+    if (icsDone) return;
+    fetch(ATHLETICA_ICS).then(r => r.text()).then(t => { setPlanned(parseICS(t)); setIcsDone(true); }).catch(() => setIcsDone(true));
+  }, []);
 
-  // Fetch Intervals.icu wellness
+  // Fetch Intervals.icu wellness (now via server proxy)
   useEffect(() => {
     const m = date.slice(0, 7);
     if (fetched.has(m)) return;
     const [y, mo] = m.split("-").map(Number);
     const s = fmt(new Date(y, mo - 1, -6)), e = fmt(new Date(y, mo, 6));
     apiFetch(`wellness?oldest=${s}&newest=${e}`).then(w => {
-      setWellness(prev => { const map = new Map(prev.map(x => [x.id, x])); (Array.isArray(w) ? w : []).forEach(x => map.set(x.id, x)); return Array.from(map.values()); });
-      setFetched(prev => new Set(prev).add(m)); setLoading(false);
+      setWellness(prev => {
+        const map = new Map(prev.map(x => [x.id, x]));
+        (Array.isArray(w) ? w : []).forEach(x => map.set(x.id, x));
+        return Array.from(map.values());
+      });
+      setFetched(prev => new Set(prev).add(m));
+      setLoading(false);
     }).catch(() => setLoading(false));
   }, [date]);
 
-  // Navigate date
   function shiftDate(n) {
-    const d = new Date(date + "T00:00:00"); d.setDate(d.getDate() + n);
+    const d = new Date(date + "T00:00:00");
+    d.setDate(d.getDate() + n);
     setDate(fmt(d));
   }
 
   const wd = wellness.find(w => w.id === date) || {};
-  const load = wd.atlLoad || wd.ctlLoad || 0;
+  const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
   const dayWorkouts = planned.filter(w => w.date === date);
   const sType = getSessionTypeFromWorkouts(dayWorkouts, load);
-  const session = S[sType];
+  const session = SESSION_CONFIG[sType];
   const macros = calcMacros(sType, W, settings.height, settings.age, calAdj, settings.gender);
-
-  // Recommended training fuel macros (pre/during/post) based on session type & body weight
-  const kg = W / 2.205;
-  const fuelRec = (() => {
-    const t = sType;
-    if (t === "rest") return { pre: { carbs: 0, protein: 0, fat: 0 }, during: { carbs: 0, protein: 0, fat: 0 }, post: { carbs: 0, protein: 0, fat: 0 } };
-    const totalCarb = Math.round(session.carbGkg * kg);
-    const totalPro = Math.round(session.proteinGkg * kg);
-    // Distribute ~40% of daily carbs as training fuel (pre 30%, during 40%, post 30%)
-    const trainCarb = Math.round(totalCarb * 0.4);
-    const trainPro = Math.round(totalPro * 0.25);
-    if (["endurance", "lowerTempo"].includes(t)) {
-      // Fat-adapted: minimal carbs pre, fat-based during, protein-only post (no carbs post per Plews)
-      return { pre: { carbs: 0, protein: Math.round(trainPro * 0.4), fat: 15 }, during: { carbs: 0, protein: 0, fat: 15 }, post: { carbs: 0, protein: Math.round(trainPro * 0.6), fat: 5 } };
-    }
-    if (t === "upperTempo") {
-      // Pre: low-moderate CHO. During: fat-based early, CHO after ~60 min. Post: protein only
-      return { pre: { carbs: Math.round(trainCarb * 0.3), protein: Math.round(trainPro * 0.4), fat: 10 }, during: { carbs: Math.round(trainCarb * 0.7), protein: 0, fat: 5 }, post: { carbs: 0, protein: Math.round(trainPro * 0.6), fat: 5 } };
-    }
-    // threshold, vo2max, anaerobic — full carb support
-    return { pre: { carbs: Math.round(trainCarb * 0.3), protein: Math.round(trainPro * 0.4), fat: 5 }, during: { carbs: Math.round(trainCarb * 0.45), protein: 0, fat: 0 }, post: { carbs: Math.round(trainCarb * 0.25), protein: Math.round(trainPro * 0.6), fat: 5 } };
-  })();
-  const fuelRecTotal = { carbs: fuelRec.pre.carbs + fuelRec.during.carbs + fuelRec.post.carbs, protein: fuelRec.pre.protein + fuelRec.during.protein + fuelRec.post.protein, fat: fuelRec.pre.fat + fuelRec.during.fat + fuelRec.post.fat };
-  fuelRecTotal.cal = fuelRecTotal.carbs * 4 + fuelRecTotal.protein * 4 + fuelRecTotal.fat * 9;
+  const fuelRec = calcFuelRec(sType, session, W);
+  const fuelRecTotal = sumFuelRec(fuelRec);
 
   const mealData = MEALS.map(m => ({ key: m, label: m[0].toUpperCase() + m.slice(1), entries: getLog(date, m) }));
   const mealTotals = sum(mealData.flatMap(m => m.entries));
@@ -438,13 +163,14 @@ function App() {
   function rmTrain(id) { setTLog(date, getTLog(date).filter(e => e.id !== id)); refresh(); }
 
   const dayDisplay = new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-  const greeting = new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 17 ? "Good Afternoon" : "Good Evening";
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+  const userName = settings.name || "Stephanie";
 
   if (loading && wellness.length === 0) return <div className="app-loading">Loading your training data...</div>;
 
   return (
     <div className="layout">
-      {/* ── Sidebar ── */}
       <aside className="sidebar">
         <div className="sb-brand"><span className="sb-logo">F</span><span className="sb-name">FuelFlow</span></div>
         <nav className="sb-nav">
@@ -467,12 +193,10 @@ function App() {
         </nav>
       </aside>
 
-      {/* ── Main ── */}
       <main className="main">
-        {/* Top bar */}
         <div className="topbar">
           <div className="topbar-greet">
-            <h1>{greeting}, Stephanie!</h1>
+            <h1>{greeting}, {userName}!</h1>
             <p className="topbar-phase" style={{ color: session.color }}>{session.label} — {session.target}</p>
           </div>
           <div className="topbar-date">
@@ -484,9 +208,7 @@ function App() {
         </div>
 
         {page === "log" && <>
-          {/* ── Top Cards Row ── */}
           <div className="cards-row">
-            {/* Non-Training Fuel */}
             <div className="card">
               <h2>Non-Training Fuel</h2>
               <MacroRow label="Fat" consumed={mealTotals.fat} target={Math.max(macros.fat - fuelRecTotal.fat, 0)} color="#fe00a4" />
@@ -495,7 +217,6 @@ function App() {
               <div className="card-cal"><span>{mealTotals.cal}</span> / {Math.max(macros.cal - fuelRecTotal.cal, 0)} kcal</div>
             </div>
 
-            {/* My Training Macros */}
             <div className="card">
               <h2>My Training Fuel</h2>
               <div className="fuel-recs">
@@ -522,7 +243,6 @@ function App() {
               <FoodInput onAdd={addTrain} placeholder="Log training fuel..." />
             </div>
 
-            {/* Training Sessions */}
             <div className="card">
               <h2>Training Sessions</h2>
               {dayWorkouts.length > 0 ? dayWorkouts.map((w, i) => (
@@ -532,7 +252,7 @@ function App() {
                     {w.duration && <span className="wo-dur">{w.duration}</span>}
                   </div>
                   <div className="wo-desc">{w.description.split("\n").filter(l => l.trim() && !l.startsWith("Duration:")).slice(0, 4).join("\n")}</div>
-                  <span className="wo-badge" style={{ color: S[classifyWorkout(w.summary)].color }}>{S[classifyWorkout(w.summary)].label}</span>
+                  <span className="wo-badge" style={{ color: SESSION_CONFIG[classifyWorkout(w.summary)].color }}>{SESSION_CONFIG[classifyWorkout(w.summary)].label}</span>
                 </div>
               )) : <p className="wo-empty">{load > 0 ? "Activity recorded — no planned workout" : "Rest day"}</p>}
               {(load > 0 || wd.ctl != null) && (
@@ -545,7 +265,6 @@ function App() {
             </div>
           </div>
 
-          {/* Total Macros */}
           <div className="goals-section">
             <h2 className="goals-title">Total Macros</h2>
             <div className="goals-row">
@@ -556,7 +275,6 @@ function App() {
             </div>
           </div>
 
-          {/* ── Meal Sections ── */}
           {mealData.map(({ key, label, entries }) => {
             const mSum = sum(entries);
             return (
@@ -582,7 +300,7 @@ function App() {
             </div>
             <h3>Carb Periodization Guide (Dr. Plews)</h3>
             <div className="phase-table">
-              {Object.entries(S).map(([key, s]) => (
+              {Object.entries(SESSION_CONFIG).map(([key, s]) => (
                 <div key={key} className={`phase-row ${key === sType ? "active" : ""}`}>
                   <span className="phase-dot" style={{ background: s.color }} />
                   <span className="phase-name">{s.label}</span>
@@ -598,7 +316,6 @@ function App() {
           const mf = macros.fat, mp = macros.protein, mc = macros.carbs, mcal = macros.cal;
           const lowCarb = ["rest", "endurance", "lowerTempo"].includes(sType);
           const midCarb = sType === "upperTempo";
-          // Distribute macros: Breakfast 25%, Lunch 30%, Dinner 30%, Snack 15%
           const dist = [
             { meal: "Breakfast", pct: 0.25 },
             { meal: "Lunch", pct: 0.30 },
@@ -606,116 +323,46 @@ function App() {
             { meal: "Snack", pct: 0.15 },
           ].map(d => ({ ...d, fat: Math.round(mf * d.pct), protein: Math.round(mp * d.pct), carbs: Math.round(mc * d.pct), cal: Math.round(mcal * d.pct) }));
 
-          const plans = lowCarb ? [
-            { foods: [
-              { name: "Eggs (3) cooked in butter", f: 21, p: 18, c: 2 },
-              { name: "Avocado (½)", f: 15, p: 2, c: 6 },
-              { name: "Smoked salmon (3 oz)", f: 4, p: 16, c: 0 },
-              { name: "Coffee with MCT oil", f: 14, p: 0, c: 0 },
-            ]},
-            { foods: [
-              { name: "Grilled chicken thighs (6 oz)", f: 14, p: 42, c: 0 },
-              { name: "Mixed greens with olive oil (2 tbsp)", f: 28, p: 2, c: 4 },
-              { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
-              { name: "Cheese (1 oz)", f: 9, p: 7, c: 0 },
-            ]},
-            { foods: [
-              { name: "Grass-fed ribeye steak (8 oz)", f: 28, p: 50, c: 0 },
-              { name: "Roasted broccoli with coconut oil", f: 14, p: 4, c: 8 },
-              { name: "Side salad with olive oil", f: 14, p: 2, c: 3 },
-              { name: "Bone broth (1 cup)", f: 1, p: 10, c: 1 },
-            ]},
-            { foods: [
-              { name: "Macadamia nuts (1.5 oz)", f: 32, p: 3, c: 4 },
-              { name: "String cheese (2)", f: 12, p: 14, c: 2 },
-              { name: "Olives (10)", f: 5, p: 0, c: 2 },
-            ]},
-          ] : midCarb ? [
-            { foods: [
-              { name: "Eggs (3) scrambled with veggies", f: 18, p: 20, c: 4 },
-              { name: "Oatmeal (½ cup) with berries", f: 3, p: 5, c: 20 },
-              { name: "Avocado (½)", f: 15, p: 2, c: 6 },
-              { name: "Turkey sausage (2 links)", f: 8, p: 14, c: 2 },
-            ]},
-            { foods: [
-              { name: "Grilled salmon (6 oz)", f: 18, p: 40, c: 0 },
-              { name: "Sweet potato (1 medium)", f: 0, p: 4, c: 26 },
-              { name: "Mixed greens with olive oil", f: 14, p: 2, c: 4 },
-              { name: "Quinoa (½ cup cooked)", f: 2, p: 4, c: 20 },
-            ]},
-            { foods: [
-              { name: "Chicken breast (6 oz)", f: 4, p: 48, c: 0 },
-              { name: "Brown rice (¾ cup cooked)", f: 1, p: 4, c: 34 },
-              { name: "Roasted vegetables with olive oil", f: 14, p: 3, c: 10 },
-              { name: "Avocado (½)", f: 15, p: 2, c: 6 },
-            ]},
-            { foods: [
-              { name: "Greek yogurt (1 cup)", f: 5, p: 20, c: 8 },
-              { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
-              { name: "Banana (½)", f: 0, p: 1, c: 14 },
-            ]},
-          ] : [
-            { foods: [
-              { name: "Oatmeal (1 cup) with banana & honey", f: 4, p: 8, c: 52 },
-              { name: "Eggs (3) scrambled", f: 15, p: 18, c: 2 },
-              { name: "Toast with nut butter (1 tbsp)", f: 12, p: 7, c: 15 },
-              { name: "Orange juice (8 oz)", f: 0, p: 2, c: 26 },
-            ]},
-            { foods: [
-              { name: "Rice bowl with salmon (6 oz)", f: 18, p: 40, c: 45 },
-              { name: "Sweet potato (1 large)", f: 0, p: 4, c: 38 },
-              { name: "Avocado (½)", f: 15, p: 2, c: 6 },
-              { name: "Mixed greens with olive oil", f: 14, p: 2, c: 4 },
-            ]},
-            { foods: [
-              { name: "Pasta (2 cups) with chicken (6 oz)", f: 8, p: 52, c: 60 },
-              { name: "Olive oil & parmesan", f: 18, p: 4, c: 2 },
-              { name: "Roasted vegetables", f: 5, p: 3, c: 12 },
-              { name: "Bread roll with butter", f: 8, p: 4, c: 22 },
-            ]},
-            { foods: [
-              { name: "Rice cakes (3) with nut butter", f: 12, p: 7, c: 28 },
-              { name: "Banana", f: 0, p: 1, c: 27 },
-              { name: "Greek yogurt (½ cup)", f: 3, p: 12, c: 4 },
-            ]},
-          ];
+          const plans = lowCarb ? MEAL_PLANS.lowCarb : midCarb ? MEAL_PLANS.midCarb : MEAL_PLANS.highCarb;
 
           return (
-          <div className="page-content">
-            <h2>Meal Plan — {new Date(date + "T12:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</h2>
-            <p className="page-sub">
-              Based on your <strong style={{ color: session.color }}>{session.label}</strong> session — {mcal} kcal | Fat {mf}g | Protein {mp}g | Carbs {mc}g
-            </p>
-            <div className="meal-plan-grid">
-              {dist.map((d, i) => {
-                const plan = plans[i];
-                const totals = plan.foods.reduce((a, f) => ({ f: a.f + f.f, p: a.p + f.p, c: a.c + f.c }), { f: 0, p: 0, c: 0 });
-                totals.cal = totals.f * 9 + totals.p * 4 + totals.c * 4;
-                return (
-                <div key={d.meal} className="meal-plan-card">
-                  <div className="mp-head">
-                    <h3>{d.meal}</h3>
-                    <span className="mp-target">Target: {d.cal} kcal | F:{d.fat}g P:{d.protein}g C:{d.carbs}g</span>
-                  </div>
-                  <div className="mp-foods">
-                    {plan.foods.map((f, j) => (
-                      <div key={j} className="mp-food">
-                        <span className="mp-food-name">{f.name}</span>
-                        <span className="mp-food-macros">F:{f.f}g P:{f.p}g C:{f.c}g</span>
+            <div className="page-content">
+              <h2>Meal Plan — {new Date(date + "T12:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</h2>
+              <p className="page-sub">
+                Based on your <strong style={{ color: session.color }}>{session.label}</strong> session — {mcal} kcal | Fat {mf}g | Protein {mp}g | Carbs {mc}g
+              </p>
+              <div className="meal-plan-grid">
+                {dist.map((d, i) => {
+                  const plan = plans[i];
+                  const totals = plan.foods.reduce((a, f) => ({ f: a.f + f.f, p: a.p + f.p, c: a.c + f.c }), { f: 0, p: 0, c: 0 });
+                  totals.cal = totals.f * 9 + totals.p * 4 + totals.c * 4;
+                  return (
+                    <div key={d.meal} className="meal-plan-card">
+                      <div className="mp-head">
+                        <h3>{d.meal}</h3>
+                        <span className="mp-target">Target: {d.cal} kcal | F:{d.fat}g P:{d.protein}g C:{d.carbs}g</span>
                       </div>
-                    ))}
-                  </div>
-                  <div className="mp-totals">
-                    Meal total: {totals.cal} kcal — F:{totals.f}g P:{totals.p}g C:{totals.c}g
-                  </div>
-                </div>
-              );})}
+                      <div className="mp-foods">
+                        {plan.foods.map((f, j) => (
+                          <div key={j} className="mp-food">
+                            <span className="mp-food-name">{f.name}</span>
+                            <span className="mp-food-macros">F:{f.f}g P:{f.p}g C:{f.c}g</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mp-totals">
+                        Meal total: {totals.cal} kcal — F:{totals.f}g P:{totals.p}g C:{totals.c}g
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mp-note">
+                <strong>Session note:</strong> {session.note}
+              </div>
             </div>
-            <div className="mp-note">
-              <strong>Session note:</strong> {session.note}
-            </div>
-          </div>
-        );})()}
+          );
+        })()}
 
         {page === "settings" && (
           <div className="page-content">
@@ -725,6 +372,10 @@ function App() {
             <div className="settings-card">
               <h3>Your Profile</h3>
               <div className="settings-grid">
+                <label className="sett-field">
+                  <span>Name</span>
+                  <input type="text" value={draft.name || ""} onChange={e => updateDraft({ name: e.target.value })} />
+                </label>
                 <label className="sett-field">
                   <span>Starting Weight (lbs)</span>
                   <input type="number" value={draft.weight} onChange={e => updateDraft({ weight: Number(e.target.value) || 0 })} />

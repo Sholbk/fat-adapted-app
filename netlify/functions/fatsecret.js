@@ -1,8 +1,9 @@
 import crypto from "crypto";
 
-const CONSUMER_KEY = "63173fc7e51949c69953fbcf06b28e35";
-const CONSUMER_SECRET = "18450834e9864d0aaebfd9add105faf1";
+const CONSUMER_KEY = process.env.FATSECRET_CONSUMER_KEY;
+const CONSUMER_SECRET = process.env.FATSECRET_CONSUMER_SECRET;
 const API_URL = "https://platform.fatsecret.com/rest/server.api";
+const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fuelflow-app.netlify.app";
 
 function percentEncode(str) {
   return encodeURIComponent(str).replace(/[!'()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
@@ -16,34 +17,27 @@ function oauthSign(method, url, params) {
     oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
     oauth_version: "1.0",
   };
-
-  // Combine all params and sort
   const allParams = { ...params, ...oauthParams };
   const sortedKeys = Object.keys(allParams).sort();
   const paramString = sortedKeys.map((k) => `${percentEncode(k)}=${percentEncode(allParams[k])}`).join("&");
-
-  // Create signature base string
   const baseString = `${method}&${percentEncode(url)}&${percentEncode(paramString)}`;
-
-  // Sign with consumer secret + empty token secret
   const signingKey = `${percentEncode(CONSUMER_SECRET)}&`;
   const signature = crypto.createHmac("sha1", signingKey).update(baseString).digest("base64");
-
   oauthParams.oauth_signature = signature;
   return oauthParams;
 }
 
 async function apiCall(apiMethod, params) {
+  if (!CONSUMER_KEY || !CONSUMER_SECRET) throw new Error("FatSecret credentials not configured");
   const allParams = { method: apiMethod, format: "json", ...params };
   const oauthParams = oauthSign("POST", API_URL, allParams);
   const body = new URLSearchParams({ ...allParams, ...oauthParams }).toString();
-
   const r = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
+    signal: AbortSignal.timeout(10000),
   });
-
   if (!r.ok) {
     const text = await r.text();
     throw new Error(`API ${r.status}: ${text}`);
@@ -53,23 +47,28 @@ async function apiCall(apiMethod, params) {
   return json;
 }
 
+function respond(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    },
+  });
+}
+
 export default async (req) => {
   const url = new URL(req.url);
   const action = url.searchParams.get("action");
 
-  const headers = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-  };
-
   try {
     if (action === "search") {
-      const q = url.searchParams.get("q");
-      if (!q) return new Response(JSON.stringify([]), { headers });
+      const q = (url.searchParams.get("q") || "").trim();
+      if (!q || q.length > 200) return respond([]);
 
       const data = await apiCall("foods.search", { search_expression: q, max_results: "8" });
       const foods = data?.foods?.food;
-      if (!foods) return new Response(JSON.stringify([]), { headers });
+      if (!foods) return respond([]);
 
       const list = Array.isArray(foods) ? foods : [foods];
       const results = list.map((f) => {
@@ -79,7 +78,6 @@ export default async (req) => {
         const carbM = desc.match(/Carbs:\s*([\d.]+)/);
         const proM = desc.match(/Protein:\s*([\d.]+)/);
         const servM = desc.match(/^Per\s+(.+?)\s*-/);
-
         return {
           id: f.food_id,
           name: f.food_name,
@@ -91,21 +89,19 @@ export default async (req) => {
           brand: f.brand_name || null,
         };
       });
-
-      return new Response(JSON.stringify(results), { headers });
+      return respond(results);
     }
 
     if (action === "get") {
       const id = url.searchParams.get("id");
-      if (!id) return new Response(JSON.stringify({ error: "missing id" }), { status: 400, headers });
+      if (!id || !/^\d+$/.test(id)) return respond({ error: "invalid id" }, 400);
 
       const data = await apiCall("food.get.v4", { food_id: id });
       const food = data?.food;
-      if (!food) return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers });
+      if (!food) return respond({ error: "not found" }, 404);
 
       const servingsRaw = food.servings;
       const servList = Array.isArray(servingsRaw?.serving) ? servingsRaw.serving : servingsRaw?.serving ? [servingsRaw.serving] : [];
-
       const servings = servList.map((s) => ({
         id: s.serving_id,
         desc: s.serving_description,
@@ -116,46 +112,37 @@ export default async (req) => {
         protein: parseFloat(s.protein) || 0,
         carbs: parseFloat(s.carbohydrate) || 0,
       }));
-
-      return new Response(JSON.stringify({
-        id: food.food_id,
-        name: food.food_name,
-        brand: food.brand_name || null,
-        servings,
-      }), { headers });
+      return respond({ id: food.food_id, name: food.food_name, brand: food.brand_name || null, servings });
     }
 
     if (action === "barcode") {
-      const code = url.searchParams.get("code");
-      if (!code) return new Response(JSON.stringify({ error: "missing code" }), { status: 400, headers });
+      const code = (url.searchParams.get("code") || "").trim();
+      if (!code || !/^\d{8,14}$/.test(code)) return respond({ error: "invalid barcode" }, 400);
 
       const data = await apiCall("food.find_id_for_barcode", { barcode: code });
       const foodId = data?.food_id?.value;
-      if (!foodId) return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers });
+      if (!foodId) return respond({ error: "not found" }, 404);
 
       const detail = await apiCall("food.get.v4", { food_id: foodId });
       const food = detail?.food;
-      if (!food) return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers });
+      if (!food) return respond({ error: "not found" }, 404);
 
       const servingsRaw = food.servings;
       const servList = Array.isArray(servingsRaw?.serving) ? servingsRaw.serving : servingsRaw?.serving ? [servingsRaw.serving] : [];
       const s = servList[0];
-
-      return new Response(JSON.stringify({
+      return respond({
         name: food.food_name,
         fat: s ? parseFloat(s.fat) || 0 : 0,
         protein: s ? parseFloat(s.protein) || 0 : 0,
         carbs: s ? parseFloat(s.carbohydrate) || 0 : 0,
         serving: s ? s.serving_description : "1 serving",
-      }), { headers });
+      });
     }
 
-    return new Response(JSON.stringify({ error: "unknown action" }), { status: 400, headers });
+    return respond({ error: "unknown action" }, 400);
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+    return respond({ error: err.message }, 500);
   }
 };
 
-export const config = {
-  path: "/api/fatsecret",
-};
+export const config = { path: "/api/fatsecret" };

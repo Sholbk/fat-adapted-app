@@ -1,0 +1,62 @@
+export const SESSION_CONFIG = {
+  rest: { label: "Rest Day", color: "#1e8ad3", target: "Recovery & repair", carbGkg: 0.5, proteinGkg: 1.6, calMul: 1.0, fuel: { pre: "Protein, healthy fats, low CHO", during: "N/A", post: "Protein" }, note: "Keep carbs low. Prioritize protein and healthy fats for recovery." },
+  endurance: { label: "Endurance", color: "#10bc10", target: "Increase fat oxidation", carbGkg: 0.8, proteinGkg: 1.8, calMul: 1.15, fuel: { pre: "Protein, healthy fats — restrict CHO", during: "Fat-based fuels, electrolytes. CHO only after ~120 min", post: "Protein" }, note: "Restrict carbs to maximize fat oxidation. CHO only after ~2 hours." },
+  lowerTempo: { label: "Lower Tempo", color: "#10bc10", target: "Fat oxidation + sustain intensity", carbGkg: 1.0, proteinGkg: 1.8, calMul: 1.2, fuel: { pre: "Protein, healthy fats — low CHO", during: "Fat-based fuels, electrolytes. CHO after ~90 min", post: "Protein" }, note: "Fat-fueled early, introduce CHO after ~90 min." },
+  upperTempo: { label: "Upper Tempo", color: "#1e8ad3", target: "Fat oxidation + sustain intensity", carbGkg: 1.5, proteinGkg: 2.0, calMul: 1.3, fuel: { pre: "Protein, healthy fats, moderate CHO", during: "Fat-based early, CHO after ~60 min", post: "Protein" }, note: "Low-to-moderate carbs pre. Add CHO after ~60 min." },
+  threshold: { label: "Threshold", color: "#043bb1", target: "Sustain intensity", carbGkg: 2.5, proteinGkg: 2.0, calMul: 1.4, fuel: { pre: "Protein, moderate CHO", during: "CHO, electrolytes, caffeine from ~30 min", post: "CHO + Protein" }, note: "Fuel this session. CHO + electrolytes + caffeine during." },
+  vo2max: { label: "VO2max", color: "#fe00a4", target: "Maximize work rate", carbGkg: 3.0, proteinGkg: 2.2, calMul: 1.5, fuel: { pre: "CHO + Protein — top up glycogen", during: "Electrolytes, caffeine. CHO from ~20 min", post: "CHO + Protein" }, note: "Full glycogen. AMPK not blunted here — fuel for max output." },
+  anaerobic: { label: "Anaerobic", color: "#fe00a4", target: "Maximize work rate", carbGkg: 3.0, proteinGkg: 2.2, calMul: 1.5, fuel: { pre: "CHO + Protein", during: "Electrolytes, caffeine from ~20 min", post: "CHO + Protein" }, note: "Full carb support for short maximal efforts." },
+};
+
+export function calcMacros(type, lbs, heightIn, age, calAdj, gender) {
+  const kg = lbs / 2.205, s = SESSION_CONFIG[type];
+  const heightCm = heightIn * 2.54;
+  const bmr = 10 * kg + 6.25 * heightCm - 5 * age + (gender === "male" ? 5 : -161);
+  const tdee = bmr * 1.55 * s.calMul + (calAdj || 0);
+  const p = Math.round(s.proteinGkg * kg), c = Math.round(s.carbGkg * kg);
+  return { cal: Math.round(tdee), fat: Math.round(Math.max(tdee - p * 4 - c * 4, 0) / 9), protein: p, carbs: c };
+}
+
+export function calcFuelRec(sType, session, weightLbs) {
+  const kg = weightLbs / 2.205;
+  if (sType === "rest") {
+    const zero = { carbs: 0, protein: 0, fat: 0 };
+    return { pre: zero, during: zero, post: zero };
+  }
+  const totalCarb = Math.round(session.carbGkg * kg);
+  const totalPro = Math.round(session.proteinGkg * kg);
+  // ~40% of daily carbs as training fuel (pre 30%, during 40%, post 30%)
+  const trainCarb = Math.round(totalCarb * 0.4);
+  const trainPro = Math.round(totalPro * 0.25);
+
+  if (["endurance", "lowerTempo"].includes(sType)) {
+    return {
+      pre: { carbs: 0, protein: Math.round(trainPro * 0.4), fat: 15 },
+      during: { carbs: 0, protein: 0, fat: 15 },
+      post: { carbs: 0, protein: Math.round(trainPro * 0.6), fat: 5 },
+    };
+  }
+  if (sType === "upperTempo") {
+    return {
+      pre: { carbs: Math.round(trainCarb * 0.3), protein: Math.round(trainPro * 0.4), fat: 10 },
+      during: { carbs: Math.round(trainCarb * 0.7), protein: 0, fat: 5 },
+      post: { carbs: 0, protein: Math.round(trainPro * 0.6), fat: 5 },
+    };
+  }
+  // threshold, vo2max, anaerobic
+  return {
+    pre: { carbs: Math.round(trainCarb * 0.3), protein: Math.round(trainPro * 0.4), fat: 5 },
+    during: { carbs: Math.round(trainCarb * 0.45), protein: 0, fat: 0 },
+    post: { carbs: Math.round(trainCarb * 0.25), protein: Math.round(trainPro * 0.6), fat: 5 },
+  };
+}
+
+export function sumFuelRec(fuelRec) {
+  const total = {
+    carbs: fuelRec.pre.carbs + fuelRec.during.carbs + fuelRec.post.carbs,
+    protein: fuelRec.pre.protein + fuelRec.during.protein + fuelRec.post.protein,
+    fat: fuelRec.pre.fat + fuelRec.during.fat + fuelRec.post.fat,
+  };
+  total.cal = total.carbs * 4 + total.protein * 4 + total.fat * 9;
+  return total;
+}
