@@ -9,6 +9,16 @@ export function classifyWorkout(summary) {
   return "endurance";
 }
 
+export function classifyByIntensity(intensity) {
+  if (!intensity || intensity === 0) return "rest";
+  if (intensity <= 55) return "endurance";
+  if (intensity <= 65) return "lowerTempo";
+  if (intensity <= 75) return "upperTempo";
+  if (intensity <= 88) return "threshold";
+  if (intensity <= 100) return "vo2max";
+  return "anaerobic";
+}
+
 export function getSessionType(load) {
   if (!load || load === 0) return "rest";
   if (load <= 20) return "endurance";
@@ -24,7 +34,8 @@ export function getSessionTypeFromWorkouts(workouts, load) {
   const pri = ["anaerobic", "vo2max", "threshold", "upperTempo", "lowerTempo", "endurance", "rest"];
   let best = "rest";
   for (const w of workouts) {
-    const t = classifyWorkout(w.summary);
+    // Intervals.icu events have icu_intensity — use that for more accurate classification
+    const t = w.icu_intensity ? classifyByIntensity(w.icu_intensity) : classifyWorkout(w.summary || w.name || "");
     if (pri.indexOf(t) < pri.indexOf(best)) best = t;
   }
   return best;

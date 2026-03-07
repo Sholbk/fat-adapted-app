@@ -2,7 +2,7 @@ const API_KEY = process.env.INTERVALS_API_KEY;
 const ATHLETE_ID = process.env.INTERVALS_ATHLETE_ID;
 const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fuelflow-app.netlify.app";
 
-const ALLOWED_ENDPOINTS = ["wellness"];
+const ALLOWED_ENDPOINTS = ["wellness", "events"];
 
 function respond(body, status = 200) {
   return new Response(JSON.stringify(body), {

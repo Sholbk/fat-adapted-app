@@ -1,7 +1,10 @@
 import { SESSION_CONFIG } from "../utils/macros.js";
-import { classifyWorkout } from "../utils/classification.js";
+import { classifyWorkout, classifyByIntensity } from "../utils/classification.js";
 import { MEALS, getLog, setLog, getWater, setWater, getSupps, setSupps, COMMON_SUPPS, getMood, setMood, getNotes, setNotes, sum } from "../utils/storage.js";
 import { fmt } from "../utils/parsing.js";
+
+const ZONE_LABELS = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7"];
+const ZONE_COLORS = ["#1e8ad3", "#10bc10", "#90c010", "#e8c010", "#e87010", "#fe00a4", "#cc0050"];
 import FoodInput from "../components/FoodInput.jsx";
 import Entries from "../components/Entries.jsx";
 import Ring from "../components/Ring.jsx";
@@ -50,16 +53,46 @@ export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRe
 
         <div className="card">
           <h2>Training Sessions</h2>
-          {dayWorkouts.length > 0 ? dayWorkouts.map((w, i) => (
-            <div key={i} className="wo">
-              <div className="wo-top">
-                <span className="wo-name">{w.summary}</span>
-                {w.duration && <span className="wo-dur">{w.duration}</span>}
+          {dayWorkouts.length > 0 ? dayWorkouts.map((w, i) => {
+            const wName = w.summary || w.name || "";
+            const wType = w.icu_intensity ? classifyByIntensity(w.icu_intensity) : classifyWorkout(wName);
+            const sessionCfg = SESSION_CONFIG[wType];
+            const zoneTimes = w.workout_doc?.zoneTimes;
+            const totalZoneSecs = zoneTimes ? zoneTimes.reduce((s, z) => s + (z.secs || 0), 0) : 0;
+            return (
+              <div key={i} className="wo">
+                <div className="wo-top">
+                  <span className="wo-name">{wName}</span>
+                  {w.duration && <span className="wo-dur">{w.duration}</span>}
+                </div>
+                {w.type && <span className="wo-type">{w.type}</span>}
+                <div className="wo-desc">{(w.description || "").split("\n").filter(l => l.trim() && !l.startsWith("Duration:")).slice(0, 4).join("\n")}</div>
+                <span className="wo-badge" style={{ color: sessionCfg.color }}>{sessionCfg.label}</span>
+                {w.source === "intervals" && (
+                  <div className="wo-meta">
+                    {w.icu_training_load != null && <span className="wo-meta-item">Load: <strong>{Math.round(w.icu_training_load)}</strong></span>}
+                    {w.icu_intensity != null && <span className="wo-meta-item">Intensity: <strong>{Math.round(w.icu_intensity)}%</strong></span>}
+                  </div>
+                )}
+                {zoneTimes && totalZoneSecs > 0 && (
+                  <div className="wo-zones">
+                    <div className="wo-zones-bar">
+                      {zoneTimes.map((z, zi) => {
+                        const pct = (z.secs / totalZoneSecs) * 100;
+                        if (pct < 0.5) return null;
+                        return <div key={zi} style={{ width: `${pct}%`, background: ZONE_COLORS[zi] }} title={`${ZONE_LABELS[zi]}: ${Math.round(z.secs / 60)}m`} />;
+                      })}
+                    </div>
+                    <div className="wo-zones-labels">
+                      {zoneTimes.map((z, zi) => z.secs > 0 ? (
+                        <span key={zi} style={{ color: ZONE_COLORS[zi] }}>{ZONE_LABELS[zi]}: {Math.round(z.secs / 60)}m</span>
+                      ) : null)}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="wo-desc">{w.description.split("\n").filter(l => l.trim() && !l.startsWith("Duration:")).slice(0, 4).join("\n")}</div>
-              <span className="wo-badge" style={{ color: SESSION_CONFIG[classifyWorkout(w.summary)].color }}>{SESSION_CONFIG[classifyWorkout(w.summary)].label}</span>
-            </div>
-          )) : <p className="wo-empty">{load > 0 ? "Activity recorded — no planned workout" : "Rest day"}</p>}
+            );
+          }) : <p className="wo-empty">{load > 0 ? "Activity recorded — no planned workout" : "Rest day"}</p>}
           {(load > 0 || wd.ctl != null) && (
             <div className="wo-stats">
               {load > 0 && <div><span>Load</span><strong>{load}</strong></div>}

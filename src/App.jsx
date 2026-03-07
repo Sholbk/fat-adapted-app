@@ -19,6 +19,12 @@ import MealIdeas from "./pages/MealIdeas.jsx";
 import RecipeBuilder from "./pages/RecipeBuilder.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 
+function formatDuration(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 function getIcsUrl(raw) {
   if (!raw) return null;
   return import.meta.env.DEV ? raw : `/api/ics-proxy?url=${encodeURIComponent(raw)}`;
@@ -32,6 +38,7 @@ function Toast({ message, onDone, onUndo }) {
 function App() {
   const [wellness, setWellness] = useState([]);
   const [planned, setPlanned] = useState([]);
+  const [events, setEvents] = useState([]);
   const [date, setDate] = useState(today());
   const [page, setPage] = useState("log");
   const [loading, setLoading] = useState(true);
@@ -87,15 +94,25 @@ function App() {
     if (fetched.has(m)) return;
     const [y, mo] = m.split("-").map(Number);
     const s = fmt(new Date(y, mo - 1, -6)), e = fmt(new Date(y, mo, 6));
-    apiFetch(`wellness?oldest=${s}&newest=${e}`).then(w => {
+    Promise.all([
+      apiFetch(`wellness?oldest=${s}&newest=${e}`).catch(() => []),
+      apiFetch(`events?oldest=${s}&newest=${e}`).catch(() => []),
+    ]).then(([w, ev]) => {
       setWellness(prev => {
         const map = new Map(prev.map(x => [x.id, x]));
         (Array.isArray(w) ? w : []).forEach(x => map.set(x.id, x));
         return Array.from(map.values());
       });
+      if (Array.isArray(ev) && ev.length > 0) {
+        setEvents(prev => {
+          const map = new Map(prev.map(x => [x.id, x]));
+          ev.forEach(x => map.set(x.id, x));
+          return Array.from(map.values());
+        });
+      }
       setFetched(prev => new Set(prev).add(m));
       setLoading(false);
-    }).catch(() => { setLoading(false); showToast("Couldn't load wellness data from Intervals.icu"); });
+    }).catch(() => { setLoading(false); showToast("Couldn't load data from Intervals.icu"); });
   }, [date]);
 
   function shiftDate(n) {
@@ -107,7 +124,24 @@ function App() {
 
   const wd = wellness.find(w => w.id === date) || {};
   const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
-  const dayWorkouts = planned.filter(w => w.date === date);
+
+  // Merge Intervals.icu events with Athletica ICS — events have richer data
+  const dayEvents = events.filter(e => e.category === "WORKOUT" && e.start_date_local?.startsWith(date));
+  const dayICS = planned.filter(w => w.date === date);
+  // Use Intervals.icu events if available, fall back to ICS
+  const dayWorkouts = dayEvents.length > 0
+    ? dayEvents.map(e => ({
+        summary: e.name || "",
+        description: e.description || "",
+        duration: e.moving_time ? formatDuration(e.moving_time) : "",
+        type: e.type || "",
+        icu_training_load: e.icu_training_load,
+        icu_intensity: e.icu_intensity,
+        workout_doc: e.workout_doc,
+        source: "intervals",
+      }))
+    : dayICS;
+
   const sType = getSessionTypeFromWorkouts(dayWorkouts, load);
   const session = SESSION_CONFIG[sType];
   const macros = calcMacros(sType, W, settings.height, settings.age, calAdj, settings.gender);
