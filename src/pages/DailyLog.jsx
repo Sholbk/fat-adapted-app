@@ -60,40 +60,44 @@ export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRe
             const sessionCfg = SESSION_CONFIG[wType];
             const zoneTimes = w.workout_doc?.zoneTimes;
             const totalZoneSecs = zoneTimes ? zoneTimes.reduce((s, z) => s + (z.secs || 0), 0) : 0;
+            const isStravaOnly = w.source === "strava";
             return (
               <div key={i} className={`wo wo-${w.status || "planned"}`}>
                 <div className="wo-top">
-                  <span className="wo-name">{wName}</span>
+                  <span className="wo-name">{wName}{isStravaOnly && w.startTime ? ` at ${w.startTime}` : ""}</span>
                   {w.status === "completed" && <span className="wo-status-badge wo-status-done">Completed</span>}
                   {w.status === "unplanned" && <span className="wo-status-badge wo-status-extra">Unplanned</span>}
                   {w.status === "planned" && <span className="wo-status-badge wo-status-plan">Planned</span>}
                   {w.duration && <span className="wo-dur">{w.duration}</span>}
                 </div>
-                {w.type && <span className="wo-type">{w.type}</span>}
-                <div className="wo-desc">{(w.description || "").split("\n").filter(l => l.trim() && !l.startsWith("Duration:")).slice(0, 4).join("\n")}</div>
-                <span className="wo-badge" style={{ color: sessionCfg.color }}>{sessionCfg.label}</span>
-                {w.source === "intervals" && (
-                  <div className="wo-meta">
-                    {w.icu_training_load != null && <span className="wo-meta-item">Load: <strong>{Math.round(w.icu_training_load)}</strong></span>}
-                    {w.icu_intensity != null && <span className="wo-meta-item">Intensity: <strong>{Math.round(w.icu_intensity)}%</strong></span>}
-                  </div>
-                )}
-                {zoneTimes && totalZoneSecs > 0 && (
-                  <div className="wo-zones">
-                    <div className="wo-zones-bar">
-                      {zoneTimes.map((z, zi) => {
-                        const pct = (z.secs / totalZoneSecs) * 100;
-                        if (pct < 0.5) return null;
-                        return <div key={zi} style={{ width: `${pct}%`, background: ZONE_COLORS[zi] }} title={`${ZONE_LABELS[zi]}: ${Math.round(z.secs / 60)}m`} />;
-                      })}
+                {!isStravaOnly && <>
+                  {w.type && <span className="wo-type">{w.type}</span>}
+                  <div className="wo-desc">{(w.description || "").split("\n").filter(l => l.trim() && !l.startsWith("Duration:")).slice(0, 4).join("\n")}</div>
+                  <span className="wo-badge" style={{ color: sessionCfg.color }}>{sessionCfg.label}</span>
+                  {w.source === "intervals" && (
+                    <div className="wo-meta">
+                      {w.icu_training_load != null && <span className="wo-meta-item">Load: <strong>{Math.round(w.icu_training_load)}</strong></span>}
+                      {w.icu_intensity != null && <span className="wo-meta-item">Intensity: <strong>{Math.round(w.icu_intensity)}%</strong></span>}
                     </div>
-                    <div className="wo-zones-labels">
-                      {zoneTimes.map((z, zi) => z.secs > 0 ? (
-                        <span key={zi} style={{ color: ZONE_COLORS[zi] }}>{ZONE_LABELS[zi]}: {Math.round(z.secs / 60)}m</span>
-                      ) : null)}
+                  )}
+                  {zoneTimes && totalZoneSecs > 0 && (
+                    <div className="wo-zones">
+                      <div className="wo-zones-bar">
+                        {zoneTimes.map((z, zi) => {
+                          const pct = (z.secs / totalZoneSecs) * 100;
+                          if (pct < 0.5) return null;
+                          return <div key={zi} style={{ width: `${pct}%`, background: ZONE_COLORS[zi] }} title={`${ZONE_LABELS[zi]}: ${Math.round(z.secs / 60)}m`} />;
+                        })}
+                      </div>
+                      <div className="wo-zones-labels">
+                        {zoneTimes.map((z, zi) => z.secs > 0 ? (
+                          <span key={zi} style={{ color: ZONE_COLORS[zi] }}>{ZONE_LABELS[zi]}: {Math.round(z.secs / 60)}m</span>
+                        ) : null)}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </>}
+                {isStravaOnly && <span className="wo-strava-note">Recorded via Strava — details restricted by Intervals.icu API</span>}
               </div>
             );
           }) : <p className="wo-empty">{load > 0 ? "Activity recorded — no planned workout" : "Rest day"}</p>}

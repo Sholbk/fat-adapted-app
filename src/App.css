@@ -120,6 +120,7 @@
 .wo-status-done { background: #e8ffe8; color: #0a8a0a; }
 .wo-status-extra { background: #fff3e0; color: #e68a00; }
 .wo-status-plan { background: #e8f0ff; color: #043bb1; }
+.wo-strava-note { display: block; font-size: 0.65rem; color: #999; font-style: italic; margin-top: 0.25rem; }
 .wo-top { display: flex; justify-content: space-between; gap: 0.4rem; margin-bottom: 0.25rem; }
 .wo-name { font-size: 0.85rem; font-weight: 700; color: #000000; }
 .wo-dur { font-size: 0.7rem; color: #1e8ad3; font-weight: 600; white-space: nowrap; }
@@ -613,6 +614,7 @@
 .dark .wo-status-done { background: #1a3a1a; color: #10bc10; }
 .dark .wo-status-extra { background: #3a2a1a; color: #ff9800; }
 .dark .wo-status-plan { background: #1a2a4a; color: #4da6e8; }
+.dark .wo-strava-note { color: #666; }
 .dark .wo-type { color: #666; }
 .dark .wo-meta-item { color: #999; }
 .dark .wo-meta-item strong { color: #4da6e8; }

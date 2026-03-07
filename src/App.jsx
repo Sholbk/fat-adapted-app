@@ -139,6 +139,8 @@ function App() {
   const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
 
   // Merge Intervals.icu events + activities with Athletica ICS
+  // Activities from Strava are restricted — only ID + date available.
+  // Use activity count + wellness load to determine if planned workouts were completed.
   function mapWorkout(e, status) {
     return {
       summary: e.name || "",
@@ -156,47 +158,44 @@ function App() {
   const dayEvents = events.filter(e => e.category === "WORKOUT" && e.start_date_local?.startsWith(date));
   const dayActs = activities.filter(a => a.start_date_local?.startsWith(date));
   const dayICS = planned.filter(w => w.date === date);
+  // Wellness load > 0 means actual training happened (from Strava/Garmin)
+  const dayHasActivity = dayActs.length > 0 || (wd.atlLoad > 0 && date <= today());
+  const isPastOrToday = date <= today();
 
   let dayWorkouts;
-  if (dayEvents.length > 0 || dayActs.length > 0) {
-    const actIdSet = new Set(dayActs.map(a => a.id));
-    const plannedEvts = [];
-    const completedEvts = [];
-
-    for (const e of dayEvents) {
-      if (e.moving_time > 0 || actIdSet.has(e.id)) {
-        completedEvts.push(e);
-      } else {
-        plannedEvts.push(e);
+  if (dayEvents.length > 0) {
+    // Mark planned workouts as completed if Strava activities exist for the day
+    dayWorkouts = dayEvents.map(e => {
+      const status = isPastOrToday && dayHasActivity ? "completed" : "planned";
+      return mapWorkout(e, status);
+    });
+    // Add unplanned activity indicators for extra Strava sessions
+    const extraActs = dayActs.length - dayEvents.length;
+    if (extraActs > 0) {
+      for (let i = 0; i < extraActs; i++) {
+        const act = dayActs[dayEvents.length + i];
+        dayWorkouts.push({
+          summary: `Strava Activity`,
+          description: "",
+          duration: "",
+          type: "",
+          source: "strava",
+          status: "unplanned",
+          startTime: act?.start_date_local?.slice(11, 16) || "",
+        });
       }
     }
-
-    // Add activities not already in events
-    const eventIdSet = new Set(dayEvents.map(e => e.id));
-    for (const a of dayActs) {
-      if (!eventIdSet.has(a.id)) completedEvts.push(a);
-    }
-
-    // Match completed → planned via paired_event_id
-    const matchedPlanIds = new Set();
-    const result = [];
-
-    for (const comp of completedEvts) {
-      const paired = comp.paired_event_id
-        ? plannedEvts.find(p => p.id === comp.paired_event_id)
-        : null;
-      if (paired) matchedPlanIds.add(paired.id);
-      result.push(mapWorkout(comp, paired ? "completed" : "unplanned"));
-    }
-
-    // Add remaining unmatched planned events
-    for (const plan of plannedEvts) {
-      if (!matchedPlanIds.has(plan.id)) {
-        result.push(mapWorkout(plan, "planned"));
-      }
-    }
-
-    dayWorkouts = result;
+  } else if (dayActs.length > 0) {
+    // No planned workouts but Strava activities exist
+    dayWorkouts = dayActs.map(a => ({
+      summary: `Strava Activity`,
+      description: "",
+      duration: "",
+      type: "",
+      source: "strava",
+      status: "unplanned",
+      startTime: a.start_date_local?.slice(11, 16) || "",
+    }));
   } else {
     dayWorkouts = dayICS.map(w => ({ ...w, status: "planned" }));
   }
