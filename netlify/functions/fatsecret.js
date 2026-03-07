@@ -1,42 +1,49 @@
-const CLIENT_ID = "63173fc7e51949c69953fbcf06b28e35";
-const CLIENT_SECRET = "ba50e0adf0ce4df99f66d4697e608cf7";
-const TOKEN_URL = "https://oauth.fatsecret.com/connect/token";
+import crypto from "crypto";
+
+const CONSUMER_KEY = "63173fc7e51949c69953fbcf06b28e35";
+const CONSUMER_SECRET = "18450834e9864d0aaebfd9add105faf1";
 const API_URL = "https://platform.fatsecret.com/rest/server.api";
 
-let cachedToken = null;
-let tokenExpiry = 0;
-
-async function getToken() {
-  if (cachedToken && Date.now() < tokenExpiry) return cachedToken;
-  const r = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: {
-      Authorization: "Basic " + btoa(`${CLIENT_ID}:${CLIENT_SECRET}`),
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials&scope=basic",
-  });
-  if (!r.ok) {
-    const text = await r.text();
-    throw new Error(`Token error: ${r.status} ${text}`);
-  }
-  const d = await r.json();
-  cachedToken = d.access_token;
-  tokenExpiry = Date.now() + (d.expires_in - 60) * 1000;
-  return cachedToken;
+function percentEncode(str) {
+  return encodeURIComponent(str).replace(/[!'()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
 }
 
-async function apiCall(method, params) {
-  const token = await getToken();
-  const body = new URLSearchParams({ method, format: "json", ...params }).toString();
+function oauthSign(method, url, params) {
+  const oauthParams = {
+    oauth_consumer_key: CONSUMER_KEY,
+    oauth_nonce: crypto.randomBytes(16).toString("hex"),
+    oauth_signature_method: "HMAC-SHA1",
+    oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
+    oauth_version: "1.0",
+  };
+
+  // Combine all params and sort
+  const allParams = { ...params, ...oauthParams };
+  const sortedKeys = Object.keys(allParams).sort();
+  const paramString = sortedKeys.map((k) => `${percentEncode(k)}=${percentEncode(allParams[k])}`).join("&");
+
+  // Create signature base string
+  const baseString = `${method}&${percentEncode(url)}&${percentEncode(paramString)}`;
+
+  // Sign with consumer secret + empty token secret
+  const signingKey = `${percentEncode(CONSUMER_SECRET)}&`;
+  const signature = crypto.createHmac("sha1", signingKey).update(baseString).digest("base64");
+
+  oauthParams.oauth_signature = signature;
+  return oauthParams;
+}
+
+async function apiCall(apiMethod, params) {
+  const allParams = { method: apiMethod, format: "json", ...params };
+  const oauthParams = oauthSign("POST", API_URL, allParams);
+  const body = new URLSearchParams({ ...allParams, ...oauthParams }).toString();
+
   const r = await fetch(API_URL, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
+
   if (!r.ok) {
     const text = await r.text();
     throw new Error(`API ${r.status}: ${text}`);
@@ -60,7 +67,7 @@ export default async (req) => {
       const q = url.searchParams.get("q");
       if (!q) return new Response(JSON.stringify([]), { headers });
 
-      const data = await apiCall("foods.search", { search_expression: q, max_results: 8 });
+      const data = await apiCall("foods.search", { search_expression: q, max_results: "8" });
       const foods = data?.foods?.food;
       if (!foods) return new Response(JSON.stringify([]), { headers });
 
