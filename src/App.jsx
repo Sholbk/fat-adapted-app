@@ -6,6 +6,7 @@ import { classifyWorkout, getSessionTypeFromWorkouts } from "./utils/classificat
 import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
 import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, getWeightLog, addWeightEntry, getWater, setWater, getSupps, setSupps, COMMON_SUPPS } from "./utils/storage.js";
 import { apiFetch } from "./utils/api.js";
+import { isSupabaseConfigured, signIn, signUp, signOut, getSession, onAuthChange, backupToCloud, restoreFromCloud } from "./utils/supabase.js";
 
 import FoodInput from "./components/FoodInput.jsx";
 import Entries from "./components/Entries.jsx";
@@ -147,6 +148,16 @@ function App() {
   const [draft, setDraft] = useState(() => getSettings() || DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [authSession, setAuthSession] = useState(null);
+  const [authForm, setAuthForm] = useState({ email: "", password: "", mode: "login" });
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    getSession().then(s => setAuthSession(s));
+    const { data } = onAuthChange(s => setAuthSession(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const W = settings.weight;
   const calAdj = settings.goalWeight < W ? -500 : settings.goalWeight > W ? 500 : 0;
@@ -742,6 +753,57 @@ function App() {
                 <div className="conn connected"><div className="conn-info"><strong>FatSecret</strong><span>Food search, nutrition data, and barcode lookup</span></div><span className="conn-status on">Connected</span></div>
               </div>
             </div>
+
+            {isSupabaseConfigured() && (
+              <div className="settings-card">
+                <h3>Cloud Sync</h3>
+                {authSession ? (
+                  <div className="cloud-sync">
+                    <p className="cloud-user">Signed in as <strong>{authSession.user.email}</strong></p>
+                    <div className="cloud-btns">
+                      <button className="cloud-btn" disabled={syncing} onClick={async () => {
+                        setSyncing(true);
+                        const { error } = await backupToCloud(authSession.user.id) || {};
+                        setSyncing(false);
+                        showToast(error ? `Backup failed: ${error.message}` : "Data backed up to cloud");
+                      }}>{syncing ? "Syncing..." : "Backup to Cloud"}</button>
+                      <button className="cloud-btn cloud-restore" disabled={syncing} onClick={async () => {
+                        setSyncing(true);
+                        const ok = await restoreFromCloud(authSession.user.id);
+                        setSyncing(false);
+                        if (ok) {
+                          const restored = getSettings();
+                          if (restored) { setSettings(restored); setDraft(restored); }
+                          refresh();
+                          showToast("Data restored from cloud");
+                        } else {
+                          showToast("No cloud backup found");
+                        }
+                      }}>{syncing ? "Syncing..." : "Restore from Cloud"}</button>
+                    </div>
+                    <button className="cloud-signout" onClick={async () => { await signOut(); setAuthSession(null); showToast("Signed out"); }}>Sign Out</button>
+                  </div>
+                ) : (
+                  <div className="cloud-auth">
+                    <p className="cloud-desc">Sign in to backup your data to the cloud and sync across devices.</p>
+                    <input type="email" placeholder="Email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} className="cloud-input" />
+                    <input type="password" placeholder="Password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} className="cloud-input" />
+                    <div className="cloud-btns">
+                      <button className="cloud-btn" onClick={async () => {
+                        const { error } = authForm.mode === "login"
+                          ? await signIn(authForm.email, authForm.password)
+                          : await signUp(authForm.email, authForm.password);
+                        if (error) showToast(error.message);
+                        else showToast(authForm.mode === "login" ? "Signed in" : "Check your email to confirm signup");
+                      }}>{authForm.mode === "login" ? "Sign In" : "Sign Up"}</button>
+                    </div>
+                    <button className="cloud-toggle" onClick={() => setAuthForm(f => ({ ...f, mode: f.mode === "login" ? "signup" : "login" }))}>
+                      {authForm.mode === "login" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </main>

@@ -25,28 +25,51 @@ export async function signOut() {
   return supabase.auth.signOut();
 }
 
-export async function getUser() {
+export async function getSession() {
   if (!supabase) return null;
-  const { data } = await supabase.auth.getUser();
-  return data?.user || null;
+  const { data } = await supabase.auth.getSession();
+  return data?.session || null;
 }
 
-// Data sync helpers
-export async function syncToCloud(userId, key, data) {
+export function onAuthChange(callback) {
+  if (!supabase) return { data: { subscription: { unsubscribe: () => {} } } };
+  return supabase.auth.onAuthStateChange((_event, session) => callback(session));
+}
+
+// Data sync — saves all localStorage keys with "ff-" prefix to cloud
+export async function backupToCloud(userId) {
   if (!supabase) return;
+  const snapshot = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith("ff-")) {
+      snapshot[key] = localStorage.getItem(key);
+    }
+  }
+  // Also save recent foods
+  const recents = localStorage.getItem("ff_recent_foods");
+  if (recents) snapshot["ff_recent_foods"] = recents;
+
   return supabase.from("user_data").upsert(
-    { user_id: userId, key, data, updated_at: new Date().toISOString() },
+    { user_id: userId, key: "backup", data: snapshot, updated_at: new Date().toISOString() },
     { onConflict: "user_id,key" }
   );
 }
 
-export async function syncFromCloud(userId, key) {
-  if (!supabase) return null;
-  const { data } = await supabase
+export async function restoreFromCloud(userId) {
+  if (!supabase) return false;
+  const { data, error } = await supabase
     .from("user_data")
     .select("data")
     .eq("user_id", userId)
-    .eq("key", key)
+    .eq("key", "backup")
     .single();
-  return data?.data || null;
+
+  if (error || !data?.data) return false;
+
+  const snapshot = data.data;
+  Object.entries(snapshot).forEach(([key, value]) => {
+    localStorage.setItem(key, value);
+  });
+  return true;
 }
