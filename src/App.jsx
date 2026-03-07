@@ -93,6 +93,11 @@ const MEAL_PLANS = {
   ],
 };
 
+function Toast({ message, onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 4000); return () => clearTimeout(t); }, [onDone]);
+  return <div className="toast">{message}</div>;
+}
+
 function App() {
   const [wellness, setWellness] = useState([]);
   const [planned, setPlanned] = useState([]);
@@ -105,10 +110,13 @@ function App() {
   const [settings, setSettings] = useState(() => getSettings() || DEFAULT_SETTINGS);
   const [draft, setDraft] = useState(() => getSettings() || DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
+  const [toasts, setToasts] = useState([]);
 
   const W = settings.weight;
   const calAdj = settings.goalWeight < W ? -500 : settings.goalWeight > W ? 500 : 0;
   const refresh = () => setTick(t => t + 1);
+  const showToast = (msg) => setToasts(prev => [...prev, { id: Date.now(), message: msg }]);
+  const dismissToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
 
   function updateDraft(s) { setDraft(d => ({ ...d, ...s })); setSaved(false); }
   function handleSave() { setSettings(draft); saveSettings(draft); setSaved(true); setTimeout(() => setSaved(false), 2000); }
@@ -116,7 +124,7 @@ function App() {
   // Fetch Athletica ICS
   useEffect(() => {
     if (icsDone) return;
-    fetch(ATHLETICA_ICS).then(r => r.text()).then(t => { setPlanned(parseICS(t)); setIcsDone(true); }).catch(() => setIcsDone(true));
+    fetch(ATHLETICA_ICS).then(r => r.text()).then(t => { setPlanned(parseICS(t)); setIcsDone(true); }).catch(() => { setIcsDone(true); showToast("Couldn't load training plan from Athletica"); });
   }, []);
 
   // Fetch Intervals.icu wellness (now via server proxy)
@@ -133,7 +141,7 @@ function App() {
       });
       setFetched(prev => new Set(prev).add(m));
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => { setLoading(false); showToast("Couldn't load wellness data from Intervals.icu"); });
   }, [date]);
 
   function shiftDate(n) {
@@ -171,6 +179,9 @@ function App() {
 
   return (
     <div className="layout">
+      <div className="toast-container">
+        {toasts.map(t => <Toast key={t.id} message={t.message} onDone={() => dismissToast(t.id)} />)}
+      </div>
       <aside className="sidebar">
         <div className="sb-brand"><span className="sb-logo">F</span><span className="sb-name">FuelFlow</span></div>
         <nav className="sb-nav">
@@ -304,6 +315,7 @@ function App() {
                   <h3>{label}</h3>
                   <span className="meal-rec">Recommended: {Math.round(macros.cal / MEALS.length)} cals · {Math.round(macros.carbs / MEALS.length)}g carbs</span>
                 </div>
+                {entries.length === 0 && <p className="meal-empty">No foods logged yet — search or scan to add</p>}
                 <Entries items={entries} onRemove={(id) => rmMeal(key, id)} />
                 {mSum.cal > 0 && <div className="meal-sum">{mSum.cal} kcal — F:{mSum.fat}g P:{mSum.protein}g C:{mSum.carbs}g</div>}
                 <FoodInput onAdd={(entry) => addMeal(key, entry)} placeholder={`+ Add ${label}`} />

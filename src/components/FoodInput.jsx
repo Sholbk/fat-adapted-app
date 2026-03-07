@@ -29,9 +29,15 @@ export default function FoodInput({ onAdd, placeholder }) {
       if (abortRef.current) abortRef.current.abort();
       abortRef.current = new AbortController();
       setBusy(true);
-      const res = await searchFoods(v);
+      try {
+        const res = await searchFoods(v);
+        setResults(res);
+      } catch {
+        setResults([]);
+        setScanMsg("Search failed — try again");
+        setTimeout(() => setScanMsg(""), 3000);
+      }
       setBusy(false);
-      setResults(res);
     }, 400);
   }
 
@@ -46,7 +52,19 @@ export default function FoodInput({ onAdd, placeholder }) {
   async function pick(f) {
     setName(f.brand ? `${f.name} (${f.brand})` : f.name);
     setResults([]);
-    const detail = await getFoodServings(f.id);
+    let detail;
+    try {
+      detail = await getFoodServings(f.id);
+    } catch {
+      setScanMsg("Couldn't load nutrition details");
+      setTimeout(() => setScanMsg(""), 3000);
+      baseMacros.current = { fat: f.fat, protein: f.protein, carbs: f.carbs };
+      setQty("1");
+      setFat(String(Math.round(f.fat)));
+      setPro(String(Math.round(f.protein)));
+      setCarb(String(Math.round(f.carbs)));
+      return;
+    }
     if (detail?.servings?.length > 0) {
       setServings(detail.servings);
       const s = detail.servings[0];
