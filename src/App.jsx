@@ -53,6 +53,20 @@ function exportCSV(weekDates, weekData, macroTargets) {
   URL.revokeObjectURL(url);
 }
 
+function calcStreak() {
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const ds = fmt(d);
+    const hasFood = MEALS.some(m => getLog(ds, m).length > 0);
+    if (!hasFood && ds !== fmt(new Date())) break;
+    if (hasFood) streak++;
+    d.setDate(d.getDate() - 1);
+    if (streak > 365) break;
+  }
+  return streak;
+}
+
 const MEAL_PLANS = {
   lowCarb: [
     { foods: [
@@ -131,9 +145,9 @@ const MEAL_PLANS = {
   ],
 };
 
-function Toast({ message, onDone }) {
+function Toast({ message, onDone, onUndo }) {
   useEffect(() => { const t = setTimeout(onDone, 4000); return () => clearTimeout(t); }, [onDone]);
-  return <div className="toast">{message}</div>;
+  return <div className="toast">{message}{onUndo && <button className="toast-undo" onClick={() => { onUndo(); onDone(); }}>Undo</button>}</div>;
 }
 
 function App() {
@@ -159,10 +173,23 @@ function App() {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKey(e) {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA") return;
+      if (e.key === "/") { e.preventDefault(); const fi = document.querySelector(".fi-s input"); if (fi) fi.focus(); }
+      if (e.key === "ArrowLeft") shiftDate(-1);
+      if (e.key === "ArrowRight") shiftDate(1);
+      if (e.key === "t" || e.key === "T") setDate(today());
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  });
+
   const W = settings.weight;
   const calAdj = settings.goalWeight < W ? -500 : settings.goalWeight > W ? 500 : 0;
   const refresh = () => setTick(t => t + 1);
-  const showToast = (msg) => setToasts(prev => [...prev, { id: Date.now(), message: msg }]);
+  const showToast = (msg, onUndo) => setToasts(prev => [...prev, { id: Date.now(), message: msg, onUndo }]);
   const dismissToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
 
   function updateDraft(s) { setDraft(d => ({ ...d, ...s })); setSaved(false); }
@@ -214,9 +241,21 @@ function App() {
   const all = { fat: mealTotals.fat + trainTotals.fat, protein: mealTotals.protein + trainTotals.protein, carbs: mealTotals.carbs + trainTotals.carbs, cal: mealTotals.cal + trainTotals.cal };
 
   function addMeal(meal, entry) { setLog(date, meal, [...getLog(date, meal), entry]); refresh(); }
-  function rmMeal(meal, id) { setLog(date, meal, getLog(date, meal).filter(e => e.id !== id)); refresh(); }
+  function rmMeal(meal, id) {
+    const prev = getLog(date, meal);
+    const removed = prev.find(e => e.id === id);
+    setLog(date, meal, prev.filter(e => e.id !== id));
+    refresh();
+    if (removed) showToast(`Removed ${removed.name.split("(")[0].trim()}`, () => { setLog(date, meal, [...getLog(date, meal), removed]); refresh(); });
+  }
   function addTrain(entry) { setTLog(date, [...getTLog(date), entry]); refresh(); }
-  function rmTrain(id) { setTLog(date, getTLog(date).filter(e => e.id !== id)); refresh(); }
+  function rmTrain(id) {
+    const prev = getTLog(date);
+    const removed = prev.find(e => e.id === id);
+    setTLog(date, prev.filter(e => e.id !== id));
+    refresh();
+    if (removed) showToast(`Removed ${removed.name.split("(")[0].trim()}`, () => { setTLog(date, [...getTLog(date), removed]); refresh(); });
+  }
 
   const dayDisplay = new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   const hour = new Date().getHours();
@@ -226,9 +265,9 @@ function App() {
   if (loading && wellness.length === 0) return <div className="app-loading">Loading your training data...</div>;
 
   return (
-    <div className="layout">
+    <div className={`layout${settings.darkMode ? " dark" : ""}`}>
       <div className="toast-container">
-        {toasts.map(t => <Toast key={t.id} message={t.message} onDone={() => dismissToast(t.id)} />)}
+        {toasts.map(t => <Toast key={t.id} message={t.message} onDone={() => dismissToast(t.id)} onUndo={t.onUndo} />)}
       </div>
       <aside className="sidebar">
         <div className="sb-brand"><span className="sb-logo">F</span><span className="sb-name">FuelFlow</span></div>
@@ -289,6 +328,10 @@ function App() {
             <button onClick={() => shiftDate(1)}>&rarr;</button>
           </div>
           <span className="topbar-datestr">{dayDisplay}</span>
+          {(() => { const s = calcStreak(); return s > 0 ? <span className="streak-badge">{s} day streak</span> : null; })()}
+          <button className="dark-toggle" onClick={() => { const next = { ...settings, darkMode: !settings.darkMode }; setSettings(next); saveSettings(next); }} title="Toggle dark mode">
+            {settings.darkMode ? "\u2600" : "\u263E"}
+          </button>
         </div>
 
         {page === "log" && <>

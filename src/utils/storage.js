@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS = {
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   athleticaUrl: "https://app.athletica.ai/4935a810a4/athletica.ics",
   waterTarget: 100,
+  darkMode: false,
 };
 
 export function getLog(d, m) {

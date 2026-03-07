@@ -1,5 +1,5 @@
 /* ── Layout ── */
-.layout { display: flex; min-height: 100vh; }
+.layout { display: flex; min-height: 100vh; transition: background 0.2s, color 0.2s; }
 
 /* ── Sidebar ── */
 .sidebar {
@@ -409,6 +409,121 @@
   font-family: inherit; text-align: center; padding: 0;
 }
 .cloud-toggle:hover { text-decoration: underline; }
+
+/* ── Streak Badge ── */
+.streak-badge {
+  background: linear-gradient(135deg, #fe00a4, #ff6b35); color: #fff; padding: 0.25rem 0.65rem;
+  border-radius: 20px; font-size: 0.7rem; font-weight: 700; white-space: nowrap;
+}
+
+/* ── Dark Mode Toggle ── */
+.dark-toggle {
+  background: none; border: 1px solid #888; border-radius: 50%; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem;
+  transition: all 0.15s;
+}
+.dark-toggle:hover { border-color: #1e8ad3; }
+
+/* ── Toast Undo ── */
+.toast-undo {
+  background: none; border: 1px solid rgba(255,255,255,0.5); color: #fff; border-radius: 4px;
+  padding: 0.15rem 0.5rem; margin-left: 0.75rem; font-size: 0.75rem; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+.toast-undo:hover { background: rgba(255,255,255,0.15); }
+
+/* ── Dark Mode ── */
+.dark .sidebar { background: #1a1a2e; border-right-color: #2a2a4a; }
+.dark .sb-name { color: #e0e0e0; }
+.dark .sb-nav button { color: #999; }
+.dark .sb-nav button:hover { color: #1e8ad3; background: #2a2a4a; }
+.dark .sb-nav button.active { color: #1e8ad3; background: #2a2a4a; border-left-color: #1e8ad3; }
+.dark .main { background: #0f0f1a; }
+.dark .topbar-greet h1 { color: #e0e0e0; }
+.dark .topbar-datestr { color: #999; }
+.dark .topbar-date button { background: #1a1a2e; border-color: #2a2a4a; color: #1e8ad3; }
+.dark .topbar-date button:hover { background: #2a2a4a; color: #e0e0e0; }
+.dark .card, .dark .goals-section, .dark .meal-card, .dark .settings-card,
+.dark .phase-current, .dark .phase-row, .dark .meal-plan-card, .dark .mp-note,
+.dark .conn, .dark .weekly-grid, .dark .load-chart-card {
+  background: #1a1a2e; border-color: #2a2a4a; color: #e0e0e0;
+}
+.dark .card h2, .dark .goals-title { color: #4da6e8; }
+.dark .mrow-label, .dark .wo-name { color: #e0e0e0; }
+.dark .mrow-val, .dark .wo-desc, .dark .meal-rec, .dark .mrow-left { color: #888; }
+.dark .mrow-bar { background: #2a2a4a; }
+.dark .card-cal { color: #888; border-top-color: #2a2a4a; }
+.dark .card-cal span { color: #e0e0e0; }
+.dark .ring-v { color: #e0e0e0; }
+.dark .ring-max { color: #888; }
+.dark .meal-head h3 { color: #e0e0e0; }
+.dark .meal-sum { border-top-color: #2a2a4a; }
+.dark .ent { background: #252540; }
+.dark .ent-n { color: #e0e0e0; }
+.dark .ent-m { color: #888; }
+.dark .ent button { color: #888; }
+.dark .ent button:hover { color: #fe00a4; }
+.dark .fi input { background: #252540; border-color: #3a3a5a; color: #e0e0e0; }
+.dark .fi input::placeholder { color: #666; }
+.dark .fi-unit { background: #252540; border-color: #3a3a5a; color: #e0e0e0; }
+.dark .fi-drop { background: #1a1a2e; border-color: #1e8ad3; }
+.dark .fi-drop button { color: #e0e0e0; border-bottom-color: #2a2a4a; }
+.dark .fi-drop button:hover { background: #252540; }
+.dark .fi-scan { background: #1a1a2e; border-color: #3a3a5a; }
+.dark .fi-scan:hover { background: #252540; }
+.dark .wo { background: #252540; }
+.dark .wo-stats div { background: #252540; }
+.dark .wo-stats strong { color: #e0e0e0; }
+.dark .page-content h2 { color: #e0e0e0; }
+.dark .page-sub { color: #888; }
+.dark .phase-current p { color: #ccc; }
+.dark .phase-name { color: #e0e0e0; }
+.dark .phase-target { color: #888; }
+.dark .mp-head h3 { color: #e0e0e0; }
+.dark .mp-food-name { color: #e0e0e0; }
+.dark .mp-food-macros { color: #888; }
+.dark .mp-totals { border-top-color: #3a3a5a; }
+.dark .mp-food { border-bottom-color: #2a2a4a; }
+.dark .mp-note { color: #ccc; }
+.dark .sett-field span { color: #999; }
+.dark .sett-field input, .dark .sett-field select { background: #252540; border-color: #3a3a5a; color: #e0e0e0; }
+.dark .conn-info strong { color: #e0e0e0; }
+.dark .conn-info span { color: #888; }
+.dark .cloud-input { background: #252540; border-color: #3a3a5a; color: #e0e0e0; }
+.dark .cloud-user { color: #ccc; }
+.dark .cloud-desc { color: #888; }
+.dark .fuel-rec-macros { background: #252540; border-color: #3a3a5a; }
+.dark .fuel-rec-row { color: #e0e0e0; border-bottom-color: #3a3a5a; }
+.dark .fuel-rec-header { color: #888; border-bottom-color: #3a3a5a; }
+.dark .fuel-rec-total { border-top-color: #3a3a5a; }
+.dark .fuel-r { color: #e0e0e0; border-bottom-color: #2a2a4a; }
+.dark .water-amount { color: #4da6e8; }
+.dark .water-btn { background: #252540; border-color: #3a3a5a; color: #4da6e8; }
+.dark .water-btn:hover { background: #1e8ad3; color: #fff; }
+.dark .water-undo { background: #252540; color: #888; }
+.dark .supp-tag { background: #252540; border-color: #3a3a5a; color: #999; }
+.dark .supp-tag.taken { background: #1a2a4a; border-color: #1e8ad3; color: #4da6e8; }
+.dark .weekly-row-header { background: #252540; color: #888; }
+.dark .weekly-row-header:hover { background: #252540; }
+.dark .weekly-today { background: #1a2a4a; }
+.dark .weekly-today:hover { background: #1a3050; }
+.dark .weekly-row-avg { background: #252540; }
+.dark .weekly-row-avg:hover { background: #252540; }
+.dark .weekly-row { border-bottom-color: #2a2a4a; }
+.dark .weekly-row:hover { background: #252540; }
+.dark .weekly-day strong { color: #e0e0e0; }
+.dark .weekly-bar-bg { background: #2a2a4a; }
+.dark .weekly-nums { color: #888; }
+.dark .copy-meals-btn { background: #1a1a2e; border-color: #3a3a5a; color: #4da6e8; }
+.dark .copy-meals-btn:hover { background: #252540; }
+.dark .cloud-restore { background: #1a1a2e; color: #4da6e8; border-color: #1e8ad3; }
+.dark .dark-toggle { border-color: #3a3a5a; color: #e0e0e0; }
+.dark .mobile-nav { background: #1a1a2e; border-top-color: #2a2a4a; }
+.dark .mobile-nav button { color: #888; }
+.dark .mobile-nav button.active { color: #1e8ad3; }
+.dark .scanner-box { background: #1a1a2e; }
+.dark .scanner-head span { color: #e0e0e0; }
+.dark .meal-empty { color: #666; }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
