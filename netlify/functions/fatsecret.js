@@ -115,30 +115,6 @@ export default async (req) => {
       return respond({ id: food.food_id, name: food.food_name, brand: food.brand_name || null, servings });
     }
 
-    if (action === "barcode") {
-      const code = (url.searchParams.get("code") || "").trim();
-      if (!code || !/^\d{8,14}$/.test(code)) return respond({ error: "invalid barcode" }, 400);
-
-      const data = await apiCall("food.find_id_for_barcode", { barcode: code });
-      const foodId = data?.food_id?.value;
-      if (!foodId) return respond({ error: "not found" }, 404);
-
-      const detail = await apiCall("food.get.v4", { food_id: foodId });
-      const food = detail?.food;
-      if (!food) return respond({ error: "not found" }, 404);
-
-      const servingsRaw = food.servings;
-      const servList = Array.isArray(servingsRaw?.serving) ? servingsRaw.serving : servingsRaw?.serving ? [servingsRaw.serving] : [];
-      const s = servList[0];
-      return respond({
-        name: food.food_name,
-        fat: s ? parseFloat(s.fat) || 0 : 0,
-        protein: s ? parseFloat(s.protein) || 0 : 0,
-        carbs: s ? parseFloat(s.carbohydrate) || 0 : 0,
-        serving: s ? s.serving_description : "1 serving",
-      });
-    }
-
     return respond({ error: "unknown action" }, 400);
   } catch (err) {
     return respond({ error: err.message }, 500);

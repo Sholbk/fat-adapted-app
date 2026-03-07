@@ -32,10 +32,21 @@ export async function getFoodServings(id) {
 
 export async function lookupBarcode(code) {
   try {
-    const r = await fetch(`${API_BASE}/fatsecret?action=barcode&code=${encodeURIComponent(code)}`, {
-      signal: AbortSignal.timeout(10000),
-    });
+    const r = await fetch(
+      `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}?fields=product_name,nutriments,serving_size`,
+      { signal: AbortSignal.timeout(10000) }
+    );
     if (!r.ok) return null;
-    return await r.json();
+    const data = await r.json();
+    if (data.status !== 1 || !data.product) return null;
+    const p = data.product;
+    const n = p.nutriments || {};
+    return {
+      name: p.product_name || "Unknown Product",
+      fat: Math.round(n.fat_serving ?? n.fat_100g ?? 0),
+      protein: Math.round(n.proteins_serving ?? n.proteins_100g ?? 0),
+      carbs: Math.round(n.carbohydrates_serving ?? n.carbohydrates_100g ?? 0),
+      serving: p.serving_size || "1 serving",
+    };
   } catch { return null; }
 }
