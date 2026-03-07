@@ -100,52 +100,31 @@ function getTLog(d) { try { return JSON.parse(localStorage.getItem(`ff-train-${d
 function setTLog(d, e) { localStorage.setItem(`ff-train-${d}`, JSON.stringify(e)); }
 function sum(entries) { return entries.reduce((a, e) => ({ fat: a.fat + e.fat, protein: a.protein + e.protein, carbs: a.carbs + e.carbs, cal: a.cal + e.fat * 9 + e.protein * 4 + e.carbs * 4 }), { fat: 0, protein: 0, carbs: 0, cal: 0 }); }
 
-// USDA & OFF return macros per 100g. We store per-100g values plus servingG for scaling.
-async function searchUSDA(q) {
-  const r = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=MBa8H80xhD5i9nC0RcvTviRh7WKzGn92RafcnMsR&query=${encodeURIComponent(q)}&pageSize=5&dataType=Survey%20(FNDDS),Foundation,SR%20Legacy`);
-  if (!r.ok) return [];
-  const d = await r.json();
-  return (d.foods || []).map((f) => {
-    const g = (n) => { const x = f.foodNutrients?.find((x) => x.nutrientName === n); return x ? x.value : 0; };
-    const sg = f.servingSize || 100;
-    return { name: f.description, fat100: g("Total lipid (fat)"), pro100: g("Protein"), carb100: g("Carbohydrate, by difference"), servingG: sg, serving: f.servingSize ? `${f.servingSize}${f.servingSizeUnit || "g"}` : "100g", src: "USDA" };
-  });
-}
+// FatSecret API (proxied through Netlify function)
+const FS_BASE = import.meta.env.DEV ? "http://localhost:8888/api/fatsecret" : "/api/fatsecret";
 
-async function searchOFF(q) {
+async function searchFoods(q) {
   try {
-    const r = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=5`);
+    const r = await fetch(`${FS_BASE}?action=search&q=${encodeURIComponent(q)}`);
     if (!r.ok) return [];
-    const d = await r.json();
-    return (d.products || []).filter(p => p.product_name).map(p => {
-      const n = p.nutriments || {};
-      return { name: p.product_name, fat100: n.fat_100g || 0, pro100: n.proteins_100g || 0, carb100: n.carbohydrates_100g || 0, servingG: 100, serving: p.serving_size || "100g", src: "OFF" };
-    });
+    return await r.json();
   } catch { return []; }
 }
 
-// Unit to gram conversion (approximate)
-const UNIT_TO_G = { g: 1, oz: 28.35, lb: 453.6, cup: 240, tbsp: 15, tsp: 5, ml: 1, item: null, slice: null, scoop: null };
-
-async function searchAllFoods(q) {
-  const [usda, off] = await Promise.all([searchUSDA(q), searchOFF(q)]);
-  const seen = new Set();
-  return [...usda, ...off].filter(f => { const k = f.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 8);
+async function getFoodServings(id) {
+  try {
+    const r = await fetch(`${FS_BASE}?action=get&id=${id}`);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
 }
 
 async function lookupBarcode(code) {
-  const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-  if (!r.ok) return null;
-  const d = await r.json();
-  if (d.status !== 1 || !d.product) return null;
-  const p = d.product, n = p.nutriments || {};
-  return {
-    name: p.product_name || p.generic_name || "Unknown product",
-    fat: Math.round(n.fat_serving || n.fat_100g || 0),
-    protein: Math.round(n.proteins_serving || n.proteins_100g || 0),
-    carbs: Math.round(n.carbohydrates_serving || n.carbohydrates_100g || 0),
-    serving: p.serving_size || "100g",
-  };
+  try {
+    const r = await fetch(`${FS_BASE}?action=barcode&code=${encodeURIComponent(code)}`);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
 }
 
 function BarcodeScanner({ onScan, onClose }) {
@@ -245,75 +224,77 @@ function Ring({ value, max, color, label, size = 90 }) {
 }
 
 function FoodInput({ onAdd, placeholder }) {
-  const [name, setName] = useState(""); const [amt, setAmt] = useState("1"); const [unit, setUnit] = useState("g");
+  const [name, setName] = useState(""); const [qty, setQty] = useState("1");
   const [fat, setFat] = useState(""); const [pro, setPro] = useState(""); const [carb, setCarb] = useState("");
   const [results, setResults] = useState([]); const [busy, setBusy] = useState(false); const t = useRef(null);
   const [scanning, setScanning] = useState(false); const [scanMsg, setScanMsg] = useState("");
-  // Store per-100g values from database picks
-  const per100 = useRef(null);
-  // Keep refs in sync so recalcMacros always has latest values
-  const amtRef = useRef(amt); amtRef.current = amt;
-  const unitRef = useRef(unit); unitRef.current = unit;
+  const [servings, setServings] = useState([]); const [selServing, setSelServing] = useState(null);
+  // Per-serving base macros for quantity scaling
+  const baseMacros = useRef(null);
   function onN(v) {
-    setName(v); clearTimeout(t.current); per100.current = null;
+    setName(v); clearTimeout(t.current); baseMacros.current = null; setServings([]); setSelServing(null);
     if (v.trim().length < 2) { setResults([]); return; }
-    t.current = setTimeout(async () => { setBusy(true); setResults(await searchAllFoods(v)); setBusy(false); }, 400);
+    t.current = setTimeout(async () => { setBusy(true); setResults(await searchFoods(v)); setBusy(false); }, 400);
   }
-  function recalcMacros(curAmt, curUnit) {
-    if (!per100.current) return;
-    const a = +curAmt || 0;
-    const gPerUnit = UNIT_TO_G[curUnit];
-    let totalG;
-    if (gPerUnit !== null && gPerUnit !== undefined) {
-      totalG = a * gPerUnit;
+  function scaleToQty(q, base) {
+    if (!base) return;
+    const a = +q || 0;
+    setFat(String(Math.round(base.fat * a)));
+    setPro(String(Math.round(base.protein * a)));
+    setCarb(String(Math.round(base.carbs * a)));
+  }
+  async function pick(f) {
+    setName(f.brand ? `${f.name} (${f.brand})` : f.name); setResults([]);
+    // Fetch detailed servings from FatSecret
+    const detail = await getFoodServings(f.id);
+    if (detail && detail.servings && detail.servings.length > 0) {
+      setServings(detail.servings);
+      const s = detail.servings[0];
+      setSelServing(s);
+      baseMacros.current = { fat: s.fat, protein: s.protein, carbs: s.carbs };
+      setQty("1");
+      setFat(String(Math.round(s.fat))); setPro(String(Math.round(s.protein))); setCarb(String(Math.round(s.carbs)));
     } else {
-      // For item/slice/scoop, treat each unit as one serving
-      totalG = a * (per100.current.servingG || 100);
+      // Fallback to search result macros
+      setServings([]);
+      baseMacros.current = { fat: f.fat, protein: f.protein, carbs: f.carbs };
+      setSelServing(null); setQty("1");
+      setFat(String(Math.round(f.fat))); setPro(String(Math.round(f.protein))); setCarb(String(Math.round(f.carbs)));
     }
-    const scale = totalG / 100;
-    setFat(String(Math.round(per100.current.fat * scale)));
-    setPro(String(Math.round(per100.current.pro * scale)));
-    setCarb(String(Math.round(per100.current.carb * scale)));
   }
-  function pick(f) {
-    setName(f.name); setResults([]);
-    // Store per-100g values and serving size for scaling
-    per100.current = { fat: f.fat100, pro: f.pro100, carb: f.carb100, servingG: f.servingG };
-    // Default to 1 serving in grams (use serving size from API, or 1g if none provided)
-    const hasServing = f.servingG !== 100 || f.serving !== "100g";
-    const newAmt = hasServing ? String(f.servingG) : "1";
-    const newUnit = "g";
-    setAmt(newAmt); amtRef.current = newAmt;
-    setUnit(newUnit); unitRef.current = newUnit;
-    recalcMacros(newAmt, newUnit);
+  function onServingChange(idx) {
+    const s = servings[idx];
+    if (!s) return;
+    setSelServing(s);
+    baseMacros.current = { fat: s.fat, protein: s.protein, carbs: s.carbs };
+    const q = qty || "1";
+    scaleToQty(q, baseMacros.current);
   }
-  function onAmtChange(newAmt) {
-    setAmt(newAmt); amtRef.current = newAmt;
-    recalcMacros(newAmt, unitRef.current);
-  }
-  function onUnitChange(newUnit) {
-    setUnit(newUnit); unitRef.current = newUnit;
-    recalcMacros(amtRef.current, newUnit);
+  function onQtyChange(q) {
+    setQty(q);
+    scaleToQty(q, baseMacros.current);
   }
   async function handleScan(code) {
     setScanning(false); setScanMsg("Looking up barcode...");
     try {
       const food = await lookupBarcode(code);
       if (food) {
-        setName(food.name); setFat(String(food.fat)); setPro(String(food.protein)); setCarb(String(food.carbs)); setScanMsg("");
-        // Barcode values are per-serving, not per-100g — clear per100 so manual editing applies
-        per100.current = null;
-        setAmt("1"); setUnit("item");
+        setName(food.name); setScanMsg("");
+        baseMacros.current = { fat: food.fat, protein: food.protein, carbs: food.carbs };
+        setQty("1"); setServings([]); setSelServing(null);
+        setFat(String(food.fat)); setPro(String(food.protein)); setCarb(String(food.carbs));
       }
       else { setScanMsg("Product not found. Try searching manually."); setTimeout(() => setScanMsg(""), 3000); }
     } catch { setScanMsg("Lookup failed. Try again."); setTimeout(() => setScanMsg(""), 3000); }
   }
   function submit(e) {
     e.preventDefault(); if (!name.trim()) return;
-    const label = `${name.trim()} (${amt} ${unit})`;
+    const servDesc = selServing ? selServing.desc : "serving";
+    const q = +qty || 1;
+    const label = `${name.trim()} (${q}${q !== 1 ? "x " : " "}${servDesc})`;
     onAdd({ id: Date.now(), name: label, fat: +fat || 0, protein: +pro || 0, carbs: +carb || 0 });
-    setName(""); setAmt("1"); setUnit("g"); setFat(""); setPro(""); setCarb(""); setResults([]);
-    per100.current = null;
+    setName(""); setQty("1"); setFat(""); setPro(""); setCarb(""); setResults([]);
+    setServings([]); setSelServing(null); baseMacros.current = null;
   }
   return (
     <>
@@ -321,29 +302,26 @@ function FoodInput({ onAdd, placeholder }) {
         <div className="fi-s">
           <input placeholder={placeholder || "Search food..."} value={name} onChange={e => onN(e.target.value)} onBlur={() => setTimeout(() => setResults([]), 200)} />
           {(results.length > 0 || busy) && <div className="fi-drop">
-            {busy && <div className="fi-load">Searching USDA + Open Food Facts...</div>}
-            {results.map((f, i) => {
-              const s = f.servingG / 100;
-              return <button key={i} type="button" onMouseDown={() => pick(f)}><strong>{f.name}</strong><span>F:{Math.round(f.fat100*s)} P:{Math.round(f.pro100*s)} C:{Math.round(f.carb100*s)} per {f.serving} <em>{f.src}</em></span></button>;
-            })}
+            {busy && <div className="fi-load">Searching FatSecret...</div>}
+            {results.map((f, i) => (
+              <button key={i} type="button" onMouseDown={() => pick(f)}>
+                <strong>{f.brand ? `${f.name} (${f.brand})` : f.name}</strong>
+                <span>F:{Math.round(f.fat)} P:{Math.round(f.protein)} C:{Math.round(f.carbs)} per {f.serving}</span>
+              </button>
+            ))}
           </div>}
         </div>
-        <input type="number" placeholder="Amt" value={amt} onChange={e => onAmtChange(e.target.value)} className="fi-q" min="0" step="any" />
-        <select value={unit} onChange={e => onUnitChange(e.target.value)} className="fi-unit">
-          <option value="g">g</option>
-          <option value="oz">oz</option>
-          <option value="lb">lb</option>
-          <option value="cup">cup</option>
-          <option value="tbsp">tbsp</option>
-          <option value="tsp">tsp</option>
-          <option value="ml">ml</option>
-          <option value="item">item</option>
-          <option value="slice">slice</option>
-          <option value="scoop">scoop</option>
-        </select>
-        <input type="number" placeholder="Fat" value={fat} onChange={e => { setFat(e.target.value); per100.current = null; }} className="fi-n" min="0" />
-        <input type="number" placeholder="Pro" value={pro} onChange={e => { setPro(e.target.value); per100.current = null; }} className="fi-n" min="0" />
-        <input type="number" placeholder="Carb" value={carb} onChange={e => { setCarb(e.target.value); per100.current = null; }} className="fi-n" min="0" />
+        <input type="number" placeholder="Qty" value={qty} onChange={e => onQtyChange(e.target.value)} className="fi-q" min="0" step="any" />
+        {servings.length > 0 ? (
+          <select value={servings.indexOf(selServing)} onChange={e => onServingChange(+e.target.value)} className="fi-unit">
+            {servings.map((s, i) => <option key={i} value={i}>{s.desc}</option>)}
+          </select>
+        ) : (
+          <select className="fi-unit" disabled><option>serving</option></select>
+        )}
+        <input type="number" placeholder="Fat" value={fat} onChange={e => { setFat(e.target.value); baseMacros.current = null; }} className="fi-n" min="0" />
+        <input type="number" placeholder="Pro" value={pro} onChange={e => { setPro(e.target.value); baseMacros.current = null; }} className="fi-n" min="0" />
+        <input type="number" placeholder="Carb" value={carb} onChange={e => { setCarb(e.target.value); baseMacros.current = null; }} className="fi-n" min="0" />
         <button type="button" className="fi-scan" onClick={() => setScanning(true)} title="Scan barcode">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="11" y1="8" x2="11" y2="16"/><line x1="15" y1="8" x2="15" y2="16"/><line x1="19" y1="8" x2="19" y2="16"/></svg>
         </button>
@@ -788,7 +766,7 @@ function App() {
               <div className="conn-list">
                 <div className="conn connected"><div className="conn-info"><strong>Intervals.icu</strong><span>Wellness data, training load, fitness metrics</span></div><span className="conn-status on">Connected</span></div>
                 <div className="conn connected"><div className="conn-info"><strong>Athletica.ai</strong><span>Planned workouts, training plan calendar</span></div><span className="conn-status on">Connected</span></div>
-                <div className="conn connected"><div className="conn-info"><strong>USDA FoodData Central</strong><span>Food search and nutritional data</span></div><span className="conn-status on">Connected</span></div>
+                <div className="conn connected"><div className="conn-info"><strong>FatSecret</strong><span>Food search, nutrition data, and barcode lookup</span></div><span className="conn-status on">Connected</span></div>
               </div>
             </div>
           </div>
