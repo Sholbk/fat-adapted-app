@@ -151,6 +151,7 @@
 .fi-drop strong { font-size: 0.8rem; text-transform: capitalize; }
 .fi-drop span { font-size: 0.65rem; color: #1e8ad3; font-family: monospace; }
 .fi-drop em { font-style: normal; font-size: 0.55rem; background: #e8e8e8; color: #555555; padding: 0.1rem 0.3rem; border-radius: 3px; margin-left: 0.3rem; }
+.fi-recents-head { padding: 0.4rem 0.6rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #999; border-bottom: 1px solid #ddd; }
 
 /* ── Barcode Scanner ── */
 .fi-scan { background: #fefefe; border: 1px solid #888888; border-radius: 6px; padding: 0.45rem 0.55rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }

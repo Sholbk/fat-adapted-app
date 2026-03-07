@@ -2,6 +2,20 @@ import { useState, useRef } from "react";
 import { searchFoods, getFoodServings, lookupBarcode } from "../utils/api.js";
 import BarcodeScanner from "./BarcodeScanner.jsx";
 
+const RECENTS_KEY = "ff_recent_foods";
+const MAX_RECENTS = 15;
+
+function getRecents() {
+  try { return JSON.parse(localStorage.getItem(RECENTS_KEY)) || []; } catch { return []; }
+}
+
+function saveRecent(food) {
+  const recents = getRecents().filter(r => r.id !== food.id);
+  recents.unshift(food);
+  if (recents.length > MAX_RECENTS) recents.length = MAX_RECENTS;
+  localStorage.setItem(RECENTS_KEY, JSON.stringify(recents));
+}
+
 export default function FoodInput({ onAdd, placeholder }) {
   const [name, setName] = useState("");
   const [qty, setQty] = useState("1");
@@ -17,6 +31,7 @@ export default function FoodInput({ onAdd, placeholder }) {
   const [selServing, setSelServing] = useState(null);
   const baseMacros = useRef(null);
   const abortRef = useRef(null);
+  const [showRecents, setShowRecents] = useState(false);
 
   function onNameChange(v) {
     setName(v);
@@ -24,6 +39,7 @@ export default function FoodInput({ onAdd, placeholder }) {
     baseMacros.current = null;
     setServings([]);
     setSelServing(null);
+    setShowRecents(v.trim().length === 0);
     if (v.trim().length < 2) { setResults([]); return; }
     debounce.current = setTimeout(async () => {
       if (abortRef.current) abortRef.current.abort();
@@ -52,6 +68,8 @@ export default function FoodInput({ onAdd, placeholder }) {
   async function pick(f) {
     setName(f.brand ? `${f.name} (${f.brand})` : f.name);
     setResults([]);
+    setShowRecents(false);
+    saveRecent(f);
     let detail;
     try {
       detail = await getFoodServings(f.id);
@@ -149,7 +167,8 @@ export default function FoodInput({ onAdd, placeholder }) {
             placeholder={placeholder || "Search food..."}
             value={name}
             onChange={e => onNameChange(e.target.value)}
-            onBlur={() => setTimeout(() => setResults([]), 200)}
+            onFocus={() => { if (!name.trim()) setShowRecents(true); }}
+            onBlur={() => setTimeout(() => { setResults([]); setShowRecents(false); }, 200)}
           />
           {(results.length > 0 || busy) && (
             <div className="fi-drop">
@@ -162,6 +181,20 @@ export default function FoodInput({ onAdd, placeholder }) {
               ))}
             </div>
           )}
+          {showRecents && !busy && results.length === 0 && (() => {
+            const recents = getRecents();
+            return recents.length > 0 ? (
+              <div className="fi-drop">
+                <div className="fi-recents-head">Recent Foods</div>
+                {recents.map((f, i) => (
+                  <button key={i} type="button" onMouseDown={() => pick(f)}>
+                    <strong>{f.brand ? `${f.name} (${f.brand})` : f.name}</strong>
+                    <span>F:{Math.round(f.fat)} P:{Math.round(f.protein)} C:{Math.round(f.carbs)} per {f.serving}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null;
+          })()}
         </div>
         <input type="number" placeholder="Qty" value={qty} onChange={e => onQtyChange(e.target.value)} className="fi-q" min="0" step="any" />
         {servings.length > 0 ? (
