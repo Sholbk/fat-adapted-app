@@ -4,7 +4,7 @@ import "./App.css";
 import { fmt, today, parseICS } from "./utils/parsing.js";
 import { classifyWorkout, getSessionTypeFromWorkouts } from "./utils/classification.js";
 import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
-import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, getWeightLog, addWeightEntry, getWater, setWater, getSupps, setSupps, COMMON_SUPPS, getNotes, setNotes, getRecipes, saveRecipes } from "./utils/storage.js";
+import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, getWeightLog, addWeightEntry, getWater, setWater, getSupps, setSupps, COMMON_SUPPS, getMood, setMood, getNotes, setNotes, getRecipes, saveRecipes } from "./utils/storage.js";
 import { apiFetch } from "./utils/api.js";
 import { isSupabaseConfigured, signIn, signUp, signOut, getSession, onAuthChange, backupToCloud, restoreFromCloud } from "./utils/supabase.js";
 
@@ -536,8 +536,22 @@ function App() {
           })}
 
           <div className="meal-card">
-            <div className="meal-head"><h3>Daily Notes</h3></div>
-            <textarea className="daily-notes" placeholder="How did you feel today? Energy levels, mood, digestion..." value={getNotes(date)} onChange={e => { setNotes(date, e.target.value); refresh(); }} />
+            <div className="meal-head"><h3>How Do You Feel?</h3></div>
+            <div className="mood-picker">
+              {[
+                { value: "great", face: "\u{1F601}", label: "Great" },
+                { value: "good", face: "\u{1F642}", label: "Good" },
+                { value: "okay", face: "\u{1F610}", label: "Okay" },
+                { value: "meh", face: "\u{1F615}", label: "Meh" },
+                { value: "bad", face: "\u{1F61E}", label: "Bad" },
+              ].map(m => (
+                <button key={m.value} className={`mood-btn${getMood(date) === m.value ? " active" : ""}`} onClick={() => { setMood(date, getMood(date) === m.value ? "" : m.value); refresh(); }}>
+                  <span className="mood-face">{m.face}</span>
+                  <span className="mood-label">{m.label}</span>
+                </button>
+              ))}
+            </div>
+            <textarea className="daily-notes" placeholder="Energy levels, mood, digestion, anything on your mind..." value={getNotes(date)} onChange={e => { setNotes(date, e.target.value); refresh(); }} />
           </div>
         </>}
 

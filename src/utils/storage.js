@@ -70,6 +70,14 @@ export const COMMON_SUPPS = [
   "Fish Oil", "Vitamin D", "Caffeine", "BCAA", "Collagen", "Multivitamin"
 ];
 
+export function getMood(d) {
+  return localStorage.getItem(`ff-mood-${d}`) || "";
+}
+
+export function setMood(d, mood) {
+  localStorage.setItem(`ff-mood-${d}`, mood);
+}
+
 export function getNotes(d) {
   return localStorage.getItem(`ff-notes-${d}`) || "";
 }

@@ -258,6 +258,18 @@
 .pie-legend { display: flex; gap: 0.6rem; font-size: 0.65rem; font-weight: 600; color: #555555; }
 .pie-legend span { display: flex; align-items: center; gap: 0.2rem; }
 
+/* ── Mood Picker ── */
+.mood-picker { display: flex; justify-content: space-around; margin-bottom: 0.75rem; }
+.mood-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+  background: none; border: 2px solid transparent; border-radius: 12px;
+  padding: 0.5rem 0.75rem; cursor: pointer; transition: all 0.15s; font-family: inherit;
+}
+.mood-btn:hover { background: #f0f2f5; }
+.mood-btn.active { border-color: #1e8ad3; background: #e8f0ff; }
+.mood-face { font-size: 1.8rem; line-height: 1; }
+.mood-label { font-size: 0.65rem; font-weight: 600; color: #555555; }
+
 /* ── Daily Notes ── */
 .daily-notes {
   width: 100%; min-height: 80px; padding: 0.75rem; border: 1px solid #ccc; border-radius: 10px;
@@ -554,6 +566,9 @@
 .dark .pie-section { border-top-color: #3a3a5a; }
 .dark .pie-label { color: #888; }
 .dark .pie-legend { color: #888; }
+.dark .mood-btn:hover { background: #252540; }
+.dark .mood-btn.active { border-color: #1e8ad3; background: #1a2a4a; }
+.dark .mood-label { color: #888; }
 .dark .daily-notes { background: #252540; border-color: #3a3a5a; color: #e0e0e0; }
 .dark .recipe-builder { background: #1a1a2e; border-color: #2a2a4a; }
 .dark .recipe-card { background: #1a1a2e; border-color: #2a2a4a; }
