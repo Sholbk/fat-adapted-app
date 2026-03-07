@@ -4,7 +4,7 @@ import "./App.css";
 import { fmt, today, parseICS } from "./utils/parsing.js";
 import { classifyWorkout, getSessionTypeFromWorkouts } from "./utils/classification.js";
 import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
-import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, getWeightLog, addWeightEntry, getWater, setWater, getSupps, setSupps, COMMON_SUPPS } from "./utils/storage.js";
+import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, getWeightLog, addWeightEntry, getWater, setWater, getSupps, setSupps, COMMON_SUPPS, getNotes, setNotes, getRecipes, saveRecipes } from "./utils/storage.js";
 import { apiFetch } from "./utils/api.js";
 import { isSupabaseConfigured, signIn, signUp, signOut, getSession, onAuthChange, backupToCloud, restoreFromCloud } from "./utils/supabase.js";
 
@@ -188,7 +188,10 @@ function App() {
 
   const W = settings.weight;
   const calAdj = settings.goalWeight < W ? -500 : settings.goalWeight > W ? 500 : 0;
-  const refresh = () => setTick(t => t + 1);
+  const refresh = () => {
+    setTick(t => t + 1);
+    if (authSession?.user?.id) backupToCloud(authSession.user.id);
+  };
   const showToast = (msg, onUndo) => setToasts(prev => [...prev, { id: Date.now(), message: msg, onUndo }]);
   const dismissToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
 
@@ -288,6 +291,10 @@ function App() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
             Meal Ideas
           </button>
+          <button className={page === "recipes" ? "active" : ""} onClick={() => setPage("recipes")}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+            Recipes
+          </button>
           <button className={page === "settings" ? "active" : ""} onClick={() => setPage("settings")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             Settings
@@ -308,6 +315,10 @@ function App() {
           <button className={page === "meals" ? "active" : ""} onClick={() => setPage("meals")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
             Meals
+          </button>
+          <button className={page === "recipes" ? "active" : ""} onClick={() => setPage("recipes")}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+            Recipes
           </button>
           <button className={page === "settings" ? "active" : ""} onClick={() => setPage("settings")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -444,6 +455,48 @@ function App() {
               <Ring value={all.protein} max={macros.protein} color="#043bb1" label="Protein" />
               <Ring value={all.carbs} max={macros.carbs} color="#10bc10" label="Carbs" />
             </div>
+            {all.cal > 0 && (() => {
+              const fatCal = all.fat * 9, proCal = all.protein * 4, carbCal = all.carbs * 4;
+              const total = fatCal + proCal + carbCal || 1;
+              const fatPct = Math.round(fatCal / total * 100);
+              const proPct = Math.round(proCal / total * 100);
+              const carbPct = 100 - fatPct - proPct;
+              const tFatCal = macros.fat * 9, tProCal = macros.protein * 4, tCarbCal = macros.carbs * 4;
+              const tTotal = tFatCal + tProCal + tCarbCal || 1;
+              const tFatPct = Math.round(tFatCal / tTotal * 100);
+              const tProPct = Math.round(tProCal / tTotal * 100);
+              const tCarbPct = 100 - tFatPct - tProPct;
+              function pieSlices(slices) {
+                let angle = 0;
+                return slices.map(({ pct, color }) => {
+                  const start = angle;
+                  angle += pct / 100 * 360;
+                  const end = angle;
+                  const r = 40, cx = 50, cy = 50;
+                  const rad = a => (a - 90) * Math.PI / 180;
+                  const x1 = cx + r * Math.cos(rad(start)), y1 = cy + r * Math.sin(rad(start));
+                  const x2 = cx + r * Math.cos(rad(end)), y2 = cy + r * Math.sin(rad(end));
+                  const large = pct > 50 ? 1 : 0;
+                  if (pct >= 100) return <circle key={color} cx={cx} cy={cy} r={r} fill={color} />;
+                  if (pct <= 0) return null;
+                  return <path key={color} d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z`} fill={color} />;
+                });
+              }
+              return (
+                <div className="pie-section">
+                  <div className="pie-group">
+                    <span className="pie-label">Current</span>
+                    <svg viewBox="0 0 100 100" className="pie-svg">{pieSlices([{ pct: fatPct, color: "#fe00a4" }, { pct: proPct, color: "#043bb1" }, { pct: carbPct, color: "#10bc10" }])}</svg>
+                    <div className="pie-legend"><span>F:{fatPct}%</span><span>P:{proPct}%</span><span>C:{carbPct}%</span></div>
+                  </div>
+                  <div className="pie-group">
+                    <span className="pie-label">Target</span>
+                    <svg viewBox="0 0 100 100" className="pie-svg">{pieSlices([{ pct: tFatPct, color: "#fe00a4" }, { pct: tProPct, color: "#043bb1" }, { pct: tCarbPct, color: "#10bc10" }])}</svg>
+                    <div className="pie-legend"><span>F:{tFatPct}%</span><span>P:{tProPct}%</span><span>C:{tCarbPct}%</span></div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="copy-meals-row">
@@ -481,6 +534,11 @@ function App() {
               </div>
             );
           })}
+
+          <div className="meal-card">
+            <div className="meal-head"><h3>Daily Notes</h3></div>
+            <textarea className="daily-notes" placeholder="How did you feel today? Energy levels, mood, digestion..." value={getNotes(date)} onChange={e => { setNotes(date, e.target.value); refresh(); }} />
+          </div>
         </>}
 
         {page === "weekly" && (() => {
@@ -674,6 +732,91 @@ function App() {
               <div className="mp-note">
                 <strong>Session note:</strong> {session.note}
               </div>
+            </div>
+          );
+        })()}
+
+        {page === "recipes" && (() => {
+          const recipes = getRecipes();
+          return (
+            <div className="page-content">
+              <h2>Recipe Builder</h2>
+              <p className="page-sub">Create custom recipes from multiple ingredients. Add them to any meal with one tap.</p>
+
+              <div className="recipe-builder">
+                <div className="settings-card">
+                  <h3>New Recipe</h3>
+                  <input type="text" className="cloud-input" placeholder="Recipe name (e.g. Morning Smoothie)" id="recipe-name" style={{ marginBottom: "0.5rem" }} />
+                  <FoodInput onAdd={(entry) => {
+                    const list = JSON.parse(sessionStorage.getItem("ff-recipe-wip") || "[]");
+                    list.push(entry);
+                    sessionStorage.setItem("ff-recipe-wip", JSON.stringify(list));
+                    refresh();
+                  }} placeholder="Add ingredient..." />
+                  {(() => {
+                    const wip = JSON.parse(sessionStorage.getItem("ff-recipe-wip") || "[]");
+                    if (wip.length === 0) return <p className="meal-empty">Add ingredients above to build your recipe</p>;
+                    const totals = sum(wip);
+                    return <>
+                      <Entries items={wip} onRemove={(id) => {
+                        const list = JSON.parse(sessionStorage.getItem("ff-recipe-wip") || "[]").filter(e => e.id !== id);
+                        sessionStorage.setItem("ff-recipe-wip", JSON.stringify(list));
+                        refresh();
+                      }} />
+                      <div className="meal-sum">{totals.cal} kcal — F:{totals.fat}g P:{totals.protein}g C:{totals.carbs}g</div>
+                      <button className="use-plan-btn" onClick={() => {
+                        const nameEl = document.getElementById("recipe-name");
+                        const name = nameEl?.value?.trim();
+                        if (!name) { showToast("Enter a recipe name"); return; }
+                        const ingredients = JSON.parse(sessionStorage.getItem("ff-recipe-wip") || "[]");
+                        const totals = sum(ingredients);
+                        const recipe = { id: Date.now(), name, ingredients, fat: totals.fat, protein: totals.protein, carbs: totals.carbs };
+                        saveRecipes([...getRecipes(), recipe]);
+                        sessionStorage.removeItem("ff-recipe-wip");
+                        if (nameEl) nameEl.value = "";
+                        refresh();
+                        showToast(`Recipe "${name}" saved`);
+                      }}>Save Recipe</button>
+                    </>;
+                  })()}
+                </div>
+              </div>
+
+              {recipes.length > 0 && <>
+                <h3>Saved Recipes</h3>
+                <div className="recipe-list">
+                  {recipes.map(r => {
+                    const cal = r.fat * 9 + r.protein * 4 + r.carbs * 4;
+                    return (
+                      <div key={r.id} className="recipe-card">
+                        <div className="recipe-head">
+                          <strong>{r.name}</strong>
+                          <span className="recipe-macros">{cal} kcal — F:{r.fat}g P:{r.protein}g C:{r.carbs}g</span>
+                        </div>
+                        <div className="recipe-ingredients">
+                          {r.ingredients.map((ing, i) => <span key={i}>{ing.name}</span>)}
+                        </div>
+                        <div className="recipe-actions">
+                          <select className="recipe-meal-select" id={`recipe-meal-${r.id}`}>
+                            {MEALS.map(m => <option key={m} value={m}>{m[0].toUpperCase() + m.slice(1)}</option>)}
+                          </select>
+                          <button className="copy-meals-btn" onClick={() => {
+                            const meal = document.getElementById(`recipe-meal-${r.id}`)?.value || "breakfast";
+                            const entry = { id: Date.now(), name: r.name, fat: r.fat, protein: r.protein, carbs: r.carbs };
+                            addMeal(meal, entry);
+                            showToast(`Added "${r.name}" to ${meal}`);
+                          }}>Add to Meal</button>
+                          <button className="water-btn water-undo" onClick={() => {
+                            saveRecipes(getRecipes().filter(x => x.id !== r.id));
+                            refresh();
+                            showToast(`Deleted "${r.name}"`);
+                          }}>Delete</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>}
             </div>
           );
         })()}

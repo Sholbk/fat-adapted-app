@@ -250,6 +250,39 @@
 .sett-save { display: block; width: 100%; padding: 0.75rem; background: #043bb1; color: #ffffff; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s; margin-bottom: 0.75rem; }
 .sett-save:hover { background: #1e8ad3; }
 
+/* ── Pie Chart Macro Split ── */
+.pie-section { display: flex; gap: 2rem; justify-content: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e0e0e0; }
+.pie-group { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+.pie-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #555555; }
+.pie-svg { width: 90px; height: 90px; }
+.pie-legend { display: flex; gap: 0.6rem; font-size: 0.65rem; font-weight: 600; color: #555555; }
+.pie-legend span { display: flex; align-items: center; gap: 0.2rem; }
+
+/* ── Daily Notes ── */
+.daily-notes {
+  width: 100%; min-height: 80px; padding: 0.75rem; border: 1px solid #ccc; border-radius: 10px;
+  font-family: inherit; font-size: 0.85rem; resize: vertical; background: #fefefe; color: #000;
+  transition: border-color 0.15s;
+}
+.daily-notes:focus { outline: none; border-color: #1e8ad3; }
+
+/* ── Recipe Builder ── */
+.recipe-builder { background: #fefefe; border: 1px solid #888888; border-radius: 14px; padding: 1.25rem; margin-bottom: 1.25rem; }
+.recipe-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.recipe-card {
+  background: #fefefe; border: 1px solid #888888; border-radius: 14px; padding: 1rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.recipe-head { display: flex; flex-direction: column; gap: 0.15rem; }
+.recipe-head strong { font-size: 0.95rem; color: #000; }
+.recipe-macros { font-size: 0.75rem; color: #555555; font-weight: 600; }
+.recipe-ingredients { font-size: 0.75rem; color: #777; line-height: 1.5; }
+.recipe-actions { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem; }
+.recipe-meal-select {
+  flex: 1; padding: 0.4rem; border: 1px solid #888888; border-radius: 8px; font-family: inherit;
+  font-size: 0.8rem; background: #fefefe; cursor: pointer;
+}
+
 /* ── Mobile Bottom Nav ── */
 .mobile-nav {
   display: none;
@@ -518,6 +551,16 @@
 .dark .copy-meals-btn:hover { background: #252540; }
 .dark .cloud-restore { background: #1a1a2e; color: #4da6e8; border-color: #1e8ad3; }
 .dark .dark-toggle { border-color: #3a3a5a; color: #e0e0e0; }
+.dark .pie-section { border-top-color: #3a3a5a; }
+.dark .pie-label { color: #888; }
+.dark .pie-legend { color: #888; }
+.dark .daily-notes { background: #252540; border-color: #3a3a5a; color: #e0e0e0; }
+.dark .recipe-builder { background: #1a1a2e; border-color: #2a2a4a; }
+.dark .recipe-card { background: #1a1a2e; border-color: #2a2a4a; }
+.dark .recipe-head strong { color: #e0e0e0; }
+.dark .recipe-macros { color: #888; }
+.dark .recipe-ingredients { color: #888; }
+.dark .recipe-meal-select { background: #252540; border-color: #3a3a5a; color: #e0e0e0; }
 .dark .mobile-nav { background: #1a1a2e; border-top-color: #2a2a4a; }
 .dark .mobile-nav button { color: #888; }
 .dark .mobile-nav button.active { color: #1e8ad3; }

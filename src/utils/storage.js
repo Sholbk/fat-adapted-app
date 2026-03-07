@@ -70,6 +70,22 @@ export const COMMON_SUPPS = [
   "Fish Oil", "Vitamin D", "Caffeine", "BCAA", "Collagen", "Multivitamin"
 ];
 
+export function getNotes(d) {
+  return localStorage.getItem(`ff-notes-${d}`) || "";
+}
+
+export function setNotes(d, text) {
+  localStorage.setItem(`ff-notes-${d}`, text);
+}
+
+export function getRecipes() {
+  try { return JSON.parse(localStorage.getItem("ff-recipes") || "[]"); } catch { return []; }
+}
+
+export function saveRecipes(recipes) {
+  localStorage.setItem("ff-recipes", JSON.stringify(recipes));
+}
+
 export function sum(entries) {
   return entries.reduce((a, e) => ({
     fat: a.fat + e.fat,
