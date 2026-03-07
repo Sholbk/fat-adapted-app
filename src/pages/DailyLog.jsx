@@ -2,13 +2,13 @@ import { SESSION_CONFIG } from "../utils/macros.js";
 import { classifyWorkout, classifyByIntensity } from "../utils/classification.js";
 import { MEALS, getLog, setLog, getWater, setWater, getSupps, setSupps, COMMON_SUPPS, getMood, setMood, getNotes, setNotes, sum } from "../utils/storage.js";
 import { fmt } from "../utils/parsing.js";
-
-const ZONE_LABELS = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7"];
-const ZONE_COLORS = ["#1e8ad3", "#10bc10", "#90c010", "#e8c010", "#e87010", "#fe00a4", "#cc0050"];
 import FoodInput from "../components/FoodInput.jsx";
 import Entries from "../components/Entries.jsx";
 import Ring from "../components/Ring.jsx";
 import MacroRow from "../components/MacroRow.jsx";
+
+const ZONE_LABELS = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7"];
+const ZONE_COLORS = ["#1e8ad3", "#10bc10", "#90c010", "#e8c010", "#e87010", "#fe00a4", "#cc0050"];
 
 export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRecTotal, dayWorkouts, wellness, mealData, mealTotals, trainEntries, trainTotals, all, addMeal, rmMeal, addTrain, rmTrain, refresh, showToast, settings }) {
   const wd = wellness.find(w => w.id === date) || {};

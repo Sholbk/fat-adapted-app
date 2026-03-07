@@ -43,10 +43,12 @@ export default function FoodInput({ onAdd, placeholder }) {
     if (v.trim().length < 2) { setResults([]); return; }
     debounce.current = setTimeout(async () => {
       if (abortRef.current) abortRef.current.abort();
-      abortRef.current = new AbortController();
+      const controller = new AbortController();
+      abortRef.current = controller;
       setBusy(true);
       try {
-        const res = await searchFoods(v);
+        const res = await searchFoods(v, controller.signal);
+        if (controller.signal.aborted) return;
         setResults(res);
       } catch {
         setResults([]);

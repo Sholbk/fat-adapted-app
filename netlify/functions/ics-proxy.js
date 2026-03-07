@@ -45,8 +45,8 @@ export default async (req) => {
         "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
       },
     });
-  } catch (error) {
-    return new Response(error.message, { status: 500 });
+  } catch {
+    return new Response("Internal server error", { status: 500 });
   }
 };
 

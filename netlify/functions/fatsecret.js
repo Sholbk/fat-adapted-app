@@ -116,8 +116,8 @@ export default async (req) => {
     }
 
     return respond({ error: "unknown action" }, 400);
-  } catch (err) {
-    return respond({ error: err.message }, 500);
+  } catch {
+    return respond({ error: "Internal server error" }, 500);
   }
 };
 

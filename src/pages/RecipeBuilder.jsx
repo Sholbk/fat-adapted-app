@@ -1,9 +1,11 @@
+import { useRef } from "react";
 import { MEALS, getLog, setLog, getRecipes, saveRecipes, sum } from "../utils/storage.js";
 import FoodInput from "../components/FoodInput.jsx";
 import Entries from "../components/Entries.jsx";
 
 export default function RecipeBuilder({ date, refresh, showToast, addMeal }) {
   const recipes = getRecipes();
+  const nameRef = useRef(null);
 
   return (
     <div className="page-content">
@@ -13,14 +15,14 @@ export default function RecipeBuilder({ date, refresh, showToast, addMeal }) {
       <div className="recipe-builder">
         <div className="settings-card">
           <h3>New Recipe</h3>
-          <input type="text" className="cloud-input" placeholder="Recipe name (e.g. Morning Smoothie)" id="recipe-name" style={{ marginBottom: "0.5rem" }} />
+          <input type="text" className="cloud-input" placeholder="Recipe name (e.g. Morning Smoothie)" ref={nameRef} style={{ marginBottom: "0.5rem" }} />
           <FoodInput onAdd={(entry) => {
             const list = JSON.parse(sessionStorage.getItem("ff-recipe-wip") || "[]");
             list.push(entry);
             sessionStorage.setItem("ff-recipe-wip", JSON.stringify(list));
             refresh();
           }} placeholder="Add ingredient..." />
-          <RecipeWIP refresh={refresh} showToast={showToast} />
+          <RecipeWIP nameRef={nameRef} refresh={refresh} showToast={showToast} />
         </div>
       </div>
 
@@ -36,7 +38,7 @@ export default function RecipeBuilder({ date, refresh, showToast, addMeal }) {
   );
 }
 
-function RecipeWIP({ refresh, showToast }) {
+function RecipeWIP({ nameRef, refresh, showToast }) {
   const wip = JSON.parse(sessionStorage.getItem("ff-recipe-wip") || "[]");
   if (wip.length === 0) return <p className="meal-empty">Add ingredients above to build your recipe</p>;
   const totals = sum(wip);
@@ -50,15 +52,14 @@ function RecipeWIP({ refresh, showToast }) {
       }} />
       <div className="meal-sum">{totals.cal} kcal — F:{totals.fat}g P:{totals.protein}g C:{totals.carbs}g</div>
       <button className="use-plan-btn" onClick={() => {
-        const nameEl = document.getElementById("recipe-name");
-        const name = nameEl?.value?.trim();
+        const name = nameRef.current?.value?.trim();
         if (!name) { showToast("Enter a recipe name"); return; }
         const ingredients = JSON.parse(sessionStorage.getItem("ff-recipe-wip") || "[]");
         const totals = sum(ingredients);
         const recipe = { id: Date.now(), name, ingredients, fat: totals.fat, protein: totals.protein, carbs: totals.carbs };
         saveRecipes([...getRecipes(), recipe]);
         sessionStorage.removeItem("ff-recipe-wip");
-        if (nameEl) nameEl.value = "";
+        nameRef.current.value = "";
         refresh();
         showToast(`Recipe "${name}" saved`);
       }}>Save Recipe</button>
@@ -67,6 +68,7 @@ function RecipeWIP({ refresh, showToast }) {
 }
 
 function RecipeCard({ recipe: r, date, addMeal, refresh, showToast }) {
+  const mealRef = useRef(null);
   const cal = r.fat * 9 + r.protein * 4 + r.carbs * 4;
   return (
     <div className="recipe-card">
@@ -78,11 +80,11 @@ function RecipeCard({ recipe: r, date, addMeal, refresh, showToast }) {
         {r.ingredients.map((ing, i) => <span key={i}>{ing.name}</span>)}
       </div>
       <div className="recipe-actions">
-        <select className="recipe-meal-select" id={`recipe-meal-${r.id}`}>
+        <select className="recipe-meal-select" ref={mealRef}>
           {MEALS.map(m => <option key={m} value={m}>{m[0].toUpperCase() + m.slice(1)}</option>)}
         </select>
         <button className="copy-meals-btn" onClick={() => {
-          const meal = document.getElementById(`recipe-meal-${r.id}`)?.value || "breakfast";
+          const meal = mealRef.current?.value || "breakfast";
           const entry = { id: Date.now(), name: r.name, fat: r.fat, protein: r.protein, carbs: r.carbs };
           addMeal(meal, entry);
           showToast(`Added "${r.name}" to ${meal}`);

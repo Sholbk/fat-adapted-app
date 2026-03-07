@@ -21,16 +21,30 @@ export default async (req) => {
   const endpoint = (url.searchParams.get("endpoint") || "").trim();
 
   // Validate endpoint against allowlist
-  const baseName = endpoint.split("?")[0];
-  if (!endpoint || !ALLOWED_ENDPOINTS.includes(baseName)) {
+  const [baseName, queryString] = endpoint.split("?");
+  if (!baseName || !ALLOWED_ENDPOINTS.includes(baseName)) {
     return respond({ error: "Invalid endpoint" }, 400);
   }
+
+  // Only allow known query parameters
+  const ALLOWED_PARAMS = ["oldest", "newest"];
+  const sanitizedParams = new URLSearchParams();
+  if (queryString) {
+    const parsed = new URLSearchParams(queryString);
+    for (const [key, value] of parsed) {
+      if (ALLOWED_PARAMS.includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        sanitizedParams.set(key, value);
+      }
+    }
+  }
+  const qs = sanitizedParams.toString();
+  const sanitizedEndpoint = qs ? `${baseName}?${qs}` : baseName;
 
   const baseUrl = `https://intervals.icu/api/v1/athlete/${ATHLETE_ID}`;
   const credentials = btoa(`API_KEY:${API_KEY}`);
 
   try {
-    const response = await fetch(`${baseUrl}/${endpoint}`, {
+    const response = await fetch(`${baseUrl}/${sanitizedEndpoint}`, {
       headers: { Authorization: `Basic ${credentials}`, Accept: "application/json" },
       signal: AbortSignal.timeout(10000),
     });
@@ -41,8 +55,8 @@ export default async (req) => {
 
     const data = await response.json();
     return respond(data);
-  } catch (error) {
-    return respond({ error: error.message }, 500);
+  } catch {
+    return respond({ error: "Internal server error" }, 500);
   }
 };
 

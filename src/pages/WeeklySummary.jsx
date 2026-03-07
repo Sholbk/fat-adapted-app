@@ -1,5 +1,5 @@
 import { fmt, today } from "../utils/parsing.js";
-import { MEALS, getLog, sum } from "../utils/storage.js";
+import { MEALS, getLog, getTLog, sum } from "../utils/storage.js";
 import { getSessionTypeFromWorkouts } from "../utils/classification.js";
 import { calcMacros } from "../utils/macros.js";
 
@@ -17,7 +17,7 @@ function getWeekDates(currentDate) {
 
 function getDayTotals(date) {
   const mealEntries = MEALS.flatMap(m => getLog(date, m));
-  const trainEntries = JSON.parse(localStorage.getItem(`ff-train-${date}`) || "[]");
+  const trainEntries = getTLog(date);
   return sum([...mealEntries, ...trainEntries]);
 }
 

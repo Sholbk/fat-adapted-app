@@ -8,10 +8,10 @@ export async function apiFetch(endpoint) {
   return r.json();
 }
 
-export async function searchFoods(q) {
+export async function searchFoods(q, signal) {
   try {
     const r = await fetch(`${API_BASE}/fatsecret?action=search&q=${encodeURIComponent(q)}`, {
-      signal: AbortSignal.timeout(10000),
+      signal: signal || AbortSignal.timeout(10000),
     });
     if (!r.ok) return [];
     const data = await r.json();

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { getWeightLog, addWeightEntry, getSettings } from "../utils/storage.js";
 import { isSupabaseConfigured, signIn, signUp, signOut, backupToCloud, restoreFromCloud } from "../utils/supabase.js";
 
@@ -97,17 +98,17 @@ export default function SettingsPage({ date, draft, updateDraft, handleSave, sav
 }
 
 function WeightLogSection({ date, refresh, showToast }) {
+  const weightRef = useRef(null);
   const wlog = getWeightLog();
   const recent = wlog.slice(-14);
 
   return (
     <>
       <div className="weight-log-input">
-        <input type="number" placeholder="Today's weight (lbs)" id="weight-input" step="0.1" />
+        <input type="number" placeholder="Today's weight (lbs)" ref={weightRef} step="0.1" />
         <button className="weight-log-btn" onClick={() => {
-          const inp = document.getElementById("weight-input");
-          const w = parseFloat(inp.value);
-          if (w > 0) { addWeightEntry(date, w); inp.value = ""; refresh(); showToast(`Weight logged: ${w} lbs`); }
+          const w = parseFloat(weightRef.current?.value);
+          if (w > 0) { addWeightEntry(date, w); weightRef.current.value = ""; refresh(); showToast(`Weight logged: ${w} lbs`); }
         }}>Log Weight</button>
       </div>
       {recent.length === 0 ? (

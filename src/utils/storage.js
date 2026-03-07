@@ -9,15 +9,15 @@ export function saveSettings(s) {
 }
 
 export const DEFAULT_SETTINGS = {
-  weight: 213,
+  weight: 150,
   startDate: new Date().toISOString().slice(0, 10),
-  height: 65,
-  age: 35,
+  height: 67,
+  age: 30,
   gender: "female",
-  goalWeight: 213,
-  name: "Stephanie",
+  goalWeight: 150,
+  name: "",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  athleticaUrl: "https://app.athletica.ai/4935a810a4/athletica.ics",
+  athleticaUrl: "",
   waterTarget: 100,
   darkMode: false,
 };

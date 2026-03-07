@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
 import { fmt, today, parseICS } from "./utils/parsing.js";
@@ -73,9 +73,13 @@ function App() {
 
   const W = settings.weight;
   const calAdj = settings.goalWeight < W ? -500 : settings.goalWeight > W ? 500 : 0;
+  const backupTimer = React.useRef(null);
   const refresh = () => {
     setTick(t => t + 1);
-    if (authSession?.user?.id) backupToCloud(authSession.user.id);
+    if (authSession?.user?.id) {
+      clearTimeout(backupTimer.current);
+      backupTimer.current = setTimeout(() => backupToCloud(authSession.user.id), 5000);
+    }
   };
   const showToast = (msg, onUndo) => setToasts(prev => [...prev, { id: Date.now(), message: msg, onUndo }]);
   const dismissToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
