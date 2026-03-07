@@ -106,9 +106,11 @@ const FS_BASE = import.meta.env.DEV ? "http://localhost:8888/api/fatsecret" : "/
 async function searchFoods(q) {
   try {
     const r = await fetch(`${FS_BASE}?action=search&q=${encodeURIComponent(q)}`);
-    if (!r.ok) return [];
-    return await r.json();
-  } catch { return []; }
+    if (!r.ok) { console.error("FatSecret search error:", r.status, await r.text()); return []; }
+    const data = await r.json();
+    if (data.error) { console.error("FatSecret API error:", data.error); return []; }
+    return Array.isArray(data) ? data : [];
+  } catch (e) { console.error("FatSecret search failed:", e); return []; }
 }
 
 async function getFoodServings(id) {

@@ -1,5 +1,5 @@
 const CLIENT_ID = "63173fc7e51949c69953fbcf06b28e35";
-const CLIENT_SECRET = "18450834e9864d0aaebfd9add105faf1";
+const CLIENT_SECRET = "ba50e0adf0ce4df99f66d4697e608cf7";
 const TOKEN_URL = "https://oauth.fatsecret.com/connect/token";
 const API_URL = "https://platform.fatsecret.com/rest/server.api";
 
@@ -14,9 +14,12 @@ async function getToken() {
       Authorization: "Basic " + btoa(`${CLIENT_ID}:${CLIENT_SECRET}`),
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: "grant_type=client_credentials&scope=basic barcode",
+    body: "grant_type=client_credentials&scope=basic",
   });
-  if (!r.ok) throw new Error(`Token error: ${r.status}`);
+  if (!r.ok) {
+    const text = await r.text();
+    throw new Error(`Token error: ${r.status} ${text}`);
+  }
   const d = await r.json();
   cachedToken = d.access_token;
   tokenExpiry = Date.now() + (d.expires_in - 60) * 1000;
@@ -29,8 +32,13 @@ async function apiCall(method, params) {
   const r = await fetch(`${API_URL}?${qs}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!r.ok) throw new Error(`API error: ${r.status}`);
-  return r.json();
+  if (!r.ok) {
+    const text = await r.text();
+    throw new Error(`API error: ${r.status} ${text}`);
+  }
+  const json = await r.json();
+  if (json.error) throw new Error(`FatSecret: ${json.error.message || JSON.stringify(json.error)}`);
+  return json;
 }
 
 function parseServing(servings) {
