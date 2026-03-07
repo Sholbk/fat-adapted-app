@@ -218,7 +218,7 @@ function App() {
             </div>
 
             <div className="card">
-              <h2>My Training Fuel</h2>
+              <h2>Training Fuel</h2>
               <div className="fuel-recs">
                 <div className="fuel-r"><span className="fuel-ph">Pre</span><span>{session.fuel.pre}</span></div>
                 <div className="fuel-r"><span className="fuel-ph">During</span><span>{session.fuel.during}</span></div>
