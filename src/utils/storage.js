@@ -18,6 +18,7 @@ export const DEFAULT_SETTINGS = {
   name: "Stephanie",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   athleticaUrl: "https://app.athletica.ai/4935a810a4/athletica.ics",
+  waterTarget: 100,
 };
 
 export function getLog(d, m) {
@@ -46,6 +47,27 @@ export function addWeightEntry(date, weight) {
   log.sort((a, b) => a.date.localeCompare(b.date));
   localStorage.setItem("ff-weight-log", JSON.stringify(log));
 }
+
+export function getWater(d) {
+  try { return JSON.parse(localStorage.getItem(`ff-water-${d}`) || "0"); } catch { return 0; }
+}
+
+export function setWater(d, oz) {
+  localStorage.setItem(`ff-water-${d}`, JSON.stringify(oz));
+}
+
+export function getSupps(d) {
+  try { return JSON.parse(localStorage.getItem(`ff-supps-${d}`) || "[]"); } catch { return []; }
+}
+
+export function setSupps(d, list) {
+  localStorage.setItem(`ff-supps-${d}`, JSON.stringify(list));
+}
+
+export const COMMON_SUPPS = [
+  "Electrolytes", "MCT Oil", "Creatine", "Magnesium", "Sodium", "Potassium",
+  "Fish Oil", "Vitamin D", "Caffeine", "BCAA", "Collagen", "Multivitamin"
+];
 
 export function sum(entries) {
   return entries.reduce((a, e) => ({

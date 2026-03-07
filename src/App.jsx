@@ -4,7 +4,7 @@ import "./App.css";
 import { fmt, today, parseICS } from "./utils/parsing.js";
 import { classifyWorkout, getSessionTypeFromWorkouts } from "./utils/classification.js";
 import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
-import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, getWeightLog, addWeightEntry } from "./utils/storage.js";
+import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, getWeightLog, addWeightEntry, getWater, setWater, getSupps, setSupps, COMMON_SUPPS } from "./utils/storage.js";
 import { apiFetch } from "./utils/api.js";
 
 import FoodInput from "./components/FoodInput.jsx";
@@ -338,6 +338,50 @@ function App() {
             </div>
           </div>
 
+          <div className="cards-row cards-row-2">
+            <div className="card">
+              <h2>Hydration</h2>
+              {(() => {
+                const waterOz = getWater(date);
+                const waterTarget = settings.waterTarget || 100;
+                const pct = Math.min((waterOz / waterTarget) * 100, 100);
+                return <>
+                  <div className="water-display">
+                    <span className="water-amount">{waterOz}</span>
+                    <span className="water-unit">/ {waterTarget} oz</span>
+                  </div>
+                  <div className="mrow-bar" style={{ marginBottom: "0.5rem" }}>
+                    <div style={{ width: `${pct}%`, background: waterOz >= waterTarget ? "#10bc10" : "#1e8ad3" }} />
+                  </div>
+                  <div className="water-btns">
+                    {[8, 12, 16, 24].map(oz => (
+                      <button key={oz} className="water-btn" onClick={() => { setWater(date, waterOz + oz); refresh(); }}>+{oz}oz</button>
+                    ))}
+                    <button className="water-btn water-undo" onClick={() => { setWater(date, Math.max(0, waterOz - 8)); refresh(); }}>Undo</button>
+                  </div>
+                </>;
+              })()}
+            </div>
+            <div className="card">
+              <h2>Supplements</h2>
+              {(() => {
+                const supps = getSupps(date);
+                return <>
+                  <div className="supp-tags">
+                    {COMMON_SUPPS.map(s => {
+                      const taken = supps.includes(s);
+                      return <button key={s} className={`supp-tag${taken ? " taken" : ""}`} onClick={() => {
+                        setSupps(date, taken ? supps.filter(x => x !== s) : [...supps, s]);
+                        refresh();
+                      }}>{taken ? "\u2713 " : ""}{s}</button>;
+                    })}
+                  </div>
+                  {supps.length > 0 && <div className="supp-count">{supps.length} supplement{supps.length !== 1 ? "s" : ""} taken today</div>}
+                </>;
+              })()}
+            </div>
+          </div>
+
           <div className="goals-section">
             <h2 className="goals-title">Total Macros</h2>
             <div className="goals-row">
@@ -459,6 +503,43 @@ function App() {
               <div className="phase-badge" style={{ background: session.color }}>{session.label}</div>
               <p>{session.note}</p>
             </div>
+            {(() => {
+              const sorted = [...wellness].sort((a, b) => a.id.localeCompare(b.id)).slice(-28);
+              if (sorted.length < 2) return null;
+              const ctlVals = sorted.map(w => w.ctl ?? 0);
+              const atlVals = sorted.map(w => w.atl ?? 0);
+              const tsbVals = sorted.map((w, i) => ctlVals[i] - atlVals[i]);
+              const allVals = [...ctlVals, ...atlVals, ...tsbVals];
+              const minV = Math.min(...allVals);
+              const maxV = Math.max(...allVals);
+              const range = maxV - minV || 1;
+              const toY = v => 90 - ((v - minV) / range) * 80;
+              const w = sorted.length * 20;
+              return (
+                <div className="load-chart-section">
+                  <h3>Training Load (28 days)</h3>
+                  <div className="load-chart-card">
+                    <div className="load-legend">
+                      <span><span className="load-dot" style={{ background: "#1e8ad3" }} /> Fitness (CTL)</span>
+                      <span><span className="load-dot" style={{ background: "#fe00a4" }} /> Fatigue (ATL)</span>
+                      <span><span className="load-dot" style={{ background: "#10bc10" }} /> Form (TSB)</span>
+                    </div>
+                    <svg viewBox={`0 0 ${w} 100`} preserveAspectRatio="none" className="load-svg">
+                      <line x1="0" y1={toY(0)} x2={w} y2={toY(0)} stroke="#ccc" strokeWidth="0.5" strokeDasharray="4" />
+                      <polyline fill="none" stroke="#1e8ad3" strokeWidth="1.5" points={sorted.map((_, i) => `${i * 20 + 10},${toY(ctlVals[i])}`).join(" ")} />
+                      <polyline fill="none" stroke="#fe00a4" strokeWidth="1.5" points={sorted.map((_, i) => `${i * 20 + 10},${toY(atlVals[i])}`).join(" ")} />
+                      <polyline fill="none" stroke="#10bc10" strokeWidth="1.5" points={sorted.map((_, i) => `${i * 20 + 10},${toY(tsbVals[i])}`).join(" ")} />
+                    </svg>
+                    <div className="load-dates">
+                      {sorted.filter((_, i) => i % 7 === 0).map(w => (
+                        <span key={w.id}>{new Date(w.id + "T12:00").toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             <h3>Carb Periodization Guide (Dr. Plews)</h3>
             <div className="phase-table">
               {Object.entries(SESSION_CONFIG).map(([key, s]) => (
@@ -595,6 +676,10 @@ function App() {
                 <label className="sett-field">
                   <span>Goal Weight (lbs)</span>
                   <input type="number" value={draft.goalWeight} onChange={e => updateDraft({ goalWeight: Number(e.target.value) || 0 })} />
+                </label>
+                <label className="sett-field">
+                  <span>Daily Water Target (oz)</span>
+                  <input type="number" value={draft.waterTarget || 100} onChange={e => updateDraft({ waterTarget: Number(e.target.value) || 100 })} />
                 </label>
               </div>
             </div>
