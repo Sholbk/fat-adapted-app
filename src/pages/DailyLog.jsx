@@ -61,9 +61,12 @@ export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRe
             const zoneTimes = w.workout_doc?.zoneTimes;
             const totalZoneSecs = zoneTimes ? zoneTimes.reduce((s, z) => s + (z.secs || 0), 0) : 0;
             return (
-              <div key={i} className="wo">
+              <div key={i} className={`wo wo-${w.status || "planned"}`}>
                 <div className="wo-top">
                   <span className="wo-name">{wName}</span>
+                  {w.status === "completed" && <span className="wo-status-badge wo-status-done">Completed</span>}
+                  {w.status === "unplanned" && <span className="wo-status-badge wo-status-extra">Unplanned</span>}
+                  {w.status === "planned" && <span className="wo-status-badge wo-status-plan">Planned</span>}
                   {w.duration && <span className="wo-dur">{w.duration}</span>}
                 </div>
                 {w.type && <span className="wo-type">{w.type}</span>}

@@ -39,6 +39,7 @@ function App() {
   const [wellness, setWellness] = useState([]);
   const [planned, setPlanned] = useState([]);
   const [events, setEvents] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [date, setDate] = useState(today());
   const [page, setPage] = useState("log");
   const [loading, setLoading] = useState(true);
@@ -101,7 +102,8 @@ function App() {
     Promise.all([
       apiFetch(`wellness?oldest=${s}&newest=${e}`).catch(() => []),
       apiFetch(`events?oldest=${s}&newest=${e}`).catch(() => []),
-    ]).then(([w, ev]) => {
+      apiFetch(`activities?oldest=${s}&newest=${e}`).catch(() => []),
+    ]).then(([w, ev, act]) => {
       setWellness(prev => {
         const map = new Map(prev.map(x => [x.id, x]));
         (Array.isArray(w) ? w : []).forEach(x => map.set(x.id, x));
@@ -111,6 +113,13 @@ function App() {
         setEvents(prev => {
           const map = new Map(prev.map(x => [x.id, x]));
           ev.forEach(x => map.set(x.id, x));
+          return Array.from(map.values());
+        });
+      }
+      if (Array.isArray(act) && act.length > 0) {
+        setActivities(prev => {
+          const map = new Map(prev.map(x => [x.id, x]));
+          act.forEach(x => map.set(x.id, x));
           return Array.from(map.values());
         });
       }
@@ -129,22 +138,68 @@ function App() {
   const wd = wellness.find(w => w.id === date) || {};
   const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
 
-  // Merge Intervals.icu events with Athletica ICS — events have richer data
+  // Merge Intervals.icu events + activities with Athletica ICS
+  function mapWorkout(e, status) {
+    return {
+      summary: e.name || "",
+      description: e.description || "",
+      duration: e.moving_time ? formatDuration(e.moving_time) : "",
+      type: e.type || "",
+      icu_training_load: e.icu_training_load,
+      icu_intensity: e.icu_intensity,
+      workout_doc: e.workout_doc,
+      source: "intervals",
+      status,
+    };
+  }
+
   const dayEvents = events.filter(e => e.category === "WORKOUT" && e.start_date_local?.startsWith(date));
+  const dayActs = activities.filter(a => a.start_date_local?.startsWith(date));
   const dayICS = planned.filter(w => w.date === date);
-  // Use Intervals.icu events if available, fall back to ICS
-  const dayWorkouts = dayEvents.length > 0
-    ? dayEvents.map(e => ({
-        summary: e.name || "",
-        description: e.description || "",
-        duration: e.moving_time ? formatDuration(e.moving_time) : "",
-        type: e.type || "",
-        icu_training_load: e.icu_training_load,
-        icu_intensity: e.icu_intensity,
-        workout_doc: e.workout_doc,
-        source: "intervals",
-      }))
-    : dayICS;
+
+  let dayWorkouts;
+  if (dayEvents.length > 0 || dayActs.length > 0) {
+    const actIdSet = new Set(dayActs.map(a => a.id));
+    const plannedEvts = [];
+    const completedEvts = [];
+
+    for (const e of dayEvents) {
+      if (e.moving_time > 0 || actIdSet.has(e.id)) {
+        completedEvts.push(e);
+      } else {
+        plannedEvts.push(e);
+      }
+    }
+
+    // Add activities not already in events
+    const eventIdSet = new Set(dayEvents.map(e => e.id));
+    for (const a of dayActs) {
+      if (!eventIdSet.has(a.id)) completedEvts.push(a);
+    }
+
+    // Match completed → planned via paired_event_id
+    const matchedPlanIds = new Set();
+    const result = [];
+
+    for (const comp of completedEvts) {
+      const paired = comp.paired_event_id
+        ? plannedEvts.find(p => p.id === comp.paired_event_id)
+        : null;
+      if (paired) matchedPlanIds.add(paired.id);
+      result.push(mapWorkout(comp, paired ? "completed" : "unplanned"));
+    }
+
+    // Add remaining unmatched planned events
+    for (const plan of plannedEvts) {
+      if (!matchedPlanIds.has(plan.id)) {
+        result.push(mapWorkout(plan, "planned"));
+      }
+    }
+
+    dayWorkouts = result;
+  } else {
+    dayWorkouts = dayICS.map(w => ({ ...w, status: "planned" }));
+  }
 
   const sType = getSessionTypeFromWorkouts(dayWorkouts, load);
   const session = SESSION_CONFIG[sType];
