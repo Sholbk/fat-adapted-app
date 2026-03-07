@@ -121,6 +121,30 @@
 .wo-status-extra { background: #fff3e0; color: #e68a00; }
 .wo-status-plan { background: #e8f0ff; color: #043bb1; }
 .wo-strava-note { display: block; font-size: 0.65rem; color: #999; font-style: italic; margin-top: 0.25rem; }
+
+/* ── Workout Glossary ── */
+.wo-glossary { margin-top: 0.75rem; border-top: 1px solid #e0e0e0; padding-top: 0.5rem; }
+.wo-glossary-toggle {
+  display: flex; align-items: center; gap: 0.35rem; background: none; border: none;
+  color: #999; font-size: 0.7rem; font-weight: 600; cursor: pointer; font-family: inherit;
+  padding: 0.25rem 0; transition: color 0.15s;
+}
+.wo-glossary-toggle:hover { color: #1e8ad3; }
+.wo-glossary-toggle svg { flex-shrink: 0; }
+.wo-glossary-body { margin-top: 0.5rem; animation: fadeSlideIn 0.2s ease-out; }
+.wo-glossary-section { margin-bottom: 0.75rem; }
+.wo-glossary-section h4 {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #1e8ad3; font-weight: 700; margin-bottom: 0.35rem;
+  padding-bottom: 0.2rem; border-bottom: 1px solid #e8e8e8;
+}
+.wo-glossary-body dl { margin: 0; padding: 0; }
+.wo-glossary-body dt {
+  font-size: 0.75rem; font-weight: 700; color: #333; margin-top: 0.3rem;
+}
+.wo-glossary-body dd {
+  font-size: 0.7rem; color: #777; margin: 0.1rem 0 0 0; line-height: 1.4;
+}
 .wo-top { display: flex; justify-content: space-between; gap: 0.4rem; margin-bottom: 0.25rem; }
 .wo-name { font-size: 0.85rem; font-weight: 700; color: #000000; }
 .wo-dur { font-size: 0.7rem; color: #1e8ad3; font-weight: 600; white-space: nowrap; }
@@ -615,6 +639,12 @@
 .dark .wo-status-extra { background: #3a2a1a; color: #ff9800; }
 .dark .wo-status-plan { background: #1a2a4a; color: #4da6e8; }
 .dark .wo-strava-note { color: #666; }
+.dark .wo-glossary { border-top-color: #2a2a4a; }
+.dark .wo-glossary-toggle { color: #666; }
+.dark .wo-glossary-toggle:hover { color: #4da6e8; }
+.dark .wo-glossary-section h4 { color: #4da6e8; border-bottom-color: #2a2a4a; }
+.dark .wo-glossary-body dt { color: #e0e0e0; }
+.dark .wo-glossary-body dd { color: #888; }
 .dark .wo-type { color: #666; }
 .dark .wo-meta-item { color: #999; }
 .dark .wo-meta-item strong { color: #4da6e8; }
