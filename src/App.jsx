@@ -177,7 +177,23 @@ function App() {
 
   const userName = settings.name || "Stephanie";
 
-  if (loading && wellness.length === 0) return <div className="app-loading">Loading your training data...</div>;
+  if (loading && wellness.length === 0) return (
+    <div className={`layout${settings.darkMode ? " dark" : ""}`}>
+      <Sidebar page={page} setPage={setPage} />
+      <main className="main">
+        <div className="skeleton-container">
+          <div className="skeleton skeleton-topbar" />
+          <div className="skeleton-row">
+            <div className="skeleton skeleton-card" />
+            <div className="skeleton skeleton-card" />
+            <div className="skeleton skeleton-card" />
+          </div>
+          <div className="skeleton skeleton-wide" />
+          <div className="skeleton skeleton-wide" />
+        </div>
+      </main>
+    </div>
+  );
 
   return (
     <div className={`layout${settings.darkMode ? " dark" : ""}`}>
@@ -191,6 +207,7 @@ function App() {
       <main className="main">
         <Topbar date={date} shiftDate={shiftDate} settings={settings} setSettings={setSettings} session={session} userName={userName} />
 
+        <div className="page-fade" key={page}>
         {page === "log" && (
           <DailyLog
             date={date} macros={macros} session={session} sType={sType}
@@ -238,6 +255,7 @@ function App() {
             syncing={syncing} setSyncing={setSyncing}
           />
         )}
+        </div>
       </main>
     </div>
   );

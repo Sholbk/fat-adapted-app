@@ -22,7 +22,7 @@ export default function Topbar({ date, shiftDate, settings, setSettings, session
   const streak = calcStreak();
 
   return (
-    <div className="topbar">
+    <div className="topbar sticky-topbar">
       <div className="topbar-greet">
         <h1>{greeting}, {userName}!</h1>
         <p className="topbar-phase" style={{ color: session.color }}>{session.label} — {session.target}</p>

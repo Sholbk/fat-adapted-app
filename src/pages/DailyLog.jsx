@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { SESSION_CONFIG } from "../utils/macros.js";
 import { classifyWorkout, classifyByIntensity } from "../utils/classification.js";
 import { MEALS, getLog, setLog, getWater, setWater, getSupps, setSupps, COMMON_SUPPS, getMood, setMood, getNotes, setNotes, sum } from "../utils/storage.js";
@@ -145,21 +146,9 @@ export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRe
         }}>Copy yesterday's meals</button>
       </div>
 
-      {mealData.map(({ key, label, entries }) => {
-        const mSum = sum(entries);
-        return (
-          <div key={key} className="meal-card">
-            <div className="meal-head">
-              <h3>{label}</h3>
-              <span className="meal-rec">Recommended: {Math.round(macros.cal / MEALS.length)} cals · {Math.round(macros.carbs / MEALS.length)}g carbs</span>
-            </div>
-            {entries.length === 0 && <p className="meal-empty">No foods logged yet — search or scan to add</p>}
-            <Entries items={entries} onRemove={(id) => rmMeal(key, id)} />
-            {mSum.cal > 0 && <div className="meal-sum">{mSum.cal} kcal — F:{mSum.fat}g P:{mSum.protein}g C:{mSum.carbs}g</div>}
-            <FoodInput onAdd={(entry) => addMeal(key, entry)} placeholder={`+ Add ${label}`} />
-          </div>
-        );
-      })}
+      {mealData.map(({ key, label, entries }) => (
+        <CollapsibleMeal key={key} mealKey={key} label={label} entries={entries} macros={macros} addMeal={addMeal} rmMeal={rmMeal} />
+      ))}
 
       <div className="meal-card">
         <div className="meal-head"><h3>How Do You Feel?</h3></div>
@@ -180,6 +169,46 @@ export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRe
         <textarea className="daily-notes" placeholder="Energy levels, mood, digestion, anything on your mind..." value={getNotes(date)} onChange={e => { setNotes(date, e.target.value); refresh(); }} />
       </div>
     </>
+  );
+}
+
+const MEAL_ICONS = {
+  breakfast: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
+  lunch: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>,
+  dinner: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><path d="M12 2a7 7 0 017 7c0 5-7 11-7 11S5 14 5 9a7 7 0 017-7z" fill="none"/></svg>,
+  snacks: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
+};
+
+function CollapsibleMeal({ mealKey, label, entries, macros, addMeal, rmMeal }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const mSum = sum(entries);
+  return (
+    <div className={`meal-card${collapsed ? " meal-collapsed" : ""}`}>
+      <div className="meal-head meal-head-toggle" onClick={() => setCollapsed(c => !c)}>
+        <div className="meal-head-left">
+          <span className="meal-icon">{MEAL_ICONS[mealKey] || MEAL_ICONS.snacks}</span>
+          <h3>{label}</h3>
+          {entries.length > 0 && <span className="meal-count">{entries.length}</span>}
+        </div>
+        {mSum.cal > 0 && <span className="meal-head-cal">{mSum.cal} kcal</span>}
+        <span className="meal-rec">Rec: {Math.round(macros.cal / MEALS.length)} cals</span>
+        <span className={`meal-chevron${collapsed ? " meal-chevron-down" : ""}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </div>
+      {!collapsed && <>
+        {entries.length === 0 && (
+          <div className="meal-empty-state">
+            <span className="meal-empty-icon">{MEAL_ICONS[mealKey] || MEAL_ICONS.snacks}</span>
+            <p>No foods logged for {label.toLowerCase()}</p>
+            <span className="meal-empty-hint">Search, scan a barcode, or use voice to add food</span>
+          </div>
+        )}
+        <Entries items={entries} onRemove={(id) => rmMeal(mealKey, id)} />
+        {mSum.cal > 0 && <div className="meal-sum">{mSum.cal} kcal — F:{mSum.fat}g P:{mSum.protein}g C:{mSum.carbs}g</div>}
+        <FoodInput onAdd={(entry) => addMeal(mealKey, entry)} placeholder={`+ Add ${label}`} />
+      </>}
+    </div>
   );
 }
 
