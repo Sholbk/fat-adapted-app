@@ -432,6 +432,14 @@ function App() {
                     <option value="male">Male</option>
                   </select>
                 </label>
+                <label className="sett-field">
+                  <span>Time Zone</span>
+                  <select value={draft.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone} onChange={e => updateDraft({ timezone: e.target.value })}>
+                    {Intl.supportedValuesOf("timeZone").map(tz => (
+                      <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </div>
 

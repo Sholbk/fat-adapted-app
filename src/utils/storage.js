@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS = {
   gender: "female",
   goalWeight: 213,
   name: "Stephanie",
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
 export function getLog(d, m) {
