@@ -1,0 +1,239 @@
+import { SESSION_CONFIG } from "../utils/macros.js";
+import { classifyWorkout } from "../utils/classification.js";
+import { MEALS, getLog, setLog, getWater, setWater, getSupps, setSupps, COMMON_SUPPS, getMood, setMood, getNotes, setNotes, sum } from "../utils/storage.js";
+import { fmt } from "../utils/parsing.js";
+import FoodInput from "../components/FoodInput.jsx";
+import Entries from "../components/Entries.jsx";
+import Ring from "../components/Ring.jsx";
+import MacroRow from "../components/MacroRow.jsx";
+
+export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRecTotal, dayWorkouts, wellness, mealData, mealTotals, trainEntries, trainTotals, all, addMeal, rmMeal, addTrain, rmTrain, refresh, showToast, settings }) {
+  const wd = wellness.find(w => w.id === date) || {};
+  const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
+
+  return (
+    <>
+      <div className="cards-row">
+        <div className="card">
+          <h2>Non-Training Fuel</h2>
+          <MacroRow label="Fat" consumed={mealTotals.fat} target={Math.max(macros.fat - fuelRecTotal.fat, 0)} color="#fe00a4" />
+          <MacroRow label="Protein" consumed={mealTotals.protein} target={Math.max(macros.protein - fuelRecTotal.protein, 0)} color="#043bb1" />
+          <MacroRow label="Carbs" consumed={mealTotals.carbs} target={Math.max(macros.carbs - fuelRecTotal.carbs, 0)} color="#10bc10" />
+          <div className="card-cal"><span>{mealTotals.cal}</span> / {Math.max(macros.cal - fuelRecTotal.cal, 0)} kcal</div>
+        </div>
+
+        <div className="card">
+          <h2>Training Fuel</h2>
+          <div className="fuel-recs">
+            <div className="fuel-r"><span className="fuel-ph">Pre</span><span>{session.fuel.pre}</span></div>
+            <div className="fuel-r"><span className="fuel-ph">During</span><span>{session.fuel.during}</span></div>
+            <div className="fuel-r"><span className="fuel-ph">Post</span><span>{session.fuel.post}</span></div>
+          </div>
+          <div className="fuel-rec-macros">
+            <div className="fuel-rec-title">Recommended Training Fuel</div>
+            <div className="fuel-rec-table">
+              <div className="fuel-rec-row fuel-rec-header"><span></span><span>Carbs</span><span>Protein</span><span>Fat</span></div>
+              <div className="fuel-rec-row"><span className="fuel-ph">Pre</span><span>{fuelRec.pre.carbs}g</span><span>{fuelRec.pre.protein}g</span><span>{fuelRec.pre.fat}g</span></div>
+              <div className="fuel-rec-row"><span className="fuel-ph">During</span><span>{fuelRec.during.carbs}g</span><span>{fuelRec.during.protein}g</span><span>{fuelRec.during.fat}g</span></div>
+              <div className="fuel-rec-row"><span className="fuel-ph">Post</span><span>{fuelRec.post.carbs}g</span><span>{fuelRec.post.protein}g</span><span>{fuelRec.post.fat}g</span></div>
+              <div className="fuel-rec-row fuel-rec-total"><span>Total</span><span>{fuelRecTotal.carbs}g</span><span>{fuelRecTotal.protein}g</span><span>{fuelRecTotal.fat}g</span></div>
+            </div>
+            <div className="fuel-rec-cal">{fuelRecTotal.cal} kcal recommended</div>
+          </div>
+          {trainEntries.length > 0 && <>
+            <div className="fuel-logged-head">Logged</div>
+            <Entries items={trainEntries} onRemove={rmTrain} />
+            <div className="fuel-sum">{trainTotals.cal} kcal — F:{trainTotals.fat}g P:{trainTotals.protein}g C:{trainTotals.carbs}g</div>
+          </>}
+          <FoodInput onAdd={addTrain} placeholder="Log training fuel..." />
+        </div>
+
+        <div className="card">
+          <h2>Training Sessions</h2>
+          {dayWorkouts.length > 0 ? dayWorkouts.map((w, i) => (
+            <div key={i} className="wo">
+              <div className="wo-top">
+                <span className="wo-name">{w.summary}</span>
+                {w.duration && <span className="wo-dur">{w.duration}</span>}
+              </div>
+              <div className="wo-desc">{w.description.split("\n").filter(l => l.trim() && !l.startsWith("Duration:")).slice(0, 4).join("\n")}</div>
+              <span className="wo-badge" style={{ color: SESSION_CONFIG[classifyWorkout(w.summary)].color }}>{SESSION_CONFIG[classifyWorkout(w.summary)].label}</span>
+            </div>
+          )) : <p className="wo-empty">{load > 0 ? "Activity recorded — no planned workout" : "Rest day"}</p>}
+          {(load > 0 || wd.ctl != null) && (
+            <div className="wo-stats">
+              {load > 0 && <div><span>Load</span><strong>{load}</strong></div>}
+              {wd.ctl != null && <div><span>Fitness</span><strong>{wd.ctl.toFixed(1)}</strong></div>}
+              {wd.atl != null && <div><span>Fatigue</span><strong>{wd.atl.toFixed(1)}</strong></div>}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="cards-row cards-row-2">
+        <div className="card">
+          <h2>Hydration</h2>
+          <HydrationCard date={date} settings={settings} refresh={refresh} />
+        </div>
+        <div className="card">
+          <h2>Supplements</h2>
+          <SupplementsCard date={date} refresh={refresh} />
+        </div>
+      </div>
+
+      <div className="goals-section">
+        <h2 className="goals-title">Total Macros</h2>
+        <div className="goals-row">
+          <Ring value={all.cal} max={macros.cal} color="#1e8ad3" label="Calories" size={120} />
+          <Ring value={all.fat} max={macros.fat} color="#fe00a4" label="Fat" />
+          <Ring value={all.protein} max={macros.protein} color="#043bb1" label="Protein" />
+          <Ring value={all.carbs} max={macros.carbs} color="#10bc10" label="Carbs" />
+        </div>
+        {all.cal > 0 && <PieCharts all={all} macros={macros} />}
+      </div>
+
+      <div className="copy-meals-row">
+        <button className="copy-meals-btn" onClick={() => {
+          const prev = new Date(date + "T00:00:00");
+          prev.setDate(prev.getDate() - 1);
+          const prevDate = fmt(prev);
+          let copied = 0;
+          MEALS.forEach(m => {
+            const prevEntries = getLog(prevDate, m);
+            if (prevEntries.length > 0) {
+              const existing = getLog(date, m);
+              const newEntries = prevEntries.map(e => ({ ...e, id: Date.now() + Math.random() }));
+              setLog(date, m, [...existing, ...newEntries]);
+              copied += newEntries.length;
+            }
+          });
+          if (copied > 0) { refresh(); showToast(`Copied ${copied} items from yesterday`); }
+          else showToast("No meals to copy from yesterday");
+        }}>Copy yesterday's meals</button>
+      </div>
+
+      {mealData.map(({ key, label, entries }) => {
+        const mSum = sum(entries);
+        return (
+          <div key={key} className="meal-card">
+            <div className="meal-head">
+              <h3>{label}</h3>
+              <span className="meal-rec">Recommended: {Math.round(macros.cal / MEALS.length)} cals · {Math.round(macros.carbs / MEALS.length)}g carbs</span>
+            </div>
+            {entries.length === 0 && <p className="meal-empty">No foods logged yet — search or scan to add</p>}
+            <Entries items={entries} onRemove={(id) => rmMeal(key, id)} />
+            {mSum.cal > 0 && <div className="meal-sum">{mSum.cal} kcal — F:{mSum.fat}g P:{mSum.protein}g C:{mSum.carbs}g</div>}
+            <FoodInput onAdd={(entry) => addMeal(key, entry)} placeholder={`+ Add ${label}`} />
+          </div>
+        );
+      })}
+
+      <div className="meal-card">
+        <div className="meal-head"><h3>How Do You Feel?</h3></div>
+        <div className="mood-picker">
+          {[
+            { value: "great", face: "\u{1F601}", label: "Great" },
+            { value: "good", face: "\u{1F642}", label: "Good" },
+            { value: "okay", face: "\u{1F610}", label: "Okay" },
+            { value: "meh", face: "\u{1F615}", label: "Meh" },
+            { value: "bad", face: "\u{1F61E}", label: "Bad" },
+          ].map(m => (
+            <button key={m.value} className={`mood-btn${getMood(date) === m.value ? " active" : ""}`} onClick={() => { setMood(date, getMood(date) === m.value ? "" : m.value); refresh(); }}>
+              <span className="mood-face">{m.face}</span>
+              <span className="mood-label">{m.label}</span>
+            </button>
+          ))}
+        </div>
+        <textarea className="daily-notes" placeholder="Energy levels, mood, digestion, anything on your mind..." value={getNotes(date)} onChange={e => { setNotes(date, e.target.value); refresh(); }} />
+      </div>
+    </>
+  );
+}
+
+function HydrationCard({ date, settings, refresh }) {
+  const waterOz = getWater(date);
+  const waterTarget = settings.waterTarget || 100;
+  const pct = Math.min((waterOz / waterTarget) * 100, 100);
+  return (
+    <>
+      <div className="water-display">
+        <span className="water-amount">{waterOz}</span>
+        <span className="water-unit">/ {waterTarget} oz</span>
+      </div>
+      <div className="mrow-bar" style={{ marginBottom: "0.5rem" }}>
+        <div style={{ width: `${pct}%`, background: waterOz >= waterTarget ? "#10bc10" : "#1e8ad3" }} />
+      </div>
+      <div className="water-btns">
+        {[8, 12, 16, 24].map(oz => (
+          <button key={oz} className="water-btn" onClick={() => { setWater(date, waterOz + oz); refresh(); }}>+{oz}oz</button>
+        ))}
+        <button className="water-btn water-undo" onClick={() => { setWater(date, Math.max(0, waterOz - 8)); refresh(); }}>Undo</button>
+      </div>
+    </>
+  );
+}
+
+function SupplementsCard({ date, refresh }) {
+  const supps = getSupps(date);
+  return (
+    <>
+      <div className="supp-tags">
+        {COMMON_SUPPS.map(s => {
+          const taken = supps.includes(s);
+          return (
+            <button key={s} className={`supp-tag${taken ? " taken" : ""}`} onClick={() => {
+              setSupps(date, taken ? supps.filter(x => x !== s) : [...supps, s]);
+              refresh();
+            }}>{taken ? "\u2713 " : ""}{s}</button>
+          );
+        })}
+      </div>
+      {supps.length > 0 && <div className="supp-count">{supps.length} supplement{supps.length !== 1 ? "s" : ""} taken today</div>}
+    </>
+  );
+}
+
+function PieCharts({ all, macros }) {
+  const fatCal = all.fat * 9, proCal = all.protein * 4, carbCal = all.carbs * 4;
+  const total = fatCal + proCal + carbCal || 1;
+  const fatPct = Math.round(fatCal / total * 100);
+  const proPct = Math.round(proCal / total * 100);
+  const carbPct = 100 - fatPct - proPct;
+  const tFatCal = macros.fat * 9, tProCal = macros.protein * 4, tCarbCal = macros.carbs * 4;
+  const tTotal = tFatCal + tProCal + tCarbCal || 1;
+  const tFatPct = Math.round(tFatCal / tTotal * 100);
+  const tProPct = Math.round(tProCal / tTotal * 100);
+  const tCarbPct = 100 - tFatPct - tProPct;
+
+  function pieSlices(slices) {
+    let angle = 0;
+    return slices.map(({ pct, color }) => {
+      const start = angle;
+      angle += pct / 100 * 360;
+      const end = angle;
+      const r = 40, cx = 50, cy = 50;
+      const rad = a => (a - 90) * Math.PI / 180;
+      const x1 = cx + r * Math.cos(rad(start)), y1 = cy + r * Math.sin(rad(start));
+      const x2 = cx + r * Math.cos(rad(end)), y2 = cy + r * Math.sin(rad(end));
+      const large = pct > 50 ? 1 : 0;
+      if (pct >= 100) return <circle key={color} cx={cx} cy={cy} r={r} fill={color} />;
+      if (pct <= 0) return null;
+      return <path key={color} d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z`} fill={color} />;
+    });
+  }
+
+  return (
+    <div className="pie-section">
+      <div className="pie-group">
+        <span className="pie-label">Current</span>
+        <svg viewBox="0 0 100 100" className="pie-svg">{pieSlices([{ pct: fatPct, color: "#fe00a4" }, { pct: proPct, color: "#043bb1" }, { pct: carbPct, color: "#10bc10" }])}</svg>
+        <div className="pie-legend"><span>F:{fatPct}%</span><span>P:{proPct}%</span><span>C:{carbPct}%</span></div>
+      </div>
+      <div className="pie-group">
+        <span className="pie-label">Target</span>
+        <svg viewBox="0 0 100 100" className="pie-svg">{pieSlices([{ pct: tFatPct, color: "#fe00a4" }, { pct: tProPct, color: "#043bb1" }, { pct: tCarbPct, color: "#10bc10" }])}</svg>
+        <div className="pie-legend"><span>F:{tFatPct}%</span><span>P:{tProPct}%</span><span>C:{tCarbPct}%</span></div>
+      </div>
+    </div>
+  );
+}
