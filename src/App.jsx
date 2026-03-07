@@ -17,6 +17,7 @@ import WeeklySummary from "./pages/WeeklySummary.jsx";
 import PhaseOfTraining from "./pages/PhaseOfTraining.jsx";
 import MealIdeas from "./pages/MealIdeas.jsx";
 import RecipeBuilder from "./pages/RecipeBuilder.jsx";
+import FuelTesting from "./pages/FuelTesting.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 
 function formatDuration(secs) {
@@ -296,6 +297,10 @@ function App() {
           <RecipeBuilder
             date={date} refresh={refresh} showToast={showToast} addMeal={addMeal}
           />
+        )}
+
+        {page === "fueltest" && (
+          <FuelTesting date={date} refresh={refresh} showToast={showToast} />
         )}
 
         {page === "settings" && (

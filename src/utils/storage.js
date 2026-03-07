@@ -94,6 +94,14 @@ export function saveRecipes(recipes) {
   localStorage.setItem("ff-recipes", JSON.stringify(recipes));
 }
 
+export function getFuelTests() {
+  try { return JSON.parse(localStorage.getItem("ff-fuel-tests") || "[]"); } catch { return []; }
+}
+
+export function saveFuelTests(tests) {
+  localStorage.setItem("ff-fuel-tests", JSON.stringify(tests));
+}
+
 export function sum(entries) {
   return entries.reduce((a, e) => ({
     fat: a.fat + e.fat,
