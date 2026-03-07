@@ -249,10 +249,29 @@
 .sett-save { display: block; width: 100%; padding: 0.75rem; background: #043bb1; color: #ffffff; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s; margin-bottom: 0.75rem; }
 .sett-save:hover { background: #1e8ad3; }
 
+/* ── Mobile Bottom Nav ── */
+.mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background: #fefefe; border-top: 1px solid #888888;
+  padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom, 0px));
+}
+.mobile-nav nav {
+  display: flex; justify-content: space-around; align-items: center;
+}
+.mobile-nav button {
+  display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+  background: none; border: none; color: #555555; font-size: 0.6rem; font-weight: 600;
+  cursor: pointer; font-family: inherit; padding: 0.3rem 0.5rem; transition: color 0.15s;
+}
+.mobile-nav button svg { width: 20px; height: 20px; }
+.mobile-nav button.active { color: #1e8ad3; }
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .sidebar { display: none; }
-  .main { margin-left: 0; padding: 1rem; background: #f0f2f5; }
+  .mobile-nav { display: block; }
+  .main { margin-left: 0; padding: 1rem 1rem calc(1rem + 60px + env(safe-area-inset-bottom, 0px)); background: #f0f2f5; }
   .cards-row { grid-template-columns: 1fr; }
   .goals-row { flex-wrap: wrap; }
   .idea-grid { grid-template-columns: 1fr; }
