@@ -4,7 +4,7 @@ import "./App.css";
 import { fmt, today, parseICS } from "./utils/parsing.js";
 import { classifyWorkout, getSessionTypeFromWorkouts } from "./utils/classification.js";
 import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
-import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum } from "./utils/storage.js";
+import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, getWeightLog, addWeightEntry } from "./utils/storage.js";
 import { apiFetch } from "./utils/api.js";
 
 import FoodInput from "./components/FoodInput.jsx";
@@ -15,6 +15,41 @@ import MacroRow from "./components/MacroRow.jsx";
 function getIcsUrl(raw) {
   if (!raw) return null;
   return import.meta.env.DEV ? raw : `/api/ics-proxy?url=${encodeURIComponent(raw)}`;
+}
+
+function getWeekDates(currentDate) {
+  const d = new Date(currentDate + "T00:00:00");
+  const day = d.getDay();
+  const mon = new Date(d);
+  mon.setDate(d.getDate() - ((day + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => {
+    const dd = new Date(mon);
+    dd.setDate(mon.getDate() + i);
+    return fmt(dd);
+  });
+}
+
+function getDayTotals(date) {
+  const mealEntries = MEALS.flatMap(m => getLog(date, m));
+  const trainEntries = getTLog(date);
+  return sum([...mealEntries, ...trainEntries]);
+}
+
+function exportCSV(weekDates, weekData, macroTargets) {
+  const header = "Date,Calories Target,Calories Consumed,Fat Target (g),Fat Consumed (g),Protein Target (g),Protein Consumed (g),Carbs Target (g),Carbs Consumed (g)";
+  const rows = weekDates.map((d, i) => {
+    const t = weekData[i];
+    const m = macroTargets[i];
+    return `${d},${m.cal},${t.cal},${m.fat},${t.fat},${m.protein},${t.protein},${m.carbs},${t.carbs}`;
+  });
+  const csv = [header, ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `fuelflow-week-${weekDates[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 const MEAL_PLANS = {
@@ -191,6 +226,10 @@ function App() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Daily Log
           </button>
+          <button className={page === "weekly" ? "active" : ""} onClick={() => setPage("weekly")}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            Weekly Summary
+          </button>
           <button className={page === "phase" ? "active" : ""} onClick={() => setPage("phase")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             Phase of Training
@@ -212,9 +251,9 @@ function App() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Log
           </button>
-          <button className={page === "phase" ? "active" : ""} onClick={() => setPage("phase")}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Phase
+          <button className={page === "weekly" ? "active" : ""} onClick={() => setPage("weekly")}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            Weekly
           </button>
           <button className={page === "meals" ? "active" : ""} onClick={() => setPage("meals")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
@@ -309,6 +348,26 @@ function App() {
             </div>
           </div>
 
+          <div className="copy-meals-row">
+            <button className="copy-meals-btn" onClick={() => {
+              const prev = new Date(date + "T00:00:00");
+              prev.setDate(prev.getDate() - 1);
+              const prevDate = fmt(prev);
+              let copied = 0;
+              MEALS.forEach(m => {
+                const prevEntries = getLog(prevDate, m);
+                if (prevEntries.length > 0) {
+                  const existing = getLog(date, m);
+                  const newEntries = prevEntries.map(e => ({ ...e, id: Date.now() + Math.random() }));
+                  setLog(date, m, [...existing, ...newEntries]);
+                  copied += newEntries.length;
+                }
+              });
+              if (copied > 0) { refresh(); showToast(`Copied ${copied} items from yesterday`); }
+              else showToast("No meals to copy from yesterday");
+            }}>Copy yesterday's meals</button>
+          </div>
+
           {mealData.map(({ key, label, entries }) => {
             const mSum = sum(entries);
             return (
@@ -325,6 +384,73 @@ function App() {
             );
           })}
         </>}
+
+        {page === "weekly" && (() => {
+          const weekDates = getWeekDates(date);
+          const weekData = weekDates.map(d => getDayTotals(d));
+          const weekTargets = weekDates.map(d => {
+            const dWorkouts = planned.filter(w => w.date === d);
+            const dWd = wellness.find(w => w.id === d) || {};
+            const dLoad = dWd.atlLoad ?? dWd.ctlLoad ?? 0;
+            const dSType = getSessionTypeFromWorkouts(dWorkouts, dLoad);
+            return calcMacros(dSType, W, settings.height, settings.age, calAdj, settings.gender);
+          });
+          const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+          return (
+            <div className="page-content" style={{ maxWidth: 800 }}>
+              <div className="weekly-header">
+                <h2>Weekly Summary</h2>
+                <button className="export-btn" onClick={() => exportCSV(weekDates, weekData, weekTargets)}>Export CSV</button>
+              </div>
+              <p className="page-sub">Week of {new Date(weekDates[0] + "T12:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} — {new Date(weekDates[6] + "T12:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+              <div className="weekly-grid">
+                <div className="weekly-row weekly-row-header">
+                  <span className="weekly-day">Day</span>
+                  <span>Calories</span>
+                  <span>Fat</span>
+                  <span>Protein</span>
+                  <span>Carbs</span>
+                </div>
+                {weekDates.map((d, i) => {
+                  const t = weekData[i];
+                  const m = weekTargets[i];
+                  const isToday = d === today();
+                  return (
+                    <div key={d} className={`weekly-row${isToday ? " weekly-today" : ""}`} onClick={() => { setDate(d); setPage("log"); }} style={{ cursor: "pointer" }}>
+                      <span className="weekly-day">
+                        <strong>{dayNames[i]}</strong>
+                        <span className="weekly-date-num">{new Date(d + "T12:00").getDate()}</span>
+                      </span>
+                      <span className="weekly-cell">
+                        <div className="weekly-bar-bg"><div className="weekly-bar" style={{ width: `${Math.min((t.cal / m.cal) * 100, 100)}%`, background: t.cal > m.cal ? "#fe00a4" : "#1e8ad3" }} /></div>
+                        <span className="weekly-nums">{t.cal} / {m.cal}</span>
+                      </span>
+                      <span className="weekly-cell">
+                        <div className="weekly-bar-bg"><div className="weekly-bar" style={{ width: `${Math.min((t.fat / m.fat) * 100, 100)}%`, background: t.fat > m.fat ? "#fe00a4" : "#fe00a4" }} /></div>
+                        <span className="weekly-nums">{t.fat}g / {m.fat}g</span>
+                      </span>
+                      <span className="weekly-cell">
+                        <div className="weekly-bar-bg"><div className="weekly-bar" style={{ width: `${Math.min((t.protein / m.protein) * 100, 100)}%`, background: "#043bb1" }} /></div>
+                        <span className="weekly-nums">{t.protein}g / {m.protein}g</span>
+                      </span>
+                      <span className="weekly-cell">
+                        <div className="weekly-bar-bg"><div className="weekly-bar" style={{ width: `${Math.min((t.carbs / m.carbs) * 100, 100)}%`, background: "#10bc10" }} /></div>
+                        <span className="weekly-nums">{t.carbs}g / {m.carbs}g</span>
+                      </span>
+                    </div>
+                  );
+                })}
+                <div className="weekly-row weekly-row-avg">
+                  <span className="weekly-day"><strong>Avg</strong></span>
+                  <span className="weekly-nums">{Math.round(weekData.reduce((s, d) => s + d.cal, 0) / 7)} kcal</span>
+                  <span className="weekly-nums">{Math.round(weekData.reduce((s, d) => s + d.fat, 0) / 7)}g</span>
+                  <span className="weekly-nums">{Math.round(weekData.reduce((s, d) => s + d.protein, 0) / 7)}g</span>
+                  <span className="weekly-nums">{Math.round(weekData.reduce((s, d) => s + d.carbs, 0) / 7)}g</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {page === "phase" && (
           <div className="page-content">
@@ -392,6 +518,24 @@ function App() {
                   );
                 })}
               </div>
+              <button className="use-plan-btn" onClick={() => {
+                const mealNames = ["breakfast", "lunch", "dinner", "snack"];
+                let added = 0;
+                plans.forEach((plan, i) => {
+                  const meal = mealNames[i];
+                  const existing = getLog(date, meal);
+                  const entries = plan.foods.map(f => ({
+                    id: Date.now() + Math.random() + added,
+                    name: f.name,
+                    fat: f.f, protein: f.p, carbs: f.c
+                  }));
+                  setLog(date, meal, [...existing, ...entries]);
+                  added += entries.length;
+                });
+                refresh();
+                showToast(`Added ${added} foods from meal plan`);
+                setPage("log");
+              }}>Use this plan for today</button>
               <div className="mp-note">
                 <strong>Session note:</strong> {session.note}
               </div>
@@ -453,6 +597,50 @@ function App() {
                   <input type="number" value={draft.goalWeight} onChange={e => updateDraft({ goalWeight: Number(e.target.value) || 0 })} />
                 </label>
               </div>
+            </div>
+
+            <div className="settings-card">
+              <h3>Weight Log</h3>
+              <div className="weight-log-input">
+                <input type="number" placeholder="Today's weight (lbs)" id="weight-input" step="0.1" />
+                <button className="weight-log-btn" onClick={() => {
+                  const inp = document.getElementById("weight-input");
+                  const w = parseFloat(inp.value);
+                  if (w > 0) { addWeightEntry(date, w); inp.value = ""; refresh(); showToast(`Weight logged: ${w} lbs`); }
+                }}>Log Weight</button>
+              </div>
+              {(() => {
+                const wlog = getWeightLog();
+                const recent = wlog.slice(-14);
+                if (recent.length === 0) return <p className="meal-empty">No weight entries yet</p>;
+                const min = Math.min(...recent.map(e => e.weight));
+                const max = Math.max(...recent.map(e => e.weight));
+                const range = max - min || 1;
+                return (
+                  <div className="weight-chart">
+                    <div className="weight-chart-labels">
+                      <span>{max} lbs</span>
+                      <span>{min} lbs</span>
+                    </div>
+                    <div className="weight-chart-area">
+                      <svg viewBox={`0 0 ${recent.length * 40} 100`} preserveAspectRatio="none" className="weight-svg">
+                        <polyline
+                          fill="none" stroke="#1e8ad3" strokeWidth="2"
+                          points={recent.map((e, i) => `${i * 40 + 20},${100 - ((e.weight - min) / range) * 80 - 10}`).join(" ")}
+                        />
+                        {recent.map((e, i) => (
+                          <circle key={i} cx={i * 40 + 20} cy={100 - ((e.weight - min) / range) * 80 - 10} r="3" fill="#1e8ad3" />
+                        ))}
+                      </svg>
+                      <div className="weight-chart-dates">
+                        {recent.map((e, i) => (
+                          <span key={i}>{new Date(e.date + "T12:00").toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <button className="sett-save" onClick={handleSave}>{saved ? "Saved!" : "Save Settings"}</button>

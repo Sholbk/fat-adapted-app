@@ -36,6 +36,17 @@ export function setTLog(d, e) {
   localStorage.setItem(`ff-train-${d}`, JSON.stringify(e));
 }
 
+export function getWeightLog() {
+  try { return JSON.parse(localStorage.getItem("ff-weight-log") || "[]"); } catch { return []; }
+}
+
+export function addWeightEntry(date, weight) {
+  const log = getWeightLog().filter(e => e.date !== date);
+  log.push({ date, weight });
+  log.sort((a, b) => a.date.localeCompare(b.date));
+  localStorage.setItem("ff-weight-log", JSON.stringify(log));
+}
+
 export function sum(entries) {
   return entries.reduce((a, e) => ({
     fat: a.fat + e.fat,
