@@ -28,25 +28,22 @@ async function getToken() {
 
 async function apiCall(method, params) {
   const token = await getToken();
-  const qs = new URLSearchParams({ method, format: "json", ...params });
-  const r = await fetch(`${API_URL}?${qs}`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const body = new URLSearchParams({ method, format: "json", ...params }).toString();
+  const r = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
   });
   if (!r.ok) {
     const text = await r.text();
-    throw new Error(`API error: ${r.status} ${text}`);
+    throw new Error(`API ${r.status}: ${text}`);
   }
   const json = await r.json();
   if (json.error) throw new Error(`FatSecret: ${json.error.message || JSON.stringify(json.error)}`);
   return json;
-}
-
-function parseServing(servings) {
-  // FatSecret returns servings.serving as an object (single) or array (multiple)
-  const list = Array.isArray(servings?.serving) ? servings.serving : servings?.serving ? [servings.serving] : [];
-  // Prefer "1 tsp", "1 tbsp", "1 oz", "100g" style servings; fallback to first
-  const preferred = list.find(s => /^1\s/.test(s.serving_description) && /\b(g|oz|cup|tbsp|tsp)\b/i.test(s.serving_description));
-  return preferred || list[0] || null;
 }
 
 export default async (req) => {
@@ -69,16 +66,12 @@ export default async (req) => {
 
       const list = Array.isArray(foods) ? foods : [foods];
       const results = list.map((f) => {
-        // Get all servings for this food
-        const servings = f.food_description || "";
-        // Parse the description line: "Per 100g - Calories: 876kcal | Fat: 99.52g | Carbs: 0.00g | Protein: 0.28g"
-        const calM = servings.match(/Calories:\s*([\d.]+)/);
-        const fatM = servings.match(/Fat:\s*([\d.]+)/);
-        const carbM = servings.match(/Carbs:\s*([\d.]+)/);
-        const proM = servings.match(/Protein:\s*([\d.]+)/);
-        // Parse serving size from "Per XXX -" prefix
-        const servM = servings.match(/^Per\s+(.+?)\s*-/);
-        const servingDesc = servM ? servM[1] : "1 serving";
+        const desc = f.food_description || "";
+        const calM = desc.match(/Calories:\s*([\d.]+)/);
+        const fatM = desc.match(/Fat:\s*([\d.]+)/);
+        const carbM = desc.match(/Carbs:\s*([\d.]+)/);
+        const proM = desc.match(/Protein:\s*([\d.]+)/);
+        const servM = desc.match(/^Per\s+(.+?)\s*-/);
 
         return {
           id: f.food_id,
@@ -87,7 +80,7 @@ export default async (req) => {
           fat: fatM ? parseFloat(fatM[1]) : 0,
           protein: proM ? parseFloat(proM[1]) : 0,
           carbs: carbM ? parseFloat(carbM[1]) : 0,
-          serving: servingDesc,
+          serving: servM ? servM[1] : "1 serving",
           brand: f.brand_name || null,
         };
       });
@@ -133,7 +126,6 @@ export default async (req) => {
       const foodId = data?.food_id?.value;
       if (!foodId) return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers });
 
-      // Fetch full food details
       const detail = await apiCall("food.get.v4", { food_id: foodId });
       const food = detail?.food;
       if (!food) return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers });
