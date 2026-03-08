@@ -56,7 +56,11 @@ export default function Onboarding({ authSession, onComplete }) {
     };
     saveSettings(settings);
     if (authSession?.user?.id) {
-      await backupToCloud(authSession.user.id);
+      try {
+        await backupToCloud(authSession.user.id);
+      } catch (e) {
+        console.warn("Cloud backup failed during onboarding:", e);
+      }
     }
     setSaving(false);
     onComplete(settings);
