@@ -1,6 +1,6 @@
 const DEFAULT_API_KEY = process.env.INTERVALS_API_KEY;
 const DEFAULT_ATHLETE_ID = process.env.INTERVALS_ATHLETE_ID;
-const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fuelflow-app.netlify.app";
+const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fastfuel.training";
 
 const ALLOWED_ENDPOINTS = ["wellness", "events", "activities"];
 

@@ -94,17 +94,17 @@ export default function Onboarding({ authSession, onComplete }) {
               <div className="ob-row">
                 <label className="ob-field">
                   <span>Starting Weight (lbs) *</span>
-                  <input type="number" value={data.weight} onChange={e => update({ weight: e.target.value })} placeholder="e.g. 165" />
+                  <input type="number" value={data.weight} onChange={e => update({ weight: e.target.value })} placeholder="e.g. 165" min="50" max="500" />
                 </label>
                 <label className="ob-field">
                   <span>Height (inches) *</span>
-                  <input type="number" value={data.height} onChange={e => update({ height: e.target.value })} placeholder="e.g. 68" />
+                  <input type="number" value={data.height} onChange={e => update({ height: e.target.value })} placeholder="e.g. 68" min="36" max="96" />
                 </label>
               </div>
               <div className="ob-row">
                 <label className="ob-field">
                   <span>Age *</span>
-                  <input type="number" value={data.age} onChange={e => update({ age: e.target.value })} placeholder="e.g. 35" />
+                  <input type="number" value={data.age} onChange={e => update({ age: e.target.value })} placeholder="e.g. 35" min="13" max="120" />
                 </label>
                 <label className="ob-field">
                   <span>Gender</span>

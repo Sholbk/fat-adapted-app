@@ -9,10 +9,12 @@ export const SESSION_CONFIG = {
 };
 
 export function calcMacros(type, lbs, heightIn, age, calAdj, gender) {
-  const kg = lbs / 2.205, s = SESSION_CONFIG[type];
-  const heightCm = heightIn * 2.54;
-  const bmr = 10 * kg + 6.25 * heightCm - 5 * age + (gender === "male" ? 5 : -161);
-  const tdee = bmr * 1.55 * s.calMul + (calAdj || 0);
+  const kg = Math.max((lbs || 150) / 2.205, 1);
+  const s = SESSION_CONFIG[type] || SESSION_CONFIG.rest;
+  const heightCm = Math.max((heightIn || 67) * 2.54, 1);
+  const safeAge = Math.max(age || 30, 1);
+  const bmr = 10 * kg + 6.25 * heightCm - 5 * safeAge + (gender === "male" ? 5 : -161);
+  const tdee = Math.max(bmr * 1.55 * s.calMul + (calAdj || 0), 0);
   const p = Math.round(s.proteinGkg * kg), c = Math.round(s.carbGkg * kg);
   return { cal: Math.round(tdee), fat: Math.round(Math.max(tdee - p * 4 - c * 4, 0) / 9), protein: p, carbs: c };
 }

@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { SESSION_CONFIG } from "../utils/macros.js";
 import { classifyWorkout, classifyByIntensity } from "../utils/classification.js";
-import { MEALS, getLog, setLog, getWater, setWater, getSupps, setSupps, COMMON_SUPPS, getMood, setMood, getNotes, setNotes, sum } from "../utils/storage.js";
+import { MEALS, getLog, setLog, getMood, setMood, getNotes, setNotes, sum } from "../utils/storage.js";
 import { fmt } from "../utils/parsing.js";
 import FoodInput from "../components/FoodInput.jsx";
 import Entries from "../components/Entries.jsx";
 import Ring from "../components/Ring.jsx";
 import MacroRow from "../components/MacroRow.jsx";
+import WorkoutGlossary from "../components/WorkoutGlossary.jsx";
+import HydrationCard from "../components/HydrationCard.jsx";
+import SupplementsCard from "../components/SupplementsCard.jsx";
+import PieCharts from "../components/PieCharts.jsx";
 
 const ZONE_LABELS = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7"];
 const ZONE_COLORS = ["#1e8ad3", "#10bc10", "#90c010", "#e8c010", "#e87010", "#fe00a4", "#cc0050"];
@@ -181,82 +185,6 @@ export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRe
   );
 }
 
-function WorkoutGlossary() {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="wo-glossary">
-      <button className="wo-glossary-toggle" onClick={() => setOpen(o => !o)}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        {open ? "Hide Glossary" : "What does this mean?"}
-      </button>
-      {open && (
-        <div className="wo-glossary-body">
-          <div className="wo-glossary-section">
-            <h4>Status Badges</h4>
-            <dl>
-              <dt><span className="wo-status-badge wo-status-done">Completed</span></dt>
-              <dd>Workout was in your plan and you completed it (recorded via Strava/Garmin)</dd>
-              <dt><span className="wo-status-badge wo-status-plan">Planned</span></dt>
-              <dd>Scheduled workout from your Athletica training plan — not yet completed</dd>
-              <dt><span className="wo-status-badge wo-status-extra">Unplanned</span></dt>
-              <dd>Activity recorded on Strava that wasn't part of your training plan</dd>
-            </dl>
-          </div>
-          <div className="wo-glossary-section">
-            <h4>Workout Metrics</h4>
-            <dl>
-              <dt>Load</dt>
-              <dd>Training stress score for this workout — higher means more demanding</dd>
-              <dt>Intensity</dt>
-              <dd>How hard the session is relative to your threshold (% of max)</dd>
-              <dt>Fitness (CTL)</dt>
-              <dd>Chronic Training Load — your long-term fitness trend (higher = fitter)</dd>
-              <dt>Fatigue (ATL)</dt>
-              <dd>Acute Training Load — recent training stress (higher = more tired)</dd>
-            </dl>
-          </div>
-          <div className="wo-glossary-section">
-            <h4>Heart Rate Zones</h4>
-            <dl>
-              <dt><span style={{color:"#1e8ad3"}}>Z1</span> Recovery</dt>
-              <dd>Very easy effort — active recovery, warm-up/cool-down</dd>
-              <dt><span style={{color:"#10bc10"}}>Z2</span> Endurance</dt>
-              <dd>Easy aerobic pace — fat-burning zone, builds base fitness</dd>
-              <dt><span style={{color:"#90c010"}}>Z3</span> Tempo</dt>
-              <dd>Moderate effort — comfortably hard, improves aerobic capacity</dd>
-              <dt><span style={{color:"#e8c010"}}>Z4</span> Threshold</dt>
-              <dd>Hard effort — at or near lactate threshold</dd>
-              <dt><span style={{color:"#e87010"}}>Z5</span> VO2max</dt>
-              <dd>Very hard — improves maximum oxygen uptake</dd>
-              <dt><span style={{color:"#fe00a4"}}>Z6</span> Anaerobic</dt>
-              <dd>Near-max effort — short, intense intervals</dd>
-              <dt><span style={{color:"#cc0050"}}>Z7</span> Neuromuscular</dt>
-              <dd>Max sprints — develops peak power and speed</dd>
-            </dl>
-          </div>
-          <div className="wo-glossary-section">
-            <h4>Session Types</h4>
-            <dl>
-              <dt>Endurance</dt>
-              <dd>Low intensity, long duration — prioritize fat as fuel, moderate carbs</dd>
-              <dt>Lower Tempo</dt>
-              <dd>Steady moderate effort — balanced fuel with slightly more carbs</dd>
-              <dt>Upper Tempo</dt>
-              <dd>Harder sustained effort — increase carb intake for performance</dd>
-              <dt>Threshold</dt>
-              <dd>High intensity at lactate threshold — higher carb needs</dd>
-              <dt>VO2max / Anaerobic</dt>
-              <dd>Very high intensity — maximum carb fueling for performance</dd>
-              <dt>Rest Day</dt>
-              <dd>No training — lower calories, focus on recovery nutrition</dd>
-            </dl>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 const MEAL_ICONS = {
   breakfast: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
   lunch: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>,
@@ -293,94 +221,6 @@ function CollapsibleMeal({ mealKey, label, entries, macros, addMeal, rmMeal }) {
         {mSum.cal > 0 && <div className="meal-sum">{mSum.cal} kcal — F:{mSum.fat}g P:{mSum.protein}g C:{mSum.carbs}g</div>}
         <FoodInput onAdd={(entry) => addMeal(mealKey, entry)} placeholder={`+ Add ${label}`} />
       </>}
-    </div>
-  );
-}
-
-function HydrationCard({ date, settings, refresh }) {
-  const waterOz = getWater(date);
-  const waterTarget = settings.waterTarget || 100;
-  const pct = Math.min((waterOz / waterTarget) * 100, 100);
-  return (
-    <>
-      <div className="water-display">
-        <span className="water-amount">{waterOz}</span>
-        <span className="water-unit">/ {waterTarget} oz</span>
-      </div>
-      <div className="mrow-bar" style={{ marginBottom: "0.5rem" }}>
-        <div style={{ width: `${pct}%`, background: waterOz >= waterTarget ? "#10bc10" : "#1e8ad3" }} />
-      </div>
-      <div className="water-btns">
-        {[8, 12, 16, 24].map(oz => (
-          <button key={oz} className="water-btn" onClick={() => { setWater(date, waterOz + oz); refresh(); }}>+{oz}oz</button>
-        ))}
-        <button className="water-btn water-undo" onClick={() => { setWater(date, Math.max(0, waterOz - 8)); refresh(); }}>Undo</button>
-      </div>
-    </>
-  );
-}
-
-function SupplementsCard({ date, refresh }) {
-  const supps = getSupps(date);
-  return (
-    <>
-      <div className="supp-tags">
-        {COMMON_SUPPS.map(s => {
-          const taken = supps.includes(s);
-          return (
-            <button key={s} className={`supp-tag${taken ? " taken" : ""}`} onClick={() => {
-              setSupps(date, taken ? supps.filter(x => x !== s) : [...supps, s]);
-              refresh();
-            }}>{taken ? "\u2713 " : ""}{s}</button>
-          );
-        })}
-      </div>
-      {supps.length > 0 && <div className="supp-count">{supps.length} supplement{supps.length !== 1 ? "s" : ""} taken today</div>}
-    </>
-  );
-}
-
-function PieCharts({ all, macros }) {
-  const fatCal = all.fat * 9, proCal = all.protein * 4, carbCal = all.carbs * 4;
-  const total = fatCal + proCal + carbCal || 1;
-  const fatPct = Math.round(fatCal / total * 100);
-  const proPct = Math.round(proCal / total * 100);
-  const carbPct = 100 - fatPct - proPct;
-  const tFatCal = macros.fat * 9, tProCal = macros.protein * 4, tCarbCal = macros.carbs * 4;
-  const tTotal = tFatCal + tProCal + tCarbCal || 1;
-  const tFatPct = Math.round(tFatCal / tTotal * 100);
-  const tProPct = Math.round(tProCal / tTotal * 100);
-  const tCarbPct = 100 - tFatPct - tProPct;
-
-  function pieSlices(slices) {
-    let angle = 0;
-    return slices.map(({ pct, color }) => {
-      const start = angle;
-      angle += pct / 100 * 360;
-      const end = angle;
-      const r = 40, cx = 50, cy = 50;
-      const rad = a => (a - 90) * Math.PI / 180;
-      const x1 = cx + r * Math.cos(rad(start)), y1 = cy + r * Math.sin(rad(start));
-      const x2 = cx + r * Math.cos(rad(end)), y2 = cy + r * Math.sin(rad(end));
-      const large = pct > 50 ? 1 : 0;
-      if (pct >= 100) return <circle key={color} cx={cx} cy={cy} r={r} fill={color} />;
-      if (pct <= 0) return null;
-      return <path key={color} d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z`} fill={color} />;
-    });
-  }
-
-  return (
-    <div className="pie-section">
-      <div className="pie-group">
-        <span className="pie-label">Current</span>
-        <svg viewBox="0 0 100 100" className="pie-svg">{pieSlices([{ pct: fatPct, color: "#fe00a4" }, { pct: proPct, color: "#043bb1" }, { pct: carbPct, color: "#10bc10" }])}</svg>
-        <div className="pie-legend"><span>F:{fatPct}%</span><span>P:{proPct}%</span><span>C:{carbPct}%</span></div>
-      </div>
-      <div className="pie-group">
-        <span className="pie-label">Target</span>
-        <svg viewBox="0 0 100 100" className="pie-svg">{pieSlices([{ pct: tFatPct, color: "#fe00a4" }, { pct: tProPct, color: "#043bb1" }, { pct: tCarbPct, color: "#10bc10" }])}</svg>
-        <div className="pie-legend"><span>F:{tFatPct}%</span><span>P:{tProPct}%</span><span>C:{tCarbPct}%</span></div>
-      </div>
     </div>
   );
 }

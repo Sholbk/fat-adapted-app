@@ -1,4 +1,4 @@
-const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fuelflow-app.netlify.app";
+const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fastfuel.training";
 const ALLOWED_HOSTS = ["app.athletica.ai"];
 
 export default async (req) => {

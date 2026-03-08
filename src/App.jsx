@@ -30,6 +30,10 @@ function formatDuration(secs) {
 
 function getIcsUrl(raw) {
   if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    if (parsed.hostname !== "app.athletica.ai") return null;
+  } catch { return null; }
   return import.meta.env.DEV ? raw : `/api/ics-proxy?url=${encodeURIComponent(raw)}`;
 }
 

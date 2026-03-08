@@ -1,8 +1,10 @@
 export const MEALS = ["breakfast", "lunch", "dinner", "snack"];
 
-export function getSettings() {
-  try { return JSON.parse(localStorage.getItem("ff-settings") || "null"); } catch { return null; }
+function safeGet(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; }
 }
+
+export function getSettings() { return safeGet("ff-settings", null); }
 
 export function saveSettings(s) {
   localStorage.setItem("ff-settings", JSON.stringify(s));
@@ -22,25 +24,19 @@ export const DEFAULT_SETTINGS = {
   darkMode: false,
 };
 
-export function getLog(d, m) {
-  try { return JSON.parse(localStorage.getItem(`ff-${m}-${d}`) || "[]"); } catch { return []; }
-}
+export function getLog(d, m) { return safeGet(`ff-${m}-${d}`, []); }
 
 export function setLog(d, m, e) {
   localStorage.setItem(`ff-${m}-${d}`, JSON.stringify(e));
 }
 
-export function getTLog(d) {
-  try { return JSON.parse(localStorage.getItem(`ff-train-${d}`) || "[]"); } catch { return []; }
-}
+export function getTLog(d) { return safeGet(`ff-train-${d}`, []); }
 
 export function setTLog(d, e) {
   localStorage.setItem(`ff-train-${d}`, JSON.stringify(e));
 }
 
-export function getWeightLog() {
-  try { return JSON.parse(localStorage.getItem("ff-weight-log") || "[]"); } catch { return []; }
-}
+export function getWeightLog() { return safeGet("ff-weight-log", []); }
 
 export function addWeightEntry(date, weight) {
   const log = getWeightLog().filter(e => e.date !== date);
@@ -49,17 +45,13 @@ export function addWeightEntry(date, weight) {
   localStorage.setItem("ff-weight-log", JSON.stringify(log));
 }
 
-export function getWater(d) {
-  try { return JSON.parse(localStorage.getItem(`ff-water-${d}`) || "0"); } catch { return 0; }
-}
+export function getWater(d) { return safeGet(`ff-water-${d}`, 0); }
 
 export function setWater(d, oz) {
   localStorage.setItem(`ff-water-${d}`, JSON.stringify(oz));
 }
 
-export function getSupps(d) {
-  try { return JSON.parse(localStorage.getItem(`ff-supps-${d}`) || "[]"); } catch { return []; }
-}
+export function getSupps(d) { return safeGet(`ff-supps-${d}`, []); }
 
 export function setSupps(d, list) {
   localStorage.setItem(`ff-supps-${d}`, JSON.stringify(list));
@@ -86,17 +78,13 @@ export function setNotes(d, text) {
   localStorage.setItem(`ff-notes-${d}`, text);
 }
 
-export function getRecipes() {
-  try { return JSON.parse(localStorage.getItem("ff-recipes") || "[]"); } catch { return []; }
-}
+export function getRecipes() { return safeGet("ff-recipes", []); }
 
 export function saveRecipes(recipes) {
   localStorage.setItem("ff-recipes", JSON.stringify(recipes));
 }
 
-export function getFuelTests() {
-  try { return JSON.parse(localStorage.getItem("ff-fuel-tests") || "[]"); } catch { return []; }
-}
+export function getFuelTests() { return safeGet("ff-fuel-tests", []); }
 
 export function saveFuelTests(tests) {
   localStorage.setItem("ff-fuel-tests", JSON.stringify(tests));

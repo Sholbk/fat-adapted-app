@@ -17,11 +17,11 @@ export async function searchFoods(q, signal) {
     const r = await fetch(`${API_BASE}/fatsecret?action=search&q=${encodeURIComponent(q)}`, {
       signal: signal || AbortSignal.timeout(10000),
     });
-    if (!r.ok) return [];
+    if (!r.ok) { console.warn("Food search failed:", r.status); return []; }
     const data = await r.json();
-    if (data.error) return [];
+    if (data.error) { console.warn("Food search error:", data.error); return []; }
     return Array.isArray(data) ? data : [];
-  } catch { return []; }
+  } catch (e) { if (e.name !== "AbortError") console.warn("Food search error:", e); return []; }
 }
 
 export async function getFoodServings(id) {
@@ -29,9 +29,9 @@ export async function getFoodServings(id) {
     const r = await fetch(`${API_BASE}/fatsecret?action=get&id=${id}`, {
       signal: AbortSignal.timeout(10000),
     });
-    if (!r.ok) return null;
+    if (!r.ok) { console.warn("Food details failed:", r.status); return null; }
     return await r.json();
-  } catch { return null; }
+  } catch (e) { console.warn("Food details error:", e); return null; }
 }
 
 export async function lookupBarcode(code) {
@@ -52,5 +52,5 @@ export async function lookupBarcode(code) {
       carbs: Math.round(n.carbohydrates_serving ?? n.carbohydrates_100g ?? 0),
       serving: p.serving_size || "1 serving",
     };
-  } catch { return null; }
+  } catch (e) { console.warn("Barcode lookup error:", e); return null; }
 }
