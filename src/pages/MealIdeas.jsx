@@ -1,4 +1,5 @@
 import { MEALS, getLog, setLog } from "../utils/storage.js";
+import { fmt } from "../utils/parsing.js";
 
 const MEAL_PLANS = {
   lowCarb: [
@@ -86,8 +87,122 @@ const DIST_PCTS = [
   { meal: "Snack", pct: 0.15 },
 ];
 
-export default function MealIdeas({ date, macros, session, sType, refresh, showToast, setPage }) {
-  const mf = macros.fat, mp = macros.protein, mc = macros.carbs, mcal = macros.cal;
+const CATEGORIES = {
+  "Proteins": ["egg", "salmon", "chicken", "steak", "ribeye", "turkey", "sausage", "beef", "fish", "tuna", "pork", "shrimp"],
+  "Dairy": ["cheese", "yogurt", "butter", "parmesan", "cream", "milk"],
+  "Produce": ["avocado", "greens", "broccoli", "salad", "vegetables", "veggies", "sweet potato", "banana", "berries", "olive", "orange", "tomato", "onion", "lettuce"],
+  "Grains & Starches": ["oatmeal", "rice", "quinoa", "bread", "toast", "pasta", "rice cake"],
+  "Nuts & Seeds": ["almond", "macadamia", "nut butter", "peanut", "walnut", "pecan"],
+  "Oils & Fats": ["olive oil", "coconut oil", "mct oil"],
+  "Pantry": ["bone broth", "coffee", "honey", "juice"],
+};
+
+function categorizeItem(name) {
+  const lower = name.toLowerCase();
+  for (const [cat, keywords] of Object.entries(CATEGORIES)) {
+    if (keywords.some(k => lower.includes(k))) return cat;
+  }
+  return "Other";
+}
+
+function extractIngredient(foodName) {
+  // Strip quantity/prep info in parentheses at the end, keep parenthetical quantities
+  return foodName.replace(/\s*(cooked in|scrambled with|with olive oil|with coconut oil|with nut butter)\b.*$/i, "").trim();
+}
+
+function buildShoppingList(plans, days) {
+  const items = new Map();
+  for (let d = 0; d < days; d++) {
+    for (const meal of plans) {
+      for (const food of meal.foods) {
+        const ingredient = extractIngredient(food.name);
+        items.set(ingredient, (items.get(ingredient) || 0) + days);
+      }
+    }
+  }
+  // Deduplicate: each unique ingredient x days
+  const deduped = new Map();
+  for (const meal of plans) {
+    for (const food of meal.foods) {
+      const ingredient = extractIngredient(food.name);
+      if (!deduped.has(ingredient)) deduped.set(ingredient, 0);
+      deduped.set(ingredient, deduped.get(ingredient) + 1);
+    }
+  }
+  // Group by category
+  const grouped = {};
+  for (const [name, perDay] of deduped) {
+    const cat = categorizeItem(name);
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push({ name, qty: perDay * days });
+  }
+  return grouped;
+}
+
+function printShoppingListPDF(grouped, weekLabel, planType) {
+  const w = window.open("", "_blank");
+  if (!w) return false;
+
+  const categoryHTML = Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([cat, items]) => `
+      <div class="category">
+        <h2>${cat}</h2>
+        ${items.map(item => `
+          <div class="item">
+            <span class="checkbox"></span>
+            <span class="name">${item.name}</span>
+            <span class="qty">&times;${item.qty}</span>
+          </div>
+        `).join("")}
+      </div>
+    `).join("");
+
+  w.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<title>FastFuel Shopping List</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1a1a2e; max-width: 800px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e8ad3; padding-bottom: 16px; }
+  .header h1 { font-size: 24px; color: #1a1a2e; margin-bottom: 4px; }
+  .header p { font-size: 13px; color: #666; }
+  .category { margin-bottom: 20px; break-inside: avoid; }
+  .category h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #1e8ad3; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 8px; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px dotted #eee; }
+  .checkbox { width: 16px; height: 16px; border: 2px solid #999; border-radius: 3px; flex-shrink: 0; }
+  .name { flex: 1; font-size: 14px; }
+  .qty { font-size: 13px; color: #666; font-weight: 600; white-space: nowrap; }
+  .footer { margin-top: 30px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #ddd; padding-top: 12px; }
+  .columns { columns: 2; column-gap: 30px; }
+  @media print {
+    body { padding: 20px; }
+    .no-print { display: none; }
+  }
+  .print-btn { display: block; margin: 0 auto 24px; padding: 10px 32px; background: #1e8ad3; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .print-btn:hover { background: #1670b0; }
+</style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">Download / Print PDF</button>
+  <div class="header">
+    <h1>Shopping List</h1>
+    <p>${weekLabel} &mdash; ${planType} Plan &mdash; 7 days</p>
+  </div>
+  <div class="columns">
+    ${categoryHTML}
+  </div>
+  <div class="footer">Generated by FastFuel &mdash; fastfuel.training</div>
+</body>
+</html>`);
+  w.document.close();
+  return true;
+}
+
+
+export default function MealIdeas({ date, macros, fuelRecTotal, session, sType, refresh, showToast, setPage }) {
+  const mf = Math.max(macros.fat - fuelRecTotal.fat, 0), mp = Math.max(macros.protein - fuelRecTotal.protein, 0), mc = Math.max(macros.carbs - fuelRecTotal.carbs, 0), mcal = Math.max(macros.cal - fuelRecTotal.cal, 0);
   const lowCarb = ["rest", "endurance", "lowerTempo"].includes(sType);
   const midCarb = sType === "upperTempo";
   const dist = DIST_PCTS.map(d => ({ ...d, fat: Math.round(mf * d.pct), protein: Math.round(mp * d.pct), carbs: Math.round(mc * d.pct), cal: Math.round(mcal * d.pct) }));
@@ -125,23 +240,36 @@ export default function MealIdeas({ date, macros, session, sType, refresh, showT
           );
         })}
       </div>
-      <button className="use-plan-btn" onClick={() => {
-        let added = 0;
-        plans.forEach((plan, i) => {
-          const meal = MEAL_NAMES[i];
-          const existing = getLog(date, meal);
-          const entries = plan.foods.map(f => ({
-            id: Date.now() + Math.random() + added,
-            name: f.name,
-            fat: f.f, protein: f.p, carbs: f.c
-          }));
-          setLog(date, meal, [...existing, ...entries]);
-          added += entries.length;
-        });
-        refresh();
-        showToast(`Added ${added} foods from meal plan`);
-        setPage("log");
-      }}>Use this plan for today</button>
+      <div className="mp-actions">
+        <button className="use-plan-btn" onClick={() => {
+          let added = 0;
+          plans.forEach((plan, i) => {
+            const meal = MEAL_NAMES[i];
+            const existing = getLog(date, meal);
+            const entries = plan.foods.map(f => ({
+              id: Date.now() + Math.random() + added,
+              name: f.name,
+              fat: f.f, protein: f.p, carbs: f.c
+            }));
+            setLog(date, meal, [...existing, ...entries]);
+            added += entries.length;
+          });
+          refresh();
+          showToast(`Added ${added} foods from meal plan`);
+          setPage("log");
+        }}>Use this plan for today</button>
+        <button className="shopping-list-btn" onClick={() => {
+          const startDate = new Date(date + "T12:00");
+          const endDate = new Date(startDate);
+          endDate.setDate(endDate.getDate() + 6);
+          const weekLabel = `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+          const planType = lowCarb ? "Low Carb" : midCarb ? "Mid Carb" : "High Carb";
+          const grouped = buildShoppingList(plans, 7);
+          if (!printShoppingListPDF(grouped, weekLabel, planType)) {
+            showToast("Please allow pop-ups to generate the shopping list");
+          }
+        }}>Weekly Shopping List (PDF)</button>
+      </div>
       <div className="mp-note">
         <strong>Session note:</strong> {session.note}
       </div>

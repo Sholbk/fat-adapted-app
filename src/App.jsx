@@ -65,11 +65,11 @@ function App() {
   useEffect(() => {
     if (!isSupabaseConfigured()) { setAuthLoading(false); return; }
 
-    // Hard timeout — never stay on loading screen more than 4 seconds
+    // Hard timeout — never stay on loading screen more than 1 second
     const timeout = setTimeout(() => {
       console.warn("Auth loading timed out — continuing without cloud data");
       setAuthLoading(false);
-    }, 4000);
+    }, 1000);
 
     getSession().then(async (s) => {
       setAuthSession(s);
@@ -77,7 +77,7 @@ function App() {
         try {
           await Promise.race([
             restoreFromCloud(s.user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 3000)),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 800)),
           ]);
           const restored = getSettings();
           if (restored) { setSettings(restored); setDraft(restored); }
@@ -97,7 +97,7 @@ function App() {
         try {
           await Promise.race([
             restoreFromCloud(s.user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 3000)),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 800)),
           ]);
           const restored = getSettings();
           if (restored) { setSettings(restored); setDraft(restored); }
@@ -122,8 +122,8 @@ function App() {
     return () => window.removeEventListener("keydown", handleKey);
   });
 
-  const W = settings.weight;
-  const calAdj = settings.goalWeight < W ? -500 : settings.goalWeight > W ? 500 : 0;
+  const W = settings.goalWeight > 0 ? settings.goalWeight : settings.weight;
+  const calAdj = settings.goalWeight > 0 && settings.goalWeight < settings.weight ? -500 : settings.goalWeight > settings.weight ? 500 : 0;
   const backupTimer = React.useRef(null);
   const backupInFlight = React.useRef(false);
   const refresh = () => {
@@ -374,7 +374,7 @@ function App() {
 
         {page === "meals" && (
           <MealIdeas
-            date={date} macros={macros} session={session} sType={sType}
+            date={date} macros={macros} fuelRecTotal={fuelRecTotal} session={session} sType={sType}
             refresh={refresh} showToast={showToast} setPage={setPage}
           />
         )}

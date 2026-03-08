@@ -372,6 +372,29 @@
 .pie-legend { display: flex; gap: 0.6rem; font-size: 0.65rem; font-weight: 600; color: var(--ff-text-muted); }
 .pie-legend span { display: flex; align-items: center; gap: 0.2rem; }
 
+/* ── Garmin Health Metrics ── */
+.garmin-metrics { margin-bottom: 1rem; }
+.garmin-metrics-title {
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--ff-text-muted); margin-bottom: 0.6rem;
+}
+.garmin-metrics-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem;
+}
+.garmin-metric {
+  display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+  background: var(--ff-bg); border: 1px solid var(--ff-border); border-radius: 10px;
+  padding: 0.6rem 0.4rem; text-align: center; transition: border-color 0.15s;
+}
+.garmin-metric:hover { border-color: var(--ff-blue); }
+.garmin-metric-icon { font-size: 1.2rem; line-height: 1; }
+.garmin-metric-value { font-size: 0.95rem; font-weight: 700; color: var(--ff-text); line-height: 1.2; }
+.garmin-metric-value small { font-size: 0.65rem; font-weight: 500; color: var(--ff-text-muted); }
+.garmin-metric-label { font-size: 0.6rem; font-weight: 600; color: var(--ff-text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+
+.dark .garmin-metric { background: #1a1a2e; border-color: #3a3a5a; }
+.dark .garmin-metric:hover { border-color: #1e8ad3; }
+
 /* ── Mood Picker ── */
 .mood-picker { display: flex; justify-content: space-around; margin-bottom: 0.75rem; }
 .mood-btn {
@@ -464,6 +487,16 @@
   font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s;
 }
 .use-plan-btn:hover { background: var(--ff-blue); }
+.mp-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+.mp-actions .use-plan-btn { margin-top: 0; flex: 1; }
+.shopping-list-btn {
+  flex: 1; padding: 0.75rem; background: #fff; color: var(--ff-blue-deep); border: 2px solid var(--ff-blue-deep);
+  border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.shopping-list-btn:hover { background: var(--ff-blue-deep); color: #fff; }
+.dark .shopping-list-btn { background: transparent; color: #1e8ad3; border-color: #1e8ad3; }
+.dark .shopping-list-btn:hover { background: #1e8ad3; color: #fff; }
+@media (max-width: 600px) { .mp-actions { flex-direction: column; } }
 
 /* ── Weekly Summary ── */
 .weekly-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }

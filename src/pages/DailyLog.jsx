@@ -17,7 +17,7 @@ const ZONE_COLORS = ["#1e8ad3", "#10bc10", "#90c010", "#e8c010", "#e87010", "#fe
 
 export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRecTotal, dayWorkouts, wellness, mealData, mealTotals, trainEntries, trainTotals, all, addMeal, rmMeal, addTrain, rmTrain, refresh, showToast, settings }) {
   const wd = wellness.find(w => w.id === date) || {};
-  const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
+const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
 
   return (
     <>
@@ -159,11 +159,97 @@ export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRe
       </div>
 
       {mealData.map(({ key, label, entries }) => (
-        <CollapsibleMeal key={key} mealKey={key} label={label} entries={entries} macros={macros} addMeal={addMeal} rmMeal={rmMeal} />
+        <CollapsibleMeal key={key} mealKey={key} label={label} entries={entries} macros={macros} fuelRecTotal={fuelRecTotal} addMeal={addMeal} rmMeal={rmMeal} />
       ))}
 
       <div className="meal-card">
         <div className="meal-head"><h3>How Do You Feel?</h3></div>
+
+        {wd.id && (
+          <div className="garmin-metrics">
+            <div className="garmin-metrics-title">Today's Health Metrics</div>
+            <div className="garmin-metrics-grid">
+              {wd.weight > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x2696;&#xFE0F;</span>
+                  <span className="garmin-metric-value">{wd.weight} <small>{wd.weightUnit || "kg"}</small></span>
+                  <span className="garmin-metric-label">Bodyweight</span>
+                </div>
+              )}
+              {wd.bodyFat > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x1F4CA;</span>
+                  <span className="garmin-metric-value">{wd.bodyFat}%</span>
+                  <span className="garmin-metric-label">Body Fat</span>
+                </div>
+              )}
+              {wd.restingHR > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x2764;&#xFE0F;</span>
+                  <span className="garmin-metric-value">{wd.restingHR} <small>bpm</small></span>
+                  <span className="garmin-metric-label">Resting HR</span>
+                </div>
+              )}
+              {wd.kcalConsumed > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x1F525;</span>
+                  <span className="garmin-metric-value">{wd.kcalConsumed}</span>
+                  <span className="garmin-metric-label">kCal</span>
+                </div>
+              )}
+              {wd.sleepSecs > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x1F634;</span>
+                  <span className="garmin-metric-value">{Math.floor(wd.sleepSecs / 3600)}h {Math.round((wd.sleepSecs % 3600) / 60)}m</span>
+                  <span className="garmin-metric-label">Sleep</span>
+                </div>
+              )}
+              {wd.sleepScore > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x1F31F;</span>
+                  <span className="garmin-metric-value">{wd.sleepScore}</span>
+                  <span className="garmin-metric-label">Sleep Score</span>
+                </div>
+              )}
+              {wd.sleepQuality > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x1F4A4;</span>
+                  <span className="garmin-metric-value">{wd.sleepQuality}</span>
+                  <span className="garmin-metric-label">Sleep Quality</span>
+                </div>
+              )}
+              {wd.vo2max > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x1F3C3;</span>
+                  <span className="garmin-metric-value">{wd.vo2max}</span>
+                  <span className="garmin-metric-label">VO2 Max</span>
+                </div>
+              )}
+              {wd.spO2 > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x1FA78;</span>
+                  <span className="garmin-metric-value">{wd.spO2}%</span>
+                  <span className="garmin-metric-label">SpO2</span>
+                </div>
+              )}
+              {wd.hrv > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x1F49A;</span>
+                  <span className="garmin-metric-value">{wd.hrv} <small>ms</small></span>
+                  <span className="garmin-metric-label">HRV</span>
+                </div>
+              )}
+              {wd.steps > 0 && (
+                <div className="garmin-metric">
+                  <span className="garmin-metric-icon">&#x1F6B6;</span>
+                  <span className="garmin-metric-value">{wd.steps.toLocaleString()}</span>
+                  <span className="garmin-metric-label">Steps</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="mood-picker">
           {[
             { value: "great", face: "\u{1F601}", label: "Great" },
@@ -192,7 +278,7 @@ const MEAL_ICONS = {
   snacks: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
 };
 
-function CollapsibleMeal({ mealKey, label, entries, macros, addMeal, rmMeal }) {
+function CollapsibleMeal({ mealKey, label, entries, macros, fuelRecTotal, addMeal, rmMeal }) {
   const [collapsed, setCollapsed] = useState(false);
   const mSum = sum(entries);
   return (
@@ -204,7 +290,7 @@ function CollapsibleMeal({ mealKey, label, entries, macros, addMeal, rmMeal }) {
           {entries.length > 0 && <span className="meal-count">{entries.length}</span>}
         </div>
         {mSum.cal > 0 && <span className="meal-head-cal">{mSum.cal} kcal</span>}
-        <span className="meal-rec">Rec: {Math.round(macros.cal / MEALS.length)} cals</span>
+        <span className="meal-rec">Rec: {Math.round(Math.max(macros.cal - fuelRecTotal.cal, 0) / MEALS.length)} cals</span>
         <span className={`meal-chevron${collapsed ? " meal-chevron-down" : ""}`}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
         </span>
