@@ -1,7 +1,7 @@
 {
-  "name": "FuelFlow",
-  "short_name": "FuelFlow",
-  "description": "Fat-adapted nutrition tracking for endurance athletes",
+  "name": "FastFuel",
+  "short_name": "FastFuel",
+  "description": "Smart Nutrition for endurance athletes",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f0f2f5",

@@ -30,8 +30,8 @@ export default function LandingPage({ showToast }) {
           <div className="landing-logo">
             <span className="sb-logo" style={{ width: 48, height: 48, fontSize: "1.5rem" }}>F</span>
           </div>
-          <h1>FuelFlow</h1>
-          <p className="landing-tagline">Smart nutrition for fat-adapted athletes</p>
+          <h1>FastFuel</h1>
+          <p className="landing-tagline">Smart Nutrition for endurance athletes</p>
           <div className="landing-features">
             <div className="landing-feat">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -67,7 +67,7 @@ export default function LandingPage({ showToast }) {
         <div className="landing-auth">
           <div className="landing-auth-card">
             <h2>{mode === "login" ? "Welcome Back" : "Create Account"}</h2>
-            <p>{mode === "login" ? "Sign in to your FuelFlow account" : "Start optimizing your race-day nutrition"}</p>
+            <p>{mode === "login" ? "Sign in to your FastFuel account" : "Start optimizing your race-day nutrition"}</p>
             <form onSubmit={handleSubmit}>
               <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="cloud-input" required />
               <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="cloud-input" required minLength={6} />

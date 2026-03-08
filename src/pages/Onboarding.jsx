@@ -68,7 +68,7 @@ export default function Onboarding({ authSession, onComplete }) {
       <div className="onboarding-card">
         <div className="onboarding-header">
           <span className="sb-logo" style={{ width: 36, height: 36, fontSize: "1.1rem" }}>F</span>
-          <span className="onboarding-brand">FuelFlow</span>
+          <span className="onboarding-brand">FastFuel</span>
         </div>
 
         <div className="onboarding-progress">
@@ -156,7 +156,7 @@ export default function Onboarding({ authSession, onComplete }) {
                 <span>Athletica.ai Calendar URL</span>
                 <input type="url" value={data.athleticaUrl} onChange={e => update({ athleticaUrl: e.target.value })} placeholder="https://app.athletica.ai/.../athletica.ics" />
               </label>
-              <p className="ob-hint">Connecting Intervals.icu lets FuelFlow auto-adjust your macros based on your training plan and completed workouts.</p>
+              <p className="ob-hint">Connecting Intervals.icu lets FastFuel auto-adjust your macros based on your training plan and completed workouts.</p>
             </>
           )}
         </div>

@@ -11,7 +11,7 @@ const NAV_ITEMS = [
 export default function Sidebar({ page, setPage }) {
   return (
     <aside className="sidebar">
-      <div className="sb-brand"><span className="sb-logo">F</span><span className="sb-name">FuelFlow</span></div>
+      <div className="sb-brand"><span className="sb-logo">F</span><span className="sb-name">FastFuel</span></div>
       <nav className="sb-nav">
         {NAV_ITEMS.map(({ key, label, icon }) => (
           <button key={key} className={page === key ? "active" : ""} onClick={() => setPage(key)}>
