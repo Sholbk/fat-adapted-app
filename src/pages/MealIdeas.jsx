@@ -105,36 +105,61 @@ function categorizeItem(name) {
   return "Other";
 }
 
-function extractIngredient(foodName) {
-  // Strip quantity/prep info in parentheses at the end, keep parenthetical quantities
-  return foodName.replace(/\s*(cooked in|scrambled with|with olive oil|with coconut oil|with nut butter)\b.*$/i, "").trim();
+function parseFood(foodName) {
+  // Strip prep methods to get the core ingredient
+  const cleaned = foodName.replace(/\s*(cooked in|scrambled with|scrambled)\b.*$/i, "").trim();
+
+  // Try to extract quantity and unit from parenthetical: "Eggs (3)", "Salmon (6 oz)", "Avocado (1/2)"
+  const parenMatch = cleaned.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+  if (parenMatch) {
+    const baseName = parenMatch[1].trim();
+    const inside = parenMatch[2].trim();
+    // "6 oz", "1 cup", "2 tbsp", "1/2 cup", "3/4 cup cooked", "1 medium", "1 large"
+    const qtyUnit = inside.match(/^([\d.]+(?:\/[\d.]+)?)\s*(.*)$/);
+    if (qtyUnit) {
+      const num = qtyUnit[1].includes("/") ? qtyUnit[1].split("/").reduce((a, b) => a / b) : parseFloat(qtyUnit[1]);
+      const unit = qtyUnit[2].replace(/\s*(cooked|raw)\s*$/i, "").trim();
+      return { name: baseName, qty: num, unit: unit || "items" };
+    }
+    return { name: baseName, qty: 1, unit: "items" };
+  }
+
+  // No parenthetical — treat as 1 item
+  // Handle "Coffee with MCT oil" → "Coffee" + "MCT oil"
+  return { name: cleaned, qty: 1, unit: "items" };
+}
+
+function formatQty(qty, unit) {
+  const q = qty % 1 === 0 ? qty.toString() : qty.toFixed(1).replace(/\.0$/, "");
+  if (!unit || unit === "items") return q;
+  // Pluralize simple units
+  const u = qty > 1 && !unit.endsWith("s") && !unit.endsWith("oz") && !unit.endsWith("tbsp") ? unit + "s" : unit;
+  return `${q} ${u}`;
 }
 
 function buildShoppingList(plans, days) {
+  // key = normalized ingredient name, value = { qty, unit }
   const items = new Map();
-  for (let d = 0; d < days; d++) {
-    for (const meal of plans) {
-      for (const food of meal.foods) {
-        const ingredient = extractIngredient(food.name);
-        items.set(ingredient, (items.get(ingredient) || 0) + days);
+
+  for (const meal of plans) {
+    for (const food of meal.foods) {
+      const parsed = parseFood(food.name);
+      const key = parsed.name.toLowerCase();
+      if (items.has(key)) {
+        const existing = items.get(key);
+        existing.qty += parsed.qty * days;
+      } else {
+        items.set(key, { name: parsed.name, qty: parsed.qty * days, unit: parsed.unit });
       }
     }
   }
-  // Deduplicate: each unique ingredient x days
-  const deduped = new Map();
-  for (const meal of plans) {
-    for (const food of meal.foods) {
-      const ingredient = extractIngredient(food.name);
-      if (!deduped.has(ingredient)) deduped.set(ingredient, 0);
-      deduped.set(ingredient, deduped.get(ingredient) + 1);
-    }
-  }
+
   // Group by category
   const grouped = {};
-  for (const [name, perDay] of deduped) {
-    const cat = categorizeItem(name);
+  for (const [, item] of items) {
+    const cat = categorizeItem(item.name);
     if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push({ name, qty: perDay * days });
+    grouped[cat].push(item);
   }
   return grouped;
 }
@@ -152,7 +177,7 @@ function printShoppingListPDF(grouped, weekLabel, planType) {
           <div class="item">
             <span class="checkbox"></span>
             <span class="name">${item.name}</span>
-            <span class="qty">&times;${item.qty}</span>
+            <span class="qty">${formatQty(item.qty, item.unit)}</span>
           </div>
         `).join("")}
       </div>
