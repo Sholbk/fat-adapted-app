@@ -23,176 +23,210 @@ body {
   overflow: hidden;
 }
 
+/* Stadium lights / atmosphere */
+.atmosphere {
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1400px;
+  height: 600px;
+  background: radial-gradient(ellipse, rgba(30,138,211,0.08) 0%, transparent 70%);
+  z-index: 1;
+}
+
 /* Ground / track */
 .track {
   position: absolute;
   bottom: 0;
   width: 100%;
-  height: 280px;
-  background: linear-gradient(180deg, #2a1a1a 0%, #1a1210 100%);
+  height: 340px;
+  background: linear-gradient(180deg, #c04020 0%, #8b2010 40%, #5a1508 100%);
+  z-index: 4;
 }
 .track::before {
   content: "";
   position: absolute;
   top: 0;
   width: 100%;
-  height: 3px;
-  background: rgba(255,255,255,0.15);
+  height: 4px;
+  background: rgba(255,255,255,0.2);
 }
 
 /* Lane lines */
-.lane { position: absolute; width: 100%; height: 1px; background: rgba(255,255,255,0.06); }
-.lane:nth-child(1) { top: 70px; }
-.lane:nth-child(2) { top: 140px; }
-.lane:nth-child(3) { top: 210px; }
+.lane { position: absolute; width: 100%; height: 2px; background: rgba(255,255,255,0.12); }
+.lane:nth-child(1) { top: 85px; }
+.lane:nth-child(2) { top: 170px; }
+.lane:nth-child(3) { top: 255px; }
 
 /* Finish line */
 .finish-line {
   position: absolute;
-  right: 320px;
+  right: 300px;
   top: 0;
-  width: 12px;
-  height: 280px;
+  width: 16px;
+  height: 340px;
   background: repeating-linear-gradient(
     0deg,
-    #fff 0px, #fff 15px,
-    #000 15px, #000 30px
+    #fff 0px, #fff 12px,
+    #222 12px, #222 24px
   );
-  opacity: 0.7;
+  opacity: 0.85;
   z-index: 5;
 }
-.finish-banner {
+.finish-arch {
   position: absolute;
-  right: 260px;
-  bottom: 310px;
-  font-size: 18px;
-  font-weight: 800;
-  color: rgba(255,255,255,0.3);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  right: 230px;
+  bottom: 340px;
+  width: 160px;
+  height: 60px;
+  border: 4px solid rgba(255,255,255,0.4);
+  border-bottom: none;
+  border-radius: 80px 80px 0 0;
   z-index: 5;
+}
+.finish-text {
+  position: absolute;
+  right: 265px;
+  bottom: 356px;
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  z-index: 6;
 }
 
-/* Runner silhouettes */
+/* Runner silhouettes — full body running pose */
 .runner {
   position: absolute;
-  bottom: 130px;
   z-index: 10;
-  transition: none;
 }
 .runner svg {
-  width: 90px;
-  height: 130px;
+  width: 120px;
+  height: 180px;
 }
 
 /* Runner positions and animations */
-.runner-1 {
-  animation: runner1 20s linear forwards;
-}
-.runner-2 {
-  bottom: 155px;
-  animation: runner2 20s linear forwards;
-}
-.runner-3 {
-  bottom: 105px;
-  animation: runner3 20s linear forwards;
-}
-/* The hero runner - starts behind */
+.runner-1 { bottom: 110px; animation: runner1 20s linear forwards; }
+.runner-2 { bottom: 170px; animation: runner2 20s linear forwards; }
+.runner-3 { bottom: 80px; animation: runner3 20s linear forwards; }
+.runner-4 { bottom: 200px; animation: runner4 20s linear forwards; }
+
 .runner-hero {
-  bottom: 180px;
+  bottom: 140px;
   z-index: 15;
   animation: runnerHero 20s linear forwards;
 }
-.runner-hero svg { filter: drop-shadow(0 0 20px rgba(30,138,211,0.6)); }
 
-/* Runner bobbing animation */
-.runner-bob {
-  animation: bob 0.35s ease-in-out infinite alternate;
-}
-.runner-bob-slow {
-  animation: bob 0.45s ease-in-out infinite alternate;
-}
+/* Runner bobbing */
+.runner-bob { animation: bob 0.3s ease-in-out infinite alternate; }
+.runner-bob-2 { animation: bob 0.35s ease-in-out infinite alternate; animation-delay: 0.1s; }
+.runner-bob-3 { animation: bob 0.32s ease-in-out infinite alternate; animation-delay: 0.2s; }
 @keyframes bob {
-  from { transform: translateY(0); }
-  to { transform: translateY(-6px); }
+  from { transform: translateY(0) rotate(-1deg); }
+  to { transform: translateY(-8px) rotate(1deg); }
 }
 
 /* Pack runners move steadily */
 @keyframes runner1 {
-  0% { left: -150px; }
-  30% { left: 900px; }
-  50% { left: 1200px; }
-  70% { left: 1400px; }
-  85% { left: 1500px; }
-  100% { left: 1560px; }
+  0% { left: -200px; }
+  25% { left: 750px; }
+  50% { left: 1150px; }
+  70% { left: 1380px; }
+  100% { left: 1540px; }
 }
 @keyframes runner2 {
-  0% { left: -220px; }
-  30% { left: 830px; }
-  50% { left: 1130px; }
-  70% { left: 1330px; }
-  85% { left: 1440px; }
-  100% { left: 1500px; }
+  0% { left: -260px; }
+  25% { left: 700px; }
+  50% { left: 1100px; }
+  70% { left: 1320px; }
+  100% { left: 1480px; }
 }
 @keyframes runner3 {
-  0% { left: -100px; }
-  30% { left: 950px; }
-  50% { left: 1250px; }
-  70% { left: 1420px; }
-  85% { left: 1510px; }
-  100% { left: 1570px; }
+  0% { left: -180px; }
+  25% { left: 780px; }
+  50% { left: 1170px; }
+  70% { left: 1400px; }
+  100% { left: 1560px; }
+}
+@keyframes runner4 {
+  0% { left: -300px; }
+  25% { left: 660px; }
+  50% { left: 1060px; }
+  70% { left: 1280px; }
+  100% { left: 1440px; }
 }
 
-/* Hero: starts slow, then surges past at 55-75% */
+/* Hero: starts behind, SURGES at 50-70% */
 @keyframes runnerHero {
-  0% { left: -300px; }
-  30% { left: 700px; }
-  45% { left: 950px; }
-  55% { left: 1100px; }
-  65% { left: 1400px; }
-  72% { left: 1600px; }
-  80% { left: 1680px; }
+  0% { left: -350px; }
+  25% { left: 600px; }
+  45% { left: 900px; }
+  52% { left: 1050px; }
+  62% { left: 1400px; }
+  70% { left: 1620px; }
+  78% { left: 1680px; }
   100% { left: 1700px; }
 }
 
-/* Glow trail behind hero during surge */
+/* Hero glow intensifies during surge */
+.runner-hero svg {
+  filter: drop-shadow(0 0 15px rgba(30,138,211,0.4));
+  transition: filter 0.3s;
+}
+.runner-hero .glow-wrap {
+  animation: heroGlow 20s linear forwards;
+}
+@keyframes heroGlow {
+  0%, 45% { filter: drop-shadow(0 0 10px rgba(30,138,211,0.3)); }
+  52% { filter: drop-shadow(0 0 40px rgba(30,138,211,0.9)) drop-shadow(0 0 80px rgba(254,0,164,0.4)); }
+  70% { filter: drop-shadow(0 0 30px rgba(30,138,211,0.7)); }
+  100% { filter: drop-shadow(0 0 15px rgba(30,138,211,0.4)); }
+}
+
+/* Energy trail behind hero */
 .hero-trail {
   position: absolute;
-  bottom: 200px;
-  width: 200px;
-  height: 20px;
-  background: linear-gradient(90deg, transparent, rgba(30,138,211,0.4), transparent);
+  bottom: 170px;
+  width: 350px;
+  height: 40px;
+  background: linear-gradient(90deg, transparent, rgba(30,138,211,0.3), rgba(254,0,164,0.15), transparent);
   border-radius: 50%;
   z-index: 14;
   opacity: 0;
   animation: heroTrail 20s linear forwards;
 }
 @keyframes heroTrail {
-  0%, 50% { opacity: 0; left: 900px; }
-  55% { opacity: 0.8; left: 1000px; }
-  65% { opacity: 1; left: 1300px; }
-  72% { opacity: 0.6; left: 1500px; }
-  80%, 100% { opacity: 0; left: 1600px; }
+  0%, 48% { opacity: 0; left: 800px; width: 200px; }
+  52% { opacity: 0.6; left: 900px; width: 300px; }
+  60% { opacity: 1; left: 1200px; width: 400px; }
+  68% { opacity: 0.7; left: 1450px; width: 300px; }
+  76%, 100% { opacity: 0; left: 1600px; width: 200px; }
 }
 
-/* Energy burst when hero surges */
-.energy-burst {
+/* Energy particles during surge */
+.surge-particle {
   position: absolute;
-  bottom: 230px;
-  width: 60px;
-  height: 60px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(30,138,211,0.6), transparent 70%);
-  z-index: 13;
+  z-index: 16;
   opacity: 0;
-  animation: burst 20s linear forwards;
 }
-@keyframes burst {
-  0%, 52% { opacity: 0; left: 1050px; transform: scale(0.5); }
-  55% { opacity: 1; left: 1100px; transform: scale(2); }
-  60% { opacity: 0; left: 1200px; transform: scale(3); }
-  100% { opacity: 0; }
-}
+.surge-particle:nth-child(1) { background: #1e8ad3; animation: sp1 20s linear forwards; }
+.surge-particle:nth-child(2) { background: #fe00a4; animation: sp2 20s linear forwards; }
+.surge-particle:nth-child(3) { background: #4da6e8; animation: sp3 20s linear forwards; }
+.surge-particle:nth-child(4) { background: #1e8ad3; animation: sp4 20s linear forwards; }
+.surge-particle:nth-child(5) { background: #fe00a4; animation: sp5 20s linear forwards; }
+.surge-particle:nth-child(6) { background: #fff; animation: sp6 20s linear forwards; }
+
+@keyframes sp1 { 0%,50% { opacity:0; } 52% { opacity:1; left:1050px; bottom:200px; } 58% { opacity:0; left:1000px; bottom:320px; } 100% { opacity:0; } }
+@keyframes sp2 { 0%,51% { opacity:0; } 53% { opacity:1; left:1100px; bottom:180px; } 59% { opacity:0; left:1060px; bottom:350px; } 100% { opacity:0; } }
+@keyframes sp3 { 0%,52% { opacity:0; } 54% { opacity:1; left:1150px; bottom:220px; } 60% { opacity:0; left:1120px; bottom:300px; } 100% { opacity:0; } }
+@keyframes sp4 { 0%,54% { opacity:0; } 56% { opacity:1; left:1250px; bottom:190px; } 62% { opacity:0; left:1200px; bottom:340px; } 100% { opacity:0; } }
+@keyframes sp5 { 0%,56% { opacity:0; } 58% { opacity:1; left:1350px; bottom:210px; } 64% { opacity:0; left:1310px; bottom:310px; } 100% { opacity:0; } }
+@keyframes sp6 { 0%,53% { opacity:0; } 55% { opacity:1; left:1180px; bottom:170px; } 61% { opacity:0; left:1140px; bottom:360px; } 100% { opacity:0; } }
 
 /* Text overlays */
 .text-overlay {
@@ -203,77 +237,84 @@ body {
   opacity: 0;
 }
 
-.text-1 {
-  top: 180px;
-  animation: text1 20s linear forwards;
-}
+.text-1 { top: 140px; animation: text1 20s linear forwards; }
 .text-1 h2 {
-  font-size: 72px;
+  font-size: 84px;
   font-weight: 800;
   color: #fff;
-  text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+  text-shadow: 0 4px 40px rgba(0,0,0,0.6);
 }
 .text-1 p {
-  font-size: 32px;
-  color: rgba(255,255,255,0.6);
-  margin-top: 12px;
+  font-size: 36px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 16px;
+  font-weight: 500;
 }
 @keyframes text1 {
-  0% { opacity: 0; transform: translateY(20px); }
+  0% { opacity: 0; transform: translateY(30px); }
   5% { opacity: 1; transform: translateY(0); }
-  25% { opacity: 1; }
-  30% { opacity: 0; }
+  22% { opacity: 1; }
+  28% { opacity: 0; }
   100% { opacity: 0; }
 }
 
-.text-2 {
-  top: 200px;
-  animation: text2 20s linear forwards;
-}
+.text-2 { top: 160px; animation: text2 20s linear forwards; }
 .text-2 h2 {
-  font-size: 64px;
+  font-size: 68px;
   font-weight: 800;
   color: #fe00a4;
   text-shadow: 0 4px 30px rgba(0,0,0,0.5);
 }
 @keyframes text2 {
-  0%, 30% { opacity: 0; }
-  35% { opacity: 1; transform: translateY(0); }
-  48% { opacity: 1; }
-  52% { opacity: 0; }
+  0%, 28% { opacity: 0; transform: translateY(20px); }
+  33% { opacity: 1; transform: translateY(0); }
+  46% { opacity: 1; }
+  50% { opacity: 0; }
   100% { opacity: 0; }
 }
 
-.text-3 {
-  top: 160px;
-  animation: text3 20s linear forwards;
-}
+.text-3 { top: 120px; animation: text3 20s linear forwards; }
 .text-3 h2 {
-  font-size: 90px;
+  font-size: 110px;
   font-weight: 800;
   color: #fff;
-  text-shadow: 0 0 40px rgba(30,138,211,0.8);
+  text-shadow: 0 0 60px rgba(30,138,211,0.9), 0 0 120px rgba(30,138,211,0.3);
 }
 .text-3 p {
-  font-size: 28px;
+  font-size: 32px;
   color: rgba(255,255,255,0.5);
-  margin-top: 8px;
+  margin-top: 12px;
+  font-weight: 500;
 }
 @keyframes text3 {
-  0%, 52% { opacity: 0; transform: scale(0.9); }
-  56% { opacity: 1; transform: scale(1); }
+  0%, 50% { opacity: 0; transform: scale(0.85); }
+  55% { opacity: 1; transform: scale(1); }
   70% { opacity: 1; }
-  75% { opacity: 0; }
+  76% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* Screen flash on surge */
+.flash {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(30,138,211,0.15);
+  z-index: 40;
+  opacity: 0;
+  animation: flash 20s linear forwards;
+}
+@keyframes flash {
+  0%, 51% { opacity: 0; }
+  52% { opacity: 1; }
+  56% { opacity: 0; }
   100% { opacity: 0; }
 }
 
 /* Final logo screen */
 .final {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -284,137 +325,133 @@ body {
   background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 40%, #043bb1 100%);
 }
 @keyframes finalIn {
-  0%, 76% { opacity: 0; }
-  82% { opacity: 1; }
+  0%, 77% { opacity: 0; }
+  83% { opacity: 1; }
   100% { opacity: 1; }
 }
 .final-logo {
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
   background: linear-gradient(135deg, #1e8ad3, #fe00a4);
-  border-radius: 24px;
+  border-radius: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 0 60px rgba(30,138,211,0.4);
   animation: logoPulse 2s ease-in-out infinite alternate;
-  animation-delay: 16s;
+  animation-delay: 17s;
 }
 @keyframes logoPulse {
-  from { transform: scale(1); box-shadow: 0 0 30px rgba(30,138,211,0.3); }
-  to { transform: scale(1.05); box-shadow: 0 0 50px rgba(30,138,211,0.6); }
+  from { transform: scale(1); box-shadow: 0 0 40px rgba(30,138,211,0.3); }
+  to { transform: scale(1.06); box-shadow: 0 0 70px rgba(30,138,211,0.6); }
 }
 .final h1 {
-  font-size: 96px;
+  font-size: 108px;
   font-weight: 800;
   color: #fff;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 .final p {
-  font-size: 32px;
-  color: rgba(255,255,255,0.6);
-  margin-bottom: 40px;
+  font-size: 34px;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 44px;
+  font-weight: 500;
 }
 .final .url {
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 700;
   color: #4da6e8;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
 }
 
-/* Particle effects */
+/* Particles */
 .particles {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   z-index: 3;
-  overflow: hidden;
 }
 .particle {
   position: absolute;
-  width: 4px;
-  height: 4px;
-  background: rgba(255,255,255,0.15);
+  width: 3px; height: 3px;
+  background: rgba(255,255,255,0.2);
   border-radius: 50%;
 }
-.particle:nth-child(1) { left: 10%; top: 20%; animation: float 6s ease-in-out infinite; }
-.particle:nth-child(2) { left: 30%; top: 40%; animation: float 8s ease-in-out infinite 1s; }
-.particle:nth-child(3) { left: 50%; top: 15%; animation: float 7s ease-in-out infinite 2s; }
-.particle:nth-child(4) { left: 70%; top: 35%; animation: float 5s ease-in-out infinite 0.5s; }
-.particle:nth-child(5) { left: 85%; top: 25%; animation: float 9s ease-in-out infinite 3s; }
-.particle:nth-child(6) { left: 20%; top: 55%; animation: float 6s ease-in-out infinite 1.5s; }
-.particle:nth-child(7) { left: 60%; top: 50%; animation: float 7s ease-in-out infinite 2.5s; }
-.particle:nth-child(8) { left: 45%; top: 30%; animation: float 8s ease-in-out infinite 0.8s; }
+.particle:nth-child(1) { left: 8%; top: 18%; animation: float 6s ease-in-out infinite; }
+.particle:nth-child(2) { left: 25%; top: 35%; animation: float 8s ease-in-out infinite 1s; }
+.particle:nth-child(3) { left: 45%; top: 12%; animation: float 7s ease-in-out infinite 2s; }
+.particle:nth-child(4) { left: 65%; top: 28%; animation: float 5s ease-in-out infinite 0.5s; }
+.particle:nth-child(5) { left: 82%; top: 22%; animation: float 9s ease-in-out infinite 3s; }
+.particle:nth-child(6) { left: 15%; top: 50%; animation: float 6s ease-in-out infinite 1.5s; }
 @keyframes float {
-  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.15; }
-  50% { transform: translateY(-30px) translateX(10px); opacity: 0.4; }
+  0%, 100% { transform: translateY(0); opacity: 0.2; }
+  50% { transform: translateY(-25px); opacity: 0.5; }
 }
 
-/* Speed lines during surge */
+/* Speed lines */
 .speed-lines {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   z-index: 12;
   opacity: 0;
   animation: speedIn 20s linear forwards;
 }
 @keyframes speedIn {
-  0%, 53% { opacity: 0; }
-  56% { opacity: 0.5; }
-  65% { opacity: 0.3; }
-  72% { opacity: 0; }
+  0%, 50% { opacity: 0; }
+  53% { opacity: 0.7; }
+  62% { opacity: 0.4; }
+  70% { opacity: 0; }
   100% { opacity: 0; }
 }
 .speed-line {
   position: absolute;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(30,138,211,0.5), transparent);
-  animation: speedMove 0.6s linear infinite;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(30,138,211,0.6), rgba(254,0,164,0.3), transparent);
+  border-radius: 2px;
+  animation: speedMove 0.5s linear infinite;
 }
-.speed-line:nth-child(1) { top: 30%; width: 300px; left: 20%; animation-delay: 0s; }
-.speed-line:nth-child(2) { top: 45%; width: 250px; left: 10%; animation-delay: 0.15s; }
-.speed-line:nth-child(3) { top: 55%; width: 350px; left: 30%; animation-delay: 0.3s; }
-.speed-line:nth-child(4) { top: 70%; width: 200px; left: 5%; animation-delay: 0.1s; }
-.speed-line:nth-child(5) { top: 38%; width: 280px; left: 40%; animation-delay: 0.25s; }
-.speed-line:nth-child(6) { top: 62%; width: 320px; left: 15%; animation-delay: 0.4s; }
+.speed-line:nth-child(1) { top: 25%; width: 400px; left: 15%; }
+.speed-line:nth-child(2) { top: 40%; width: 350px; left: 8%; animation-delay: 0.12s; }
+.speed-line:nth-child(3) { top: 52%; width: 450px; left: 25%; animation-delay: 0.25s; }
+.speed-line:nth-child(4) { top: 65%; width: 300px; left: 5%; animation-delay: 0.08s; }
+.speed-line:nth-child(5) { top: 33%; width: 380px; left: 35%; animation-delay: 0.18s; }
+.speed-line:nth-child(6) { top: 58%; width: 420px; left: 12%; animation-delay: 0.35s; }
+.speed-line:nth-child(7) { top: 46%; width: 280px; left: 45%; animation-delay: 0.22s; }
+.speed-line:nth-child(8) { top: 72%; width: 340px; left: 20%; animation-delay: 0.3s; }
 @keyframes speedMove {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(300%); }
+  from { transform: translateX(-100%); opacity: 0.8; }
+  to { transform: translateX(400%); opacity: 0; }
 }
 </style>
 </head>
 <body>
 <div class="scene">
-  <!-- Particles -->
+  <div class="atmosphere"></div>
+
   <div class="particles">
     <div class="particle"></div><div class="particle"></div><div class="particle"></div>
     <div class="particle"></div><div class="particle"></div><div class="particle"></div>
-    <div class="particle"></div><div class="particle"></div>
   </div>
 
-  <!-- Speed lines for surge moment -->
   <div class="speed-lines">
     <div class="speed-line"></div><div class="speed-line"></div><div class="speed-line"></div>
     <div class="speed-line"></div><div class="speed-line"></div><div class="speed-line"></div>
+    <div class="speed-line"></div><div class="speed-line"></div>
   </div>
 
-  <!-- Text: Scene 1 -->
+  <div class="flash"></div>
+
+  <!-- Text overlays -->
   <div class="text-overlay text-1">
     <h2>Race Day.</h2>
     <p>You trained hard.</p>
   </div>
-
-  <!-- Text: Scene 2 -->
   <div class="text-overlay text-2">
     <h2>But your nutrition didn't keep up.</h2>
   </div>
-
-  <!-- Text: Scene 3 (surge moment) -->
   <div class="text-overlay text-3">
     <h2>Until now.</h2>
     <p>Nutrition that matches your training</p>
@@ -426,71 +463,94 @@ body {
     <div class="lane"></div>
     <div class="lane"></div>
     <div class="finish-line"></div>
-    <div class="finish-banner">FINISH</div>
+    <div class="finish-arch"></div>
+    <div class="finish-text">FINISH</div>
 
-    <!-- Pack runners (gray) -->
+    <!-- Pack runners — full athletic silhouettes -->
     <div class="runner runner-1">
       <div class="runner-bob">
-        <svg viewBox="0 0 60 100" fill="none">
-          <circle cx="30" cy="12" r="10" fill="rgba(255,255,255,0.35)"/>
-          <line x1="30" y1="22" x2="30" y2="55" stroke="rgba(255,255,255,0.35)" stroke-width="4" stroke-linecap="round"/>
-          <line x1="30" y1="55" x2="18" y2="85" stroke="rgba(255,255,255,0.35)" stroke-width="3.5" stroke-linecap="round"/>
-          <line x1="30" y1="55" x2="45" y2="80" stroke="rgba(255,255,255,0.35)" stroke-width="3.5" stroke-linecap="round"/>
-          <line x1="30" y1="35" x2="12" y2="50" stroke="rgba(255,255,255,0.35)" stroke-width="3" stroke-linecap="round"/>
-          <line x1="30" y1="35" x2="48" y2="45" stroke="rgba(255,255,255,0.35)" stroke-width="3" stroke-linecap="round"/>
+        <svg viewBox="0 0 100 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="58" cy="16" r="14" fill="rgba(255,255,255,0.35)"/>
+          <path d="M52 30 C48 45, 40 60, 38 80 L28 120 C26 126, 30 130, 34 128 L44 110 C46 104, 48 90, 50 80" fill="rgba(255,255,255,0.35)"/>
+          <path d="M52 30 C56 50, 58 65, 56 80 L68 125 C70 132, 76 132, 76 126 L66 100 C62 90, 58 80, 56 70" fill="rgba(255,255,255,0.35)"/>
+          <path d="M48 38 C36 42, 24 50, 18 62 C16 66, 18 70, 22 68 L38 54" fill="rgba(255,255,255,0.35)"/>
+          <path d="M56 38 C66 36, 76 40, 82 52 C84 56, 80 58, 78 54 L64 46" fill="rgba(255,255,255,0.35)"/>
+          <ellipse cx="50" cy="55" rx="12" ry="18" fill="rgba(255,255,255,0.3)"/>
         </svg>
       </div>
     </div>
 
     <div class="runner runner-2">
-      <div class="runner-bob-slow">
-        <svg viewBox="0 0 60 100" fill="none">
-          <circle cx="30" cy="12" r="10" fill="rgba(255,255,255,0.3)"/>
-          <line x1="30" y1="22" x2="30" y2="55" stroke="rgba(255,255,255,0.3)" stroke-width="4" stroke-linecap="round"/>
-          <line x1="30" y1="55" x2="16" y2="82" stroke="rgba(255,255,255,0.3)" stroke-width="3.5" stroke-linecap="round"/>
-          <line x1="30" y1="55" x2="44" y2="84" stroke="rgba(255,255,255,0.3)" stroke-width="3.5" stroke-linecap="round"/>
-          <line x1="30" y1="35" x2="14" y2="48" stroke="rgba(255,255,255,0.3)" stroke-width="3" stroke-linecap="round"/>
-          <line x1="30" y1="35" x2="46" y2="42" stroke="rgba(255,255,255,0.3)" stroke-width="3" stroke-linecap="round"/>
+      <div class="runner-bob-2">
+        <svg viewBox="0 0 100 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="55" cy="16" r="14" fill="rgba(255,255,255,0.3)"/>
+          <path d="M50 30 C46 48, 38 62, 34 82 L24 122 C22 128, 26 132, 30 130 L40 112 C42 104, 44 90, 48 80" fill="rgba(255,255,255,0.3)"/>
+          <path d="M50 30 C54 52, 56 68, 54 82 L64 126 C66 134, 72 134, 72 128 L62 102 C58 92, 54 82, 52 72" fill="rgba(255,255,255,0.3)"/>
+          <path d="M46 40 C34 44, 22 52, 16 64 C14 68, 16 72, 20 70 L36 56" fill="rgba(255,255,255,0.3)"/>
+          <path d="M54 40 C64 38, 74 42, 80 54 C82 58, 78 60, 76 56 L62 48" fill="rgba(255,255,255,0.3)"/>
+          <ellipse cx="48" cy="56" rx="11" ry="18" fill="rgba(255,255,255,0.25)"/>
         </svg>
       </div>
     </div>
 
     <div class="runner runner-3">
-      <div class="runner-bob">
-        <svg viewBox="0 0 60 100" fill="none">
-          <circle cx="30" cy="12" r="10" fill="rgba(255,255,255,0.25)"/>
-          <line x1="30" y1="22" x2="30" y2="55" stroke="rgba(255,255,255,0.25)" stroke-width="4" stroke-linecap="round"/>
-          <line x1="30" y1="55" x2="20" y2="83" stroke="rgba(255,255,255,0.25)" stroke-width="3.5" stroke-linecap="round"/>
-          <line x1="30" y1="55" x2="42" y2="86" stroke="rgba(255,255,255,0.25)" stroke-width="3.5" stroke-linecap="round"/>
-          <line x1="30" y1="35" x2="15" y2="52" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-linecap="round"/>
-          <line x1="30" y1="35" x2="47" y2="44" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-linecap="round"/>
+      <div class="runner-bob-3">
+        <svg viewBox="0 0 100 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="56" cy="16" r="14" fill="rgba(255,255,255,0.28)"/>
+          <path d="M50 30 C46 46, 36 60, 32 80 L22 118 C20 124, 24 128, 28 126 L38 108 C40 100, 42 88, 46 78" fill="rgba(255,255,255,0.28)"/>
+          <path d="M50 30 C54 50, 56 66, 54 80 L66 124 C68 130, 74 130, 74 124 L64 98 C60 88, 56 78, 54 68" fill="rgba(255,255,255,0.28)"/>
+          <path d="M46 38 C34 42, 22 50, 16 62 C14 66, 16 70, 20 68 L36 54" fill="rgba(255,255,255,0.28)"/>
+          <path d="M54 38 C64 36, 74 40, 80 52 C82 56, 78 58, 76 54 L62 46" fill="rgba(255,255,255,0.28)"/>
+          <ellipse cx="48" cy="54" rx="11" ry="17" fill="rgba(255,255,255,0.22)"/>
         </svg>
       </div>
     </div>
 
-    <!-- Hero runner (blue glow) -->
-    <div class="runner runner-hero">
+    <div class="runner runner-4">
       <div class="runner-bob">
-        <svg viewBox="0 0 60 100" fill="none">
-          <circle cx="30" cy="12" r="10" fill="#1e8ad3"/>
-          <line x1="30" y1="22" x2="30" y2="55" stroke="#1e8ad3" stroke-width="4" stroke-linecap="round"/>
-          <line x1="30" y1="55" x2="16" y2="83" stroke="#1e8ad3" stroke-width="3.5" stroke-linecap="round"/>
-          <line x1="30" y1="55" x2="46" y2="80" stroke="#1e8ad3" stroke-width="3.5" stroke-linecap="round"/>
-          <line x1="30" y1="35" x2="10" y2="48" stroke="#1e8ad3" stroke-width="3" stroke-linecap="round"/>
-          <line x1="30" y1="35" x2="50" y2="42" stroke="#1e8ad3" stroke-width="3" stroke-linecap="round"/>
+        <svg viewBox="0 0 100 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="56" cy="16" r="14" fill="rgba(255,255,255,0.25)"/>
+          <path d="M50 30 C46 46, 38 60, 36 80 L26 120 C24 126, 28 130, 32 128 L42 110 C44 102, 46 90, 48 80" fill="rgba(255,255,255,0.25)"/>
+          <path d="M50 30 C54 50, 56 66, 54 80 L66 124 C68 130, 74 130, 74 124 L64 98 C60 88, 56 78, 54 68" fill="rgba(255,255,255,0.25)"/>
+          <path d="M46 38 C34 42, 24 50, 18 62 C16 66, 18 70, 22 68 L36 54" fill="rgba(255,255,255,0.25)"/>
+          <path d="M54 38 C64 36, 74 40, 80 52 C82 56, 78 58, 76 54 L62 46" fill="rgba(255,255,255,0.25)"/>
+          <ellipse cx="48" cy="55" rx="11" ry="17" fill="rgba(255,255,255,0.2)"/>
         </svg>
+      </div>
+    </div>
+
+    <!-- HERO runner — bright blue with body shape -->
+    <div class="runner runner-hero">
+      <div class="glow-wrap">
+      <div class="runner-bob">
+        <svg viewBox="0 0 100 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="58" cy="16" r="14" fill="#1e8ad3"/>
+          <path d="M52 30 C48 45, 40 60, 38 80 L28 120 C26 126, 30 130, 34 128 L44 110 C46 104, 48 90, 50 80" fill="#1e8ad3"/>
+          <path d="M52 30 C56 50, 58 65, 56 80 L68 125 C70 132, 76 132, 76 126 L66 100 C62 90, 58 80, 56 70" fill="#1e8ad3"/>
+          <path d="M48 38 C36 42, 24 50, 18 62 C16 66, 18 70, 22 68 L38 54" fill="#1e8ad3"/>
+          <path d="M56 38 C66 36, 78 40, 84 52 C86 56, 82 58, 80 54 L64 46" fill="#1e8ad3"/>
+          <ellipse cx="50" cy="55" rx="12" ry="18" fill="#1e8ad3"/>
+          <!-- Jersey accent -->
+          <ellipse cx="50" cy="50" rx="8" ry="10" fill="#4da6e8" opacity="0.5"/>
+        </svg>
+      </div>
       </div>
     </div>
 
     <!-- Energy effects -->
     <div class="hero-trail"></div>
-    <div class="energy-burst"></div>
+    <div class="surge-particle"></div>
+    <div class="surge-particle"></div>
+    <div class="surge-particle"></div>
+    <div class="surge-particle"></div>
+    <div class="surge-particle"></div>
+    <div class="surge-particle"></div>
   </div>
 
   <!-- Final logo screen -->
   <div class="final">
     <div class="final-logo">
-      <svg viewBox="0 0 192 192" width="60" height="60"><path d="M108 28L68 100h28L80 164l52-80h-30z" fill="#fff"/></svg>
+      <svg viewBox="0 0 192 192" width="70" height="70"><path d="M108 28L68 100h28L80 164l52-80h-30z" fill="#fff"/></svg>
     </div>
     <h1>FastFuel</h1>
     <p>Smart Nutrition for Endurance Athletes</p>
