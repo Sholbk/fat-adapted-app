@@ -50,10 +50,12 @@ export async function backupToCloud(userId) {
   const recents = localStorage.getItem("ff_recent_foods");
   if (recents) snapshot["ff_recent_foods"] = recents;
 
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), 5000);
   return supabase.from("user_data").upsert(
     { user_id: userId, key: "backup", data: snapshot, updated_at: new Date().toISOString() },
     { onConflict: "user_id,key" }
-  );
+  ).abortSignal(controller.signal);
 }
 
 // Store API credentials securely in Supabase (not localStorage)
@@ -79,18 +81,28 @@ export async function getApiKeys(userId) {
 
 export async function restoreFromCloud(userId) {
   if (!supabase) return false;
-  const { data, error } = await supabase
-    .from("user_data")
-    .select("data")
-    .eq("user_id", userId)
-    .eq("key", "backup")
-    .single();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+  try {
+    const { data, error } = await supabase
+      .from("user_data")
+      .select("data")
+      .eq("user_id", userId)
+      .eq("key", "backup")
+      .abortSignal(controller.signal)
+      .single();
 
-  if (error || !data?.data) return false;
+    clearTimeout(timer);
+    if (error || !data?.data) return false;
 
-  const snapshot = data.data;
-  Object.entries(snapshot).forEach(([key, value]) => {
-    localStorage.setItem(key, value);
-  });
-  return true;
+    const snapshot = data.data;
+    Object.entries(snapshot).forEach(([key, value]) => {
+      localStorage.setItem(key, value);
+    });
+    return true;
+  } catch (e) {
+    clearTimeout(timer);
+    console.warn("restoreFromCloud aborted or failed:", e);
+    return false;
+  }
 }

@@ -64,24 +64,41 @@ function App() {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) { setAuthLoading(false); return; }
+
+    // Hard timeout — never stay on loading screen more than 4 seconds
+    const timeout = setTimeout(() => {
+      console.warn("Auth loading timed out — continuing without cloud data");
+      setAuthLoading(false);
+    }, 4000);
+
     getSession().then(async (s) => {
       setAuthSession(s);
       if (s?.user?.id) {
         try {
-          await restoreFromCloud(s.user.id);
+          await Promise.race([
+            restoreFromCloud(s.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 3000)),
+          ]);
           const restored = getSettings();
           if (restored) { setSettings(restored); setDraft(restored); }
         } catch (e) {
           console.warn("Cloud restore failed:", e);
         }
       }
+      clearTimeout(timeout);
+      setAuthLoading(false);
+    }).catch(() => {
+      clearTimeout(timeout);
       setAuthLoading(false);
     });
     const { data } = onAuthChange(async (s) => {
       setAuthSession(s);
       if (s?.user?.id) {
         try {
-          await restoreFromCloud(s.user.id);
+          await Promise.race([
+            restoreFromCloud(s.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 3000)),
+          ]);
           const restored = getSettings();
           if (restored) { setSettings(restored); setDraft(restored); }
         } catch (e) {
