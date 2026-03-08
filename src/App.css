@@ -958,4 +958,15 @@
 
   /* Meal head responsive */
   .meal-rec { display: none; }
+
+  /* Settings responsive */
+  .settings-grid { grid-template-columns: 1fr; }
+  .settings-card { padding: 1rem; }
+  .sett-field input, .sett-field select { font-size: 16px; }
+  .conn-list { gap: 0.5rem; }
+  .conn { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+  .conn-status { font-size: 0.7rem; }
+  .weight-chart { overflow-x: auto; }
+  .page-content h2 { font-size: 1.2rem; }
+  .page-sub { font-size: 0.8rem; }
 }
