@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { getWeightLog, addWeightEntry, getSettings } from "../utils/storage.js";
-import { signOut, backupToCloud } from "../utils/supabase.js";
+import { signOut, backupToCloud, saveApiKeys } from "../utils/supabase.js";
 
 export default function SettingsPage({ date, draft, updateDraft, handleSave, saved, settings, setSettings, setDraft, refresh, showToast, authSession, setAuthSession, syncing, setSyncing }) {
   return (
@@ -68,7 +68,16 @@ export default function SettingsPage({ date, draft, updateDraft, handleSave, sav
         <WeightLogSection date={date} refresh={refresh} showToast={showToast} />
       </div>
 
-      <button className="sett-save" onClick={handleSave}>{saved ? "Saved!" : "Save Settings"}</button>
+      <button className="sett-save" onClick={() => {
+        handleSave();
+        if (authSession?.user?.id && (draft.intervalsApiKey || draft.intervalsAthleteId)) {
+          saveApiKeys(authSession.user.id, {
+            intervalsApiKey: draft.intervalsApiKey || "",
+            intervalsAthleteId: draft.intervalsAthleteId || "",
+            athleticaUrl: draft.athleticaUrl || "",
+          }).catch(e => console.warn("Failed to save API keys:", e));
+        }
+      }}>{saved ? "Saved!" : "Save Settings"}</button>
 
       <div className="settings-card">
         <h3>Connections</h3>

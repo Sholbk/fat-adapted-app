@@ -68,8 +68,12 @@ export default function BarcodeScanner({ onScan, onClose }) {
           <button aria-label="Close scanner" onClick={handleClose}>&times;</button>
         </div>
         <div id={idRef.current}></div>
-        {error ? <p className="scanner-hint" style={{ color: "#fe00a4" }}>{error}</p>
-          : <p className="scanner-hint">Point camera at a food barcode</p>}
+        {error ? (
+          <div className="scanner-error">
+            <p className="scanner-hint" style={{ color: "#fe00a4" }}>{error}</p>
+            <button className="scanner-retry" onClick={() => { setError(""); stoppedRef.current = false; const el = document.getElementById(idRef.current); if (el) el.innerHTML = ""; const s = new Html5Qrcode(idRef.current, { verbose: false }); scannerRef.current = s; s.start({ facingMode: "environment" }, { fps: 8, qrbox: { width: 250, height: 150 } }, (code) => { if (stoppedRef.current) return; stoppedRef.current = true; s.stop().then(() => s.clear()).catch(() => {}); onScan(code); }, () => {}).catch(() => setError("Still can't access camera. Check browser permissions.")); }}>Try Again</button>
+          </div>
+        ) : <p className="scanner-hint">Point camera at a food barcode</p>}
       </div>
     </div>
   );

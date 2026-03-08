@@ -107,11 +107,18 @@ function App() {
   const W = settings.weight;
   const calAdj = settings.goalWeight < W ? -500 : settings.goalWeight > W ? 500 : 0;
   const backupTimer = React.useRef(null);
+  const backupInFlight = React.useRef(false);
   const refresh = () => {
     setTick(t => t + 1);
     if (authSession?.user?.id) {
       clearTimeout(backupTimer.current);
-      backupTimer.current = setTimeout(() => backupToCloud(authSession.user.id), 5000);
+      backupTimer.current = setTimeout(async () => {
+        if (backupInFlight.current) return;
+        backupInFlight.current = true;
+        try { await backupToCloud(authSession.user.id); }
+        catch (e) { console.warn("Auto-backup failed:", e); }
+        finally { backupInFlight.current = false; }
+      }, 5000);
     }
   };
   const showToast = (msg, onUndo) => setToasts(prev => [...prev, { id: Date.now(), message: msg, onUndo }]);
@@ -119,6 +126,12 @@ function App() {
 
   function updateDraft(s) { setDraft(d => ({ ...d, ...s })); setSaved(false); }
   function handleSave() { setSettings(draft); saveSettings(draft); setSaved(true); setTimeout(() => setSaved(false), 2000); }
+  const prevPage = React.useRef(page);
+  if (prevPage.current === "settings" && page !== "settings") {
+    setDraft(settings);
+    setSaved(false);
+  }
+  prevPage.current = page;
 
   useEffect(() => {
     const icsUrl = getIcsUrl(settings.athleticaUrl);

@@ -266,6 +266,12 @@
 #barcode-reader { border-radius: 8px; overflow: hidden; }
 #barcode-reader video { border-radius: 8px; }
 .scanner-hint { font-size: 0.75rem; color: #555555; text-align: center; margin-top: 0.5rem; }
+.scanner-error { text-align: center; margin-top: 0.5rem; }
+.scanner-retry {
+  margin-top: 0.5rem; padding: 0.4rem 1rem; background: var(--ff-blue-deep, #043bb1); color: #fff;
+  border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.scanner-retry:hover { background: var(--ff-blue, #1e8ad3); }
 
 /* ── Entries ── */
 .ent-list { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.5rem; max-height: 200px; overflow-y: auto; }

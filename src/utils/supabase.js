@@ -56,6 +56,27 @@ export async function backupToCloud(userId) {
   );
 }
 
+// Store API credentials securely in Supabase (not localStorage)
+export async function saveApiKeys(userId, keys) {
+  if (!supabase) return;
+  return supabase.from("user_data").upsert(
+    { user_id: userId, key: "api_keys", data: keys, updated_at: new Date().toISOString() },
+    { onConflict: "user_id,key" }
+  );
+}
+
+export async function getApiKeys(userId) {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("user_data")
+    .select("data")
+    .eq("user_id", userId)
+    .eq("key", "api_keys")
+    .single();
+  if (error || !data?.data) return null;
+  return data.data;
+}
+
 export async function restoreFromCloud(userId) {
   if (!supabase) return false;
   const { data, error } = await supabase

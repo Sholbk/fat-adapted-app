@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { saveSettings, DEFAULT_SETTINGS } from "../utils/storage.js";
-import { backupToCloud } from "../utils/supabase.js";
+import { backupToCloud, saveApiKeys } from "../utils/supabase.js";
 
 const STEPS = [
   { key: "profile", title: "About You", subtitle: "Let's personalize your nutrition targets" },
@@ -58,6 +58,13 @@ export default function Onboarding({ authSession, onComplete }) {
     if (authSession?.user?.id) {
       try {
         await backupToCloud(authSession.user.id);
+        if (data.intervalsApiKey || data.intervalsAthleteId) {
+          await saveApiKeys(authSession.user.id, {
+            intervalsApiKey: data.intervalsApiKey.trim(),
+            intervalsAthleteId: data.intervalsAthleteId.trim(),
+            athleticaUrl: data.athleticaUrl.trim(),
+          });
+        }
       } catch (e) {
         console.warn("Cloud backup failed during onboarding:", e);
       }
