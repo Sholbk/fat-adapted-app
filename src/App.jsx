@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import "./App.css";
 
 import { fmt, today, parseICS } from "./utils/parsing.js";
@@ -14,13 +14,14 @@ import Sidebar from "./components/Sidebar.jsx";
 import MobileNav from "./components/MobileNav.jsx";
 import Topbar from "./components/Topbar.jsx";
 
-import DailyLog from "./pages/DailyLog.jsx";
-import WeeklySummary from "./pages/WeeklySummary.jsx";
-import PhaseOfTraining from "./pages/PhaseOfTraining.jsx";
-import MealIdeas from "./pages/MealIdeas.jsx";
-import RecipeBuilder from "./pages/RecipeBuilder.jsx";
-import FuelTesting from "./pages/FuelTesting.jsx";
-import SettingsPage from "./pages/SettingsPage.jsx";
+// Lazy-load pages for smaller initial bundle
+const DailyLog = lazy(() => import("./pages/DailyLog.jsx"));
+const WeeklySummary = lazy(() => import("./pages/WeeklySummary.jsx"));
+const PhaseOfTraining = lazy(() => import("./pages/PhaseOfTraining.jsx"));
+const MealIdeas = lazy(() => import("./pages/MealIdeas.jsx"));
+const RecipeBuilder = lazy(() => import("./pages/RecipeBuilder.jsx"));
+const FuelTesting = lazy(() => import("./pages/FuelTesting.jsx"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage.jsx"));
 
 function formatDuration(secs) {
   const h = Math.floor(secs / 3600);
@@ -330,6 +331,7 @@ function App() {
       <main className="main">
         <Topbar date={date} shiftDate={shiftDate} settings={settings} setSettings={setSettings} session={session} userName={userName} />
 
+        <Suspense fallback={<div className="page-loading">Loading...</div>}>
         <div className="page-fade" key={page}>
         {page === "log" && (
           <DailyLog
@@ -382,6 +384,7 @@ function App() {
           />
         )}
         </div>
+        </Suspense>
       </main>
     </div>
   );
