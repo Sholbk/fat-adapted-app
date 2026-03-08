@@ -222,13 +222,12 @@ function App() {
   const dayEvents = events.filter(e => e.category === "WORKOUT" && e.start_date_local?.startsWith(date));
   const dayActs = activities.filter(a => a.start_date_local?.startsWith(date));
   const dayICS = planned.filter(w => w.date === date);
-  // Wellness load > 0 means actual training happened (from Strava/Garmin)
-  const dayHasActivity = dayActs.length > 0 || (wd.atlLoad > 0 && date <= today());
+  // Only mark completed if actual recorded activities exist for this day
+  const dayHasActivity = dayActs.length > 0;
   const isPastOrToday = date <= today();
 
   let dayWorkouts;
   if (dayEvents.length > 0) {
-    // Mark planned workouts as completed if Strava activities exist for the day
     dayWorkouts = dayEvents.map(e => {
       const status = isPastOrToday && dayHasActivity ? "completed" : "planned";
       return mapWorkout(e, status);
