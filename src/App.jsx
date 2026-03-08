@@ -62,18 +62,26 @@ function App() {
     getSession().then(async (s) => {
       setAuthSession(s);
       if (s?.user?.id) {
-        await restoreFromCloud(s.user.id);
-        const restored = getSettings();
-        if (restored) { setSettings(restored); setDraft(restored); }
+        try {
+          await restoreFromCloud(s.user.id);
+          const restored = getSettings();
+          if (restored) { setSettings(restored); setDraft(restored); }
+        } catch (e) {
+          console.warn("Cloud restore failed:", e);
+        }
       }
       setAuthLoading(false);
     });
     const { data } = onAuthChange(async (s) => {
       setAuthSession(s);
       if (s?.user?.id) {
-        await restoreFromCloud(s.user.id);
-        const restored = getSettings();
-        if (restored) { setSettings(restored); setDraft(restored); }
+        try {
+          await restoreFromCloud(s.user.id);
+          const restored = getSettings();
+          if (restored) { setSettings(restored); setDraft(restored); }
+        } catch (e) {
+          console.warn("Cloud restore failed:", e);
+        }
         setTick(t => t + 1);
       }
     });
