@@ -1,8 +1,8 @@
 import { useRef } from "react";
 import { getWeightLog, addWeightEntry, getSettings } from "../utils/storage.js";
-import { isSupabaseConfigured, signIn, signUp, signOut, backupToCloud, restoreFromCloud } from "../utils/supabase.js";
+import { signOut, backupToCloud } from "../utils/supabase.js";
 
-export default function SettingsPage({ date, draft, updateDraft, handleSave, saved, settings, setSettings, setDraft, refresh, showToast, authSession, setAuthSession, authForm, setAuthForm, syncing, setSyncing }) {
+export default function SettingsPage({ date, draft, updateDraft, handleSave, saved, settings, setSettings, setDraft, refresh, showToast, authSession, setAuthSession, syncing, setSyncing }) {
   return (
     <div className="page-content">
       <h2>Settings</h2>
@@ -72,25 +72,41 @@ export default function SettingsPage({ date, draft, updateDraft, handleSave, sav
 
       <div className="settings-card">
         <h3>Connections</h3>
-        <label className="sett-field" style={{ marginBottom: "0.75rem" }}>
-          <span>Athletica Calendar URL</span>
-          <input type="url" placeholder="https://app.athletica.ai/.../athletica.ics" value={draft.athleticaUrl || ""} onChange={e => updateDraft({ athleticaUrl: e.target.value })} />
-        </label>
+        <div className="settings-grid" style={{ marginBottom: "0.75rem" }}>
+          <label className="sett-field">
+            <span>Intervals.icu API Key</span>
+            <input type="password" placeholder="Your API key from Intervals.icu settings" value={draft.intervalsApiKey || ""} onChange={e => updateDraft({ intervalsApiKey: e.target.value })} />
+          </label>
+          <label className="sett-field">
+            <span>Intervals.icu Athlete ID</span>
+            <input type="text" placeholder="e.g. i338079" value={draft.intervalsAthleteId || ""} onChange={e => updateDraft({ intervalsAthleteId: e.target.value })} />
+          </label>
+          <label className="sett-field">
+            <span>Athletica Calendar URL</span>
+            <input type="url" placeholder="https://app.athletica.ai/.../athletica.ics" value={draft.athleticaUrl || ""} onChange={e => updateDraft({ athleticaUrl: e.target.value })} />
+          </label>
+        </div>
+        <p className="conn-help">Get your Intervals.icu API key from <strong>Settings &gt; Developer</strong> in your Intervals.icu account.</p>
         <div className="conn-list">
-          <div className="conn connected"><div className="conn-info"><strong>Intervals.icu</strong><span>Wellness data, training load, fitness metrics</span></div><span className="conn-status on">Connected</span></div>
+          <div className={`conn${draft.intervalsApiKey && draft.intervalsAthleteId ? " connected" : ""}`}><div className="conn-info"><strong>Intervals.icu</strong><span>Wellness data, training load, fitness metrics</span></div><span className={`conn-status${draft.intervalsApiKey && draft.intervalsAthleteId ? " on" : ""}`}>{draft.intervalsApiKey && draft.intervalsAthleteId ? "Connected" : "Not configured"}</span></div>
           <div className={`conn${draft.athleticaUrl ? " connected" : ""}`}><div className="conn-info"><strong>Athletica.ai</strong><span>Planned workouts, training plan calendar</span></div><span className={`conn-status${draft.athleticaUrl ? " on" : ""}`}>{draft.athleticaUrl ? "Connected" : "Not configured"}</span></div>
           <div className="conn connected"><div className="conn-info"><strong>FatSecret</strong><span>Food search, nutrition data, and barcode lookup</span></div><span className="conn-status on">Connected</span></div>
         </div>
       </div>
 
-      {isSupabaseConfigured() && (
+      {authSession && (
         <div className="settings-card">
-          <h3>Cloud Sync</h3>
-          {authSession ? (
-            <CloudSyncLoggedIn authSession={authSession} setAuthSession={setAuthSession} syncing={syncing} setSyncing={setSyncing} showToast={showToast} setSettings={setSettings} setDraft={setDraft} refresh={refresh} />
-          ) : (
-            <CloudSyncLogin authForm={authForm} setAuthForm={setAuthForm} showToast={showToast} />
-          )}
+          <h3>Account</h3>
+          <p className="cloud-user">Signed in as <strong>{authSession.user.email}</strong></p>
+          <div className="cloud-btns" style={{ marginTop: "0.5rem" }}>
+            <button className="cloud-btn" disabled={syncing} onClick={async () => {
+              setSyncing(true);
+              const { error } = await backupToCloud(authSession.user.id) || {};
+              setSyncing(false);
+              showToast(error ? `Backup failed: ${error.message}` : "Data backed up to cloud");
+            }}>{syncing ? "Syncing..." : "Backup Now"}</button>
+          </div>
+          <button className="cloud-signout" onClick={async () => { await signOut(); setAuthSession(null); showToast("Signed out"); }}>Sign Out</button>
         </div>
       )}
     </div>
@@ -151,54 +167,3 @@ function WeightChart({ entries }) {
   );
 }
 
-function CloudSyncLoggedIn({ authSession, setAuthSession, syncing, setSyncing, showToast, setSettings, setDraft, refresh }) {
-  return (
-    <div className="cloud-sync">
-      <p className="cloud-user">Signed in as <strong>{authSession.user.email}</strong></p>
-      <div className="cloud-btns">
-        <button className="cloud-btn" disabled={syncing} onClick={async () => {
-          setSyncing(true);
-          const { error } = await backupToCloud(authSession.user.id) || {};
-          setSyncing(false);
-          showToast(error ? `Backup failed: ${error.message}` : "Data backed up to cloud");
-        }}>{syncing ? "Syncing..." : "Backup to Cloud"}</button>
-        <button className="cloud-btn cloud-restore" disabled={syncing} onClick={async () => {
-          setSyncing(true);
-          const ok = await restoreFromCloud(authSession.user.id);
-          setSyncing(false);
-          if (ok) {
-            const restored = getSettings();
-            if (restored) { setSettings(restored); setDraft(restored); }
-            refresh();
-            showToast("Data restored from cloud");
-          } else {
-            showToast("No cloud backup found");
-          }
-        }}>{syncing ? "Syncing..." : "Restore from Cloud"}</button>
-      </div>
-      <button className="cloud-signout" onClick={async () => { await signOut(); setAuthSession(null); showToast("Signed out"); }}>Sign Out</button>
-    </div>
-  );
-}
-
-function CloudSyncLogin({ authForm, setAuthForm, showToast }) {
-  return (
-    <div className="cloud-auth">
-      <p className="cloud-desc">Sign in to backup your data to the cloud and sync across devices.</p>
-      <input type="email" placeholder="Email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} className="cloud-input" />
-      <input type="password" placeholder="Password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} className="cloud-input" />
-      <div className="cloud-btns">
-        <button className="cloud-btn" onClick={async () => {
-          const { error } = authForm.mode === "login"
-            ? await signIn(authForm.email, authForm.password)
-            : await signUp(authForm.email, authForm.password);
-          if (error) showToast(error.message);
-          else showToast(authForm.mode === "login" ? "Signed in" : "Check your email to confirm signup");
-        }}>{authForm.mode === "login" ? "Sign In" : "Sign Up"}</button>
-      </div>
-      <button className="cloud-toggle" onClick={() => setAuthForm(f => ({ ...f, mode: f.mode === "login" ? "signup" : "login" }))}>
-        {authForm.mode === "login" ? "Need an account? Sign up" : "Already have an account? Sign in"}
-      </button>
-    </div>
-  );
-}

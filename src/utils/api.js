@@ -1,7 +1,11 @@
 const API_BASE = import.meta.env.DEV ? "http://localhost:8888/api" : "/api";
 
-export async function apiFetch(endpoint) {
+export async function apiFetch(endpoint, intervalsConfig) {
+  const headers = {};
+  if (intervalsConfig?.apiKey) headers["X-Intervals-Key"] = intervalsConfig.apiKey;
+  if (intervalsConfig?.athleteId) headers["X-Intervals-Athlete"] = intervalsConfig.athleteId;
   const r = await fetch(`${API_BASE}/intervals?endpoint=${encodeURIComponent(endpoint)}`, {
+    headers,
     signal: AbortSignal.timeout(10000),
   });
   if (!r.ok) throw new Error(`API ${r.status}`);

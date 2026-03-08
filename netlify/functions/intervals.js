@@ -1,5 +1,5 @@
-const API_KEY = process.env.INTERVALS_API_KEY;
-const ATHLETE_ID = process.env.INTERVALS_ATHLETE_ID;
+const DEFAULT_API_KEY = process.env.INTERVALS_API_KEY;
+const DEFAULT_ATHLETE_ID = process.env.INTERVALS_ATHLETE_ID;
 const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fuelflow-app.netlify.app";
 
 const ALLOWED_ENDPOINTS = ["wellness", "events", "activities"];
@@ -10,12 +10,29 @@ function respond(body, status = 200) {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+      "Access-Control-Allow-Headers": "Content-Type, X-Intervals-Key, X-Intervals-Athlete",
     },
   });
 }
 
 export default async (req) => {
-  if (!API_KEY || !ATHLETE_ID) return respond({ error: "Intervals.icu not configured" }, 500);
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, X-Intervals-Key, X-Intervals-Athlete",
+      },
+    });
+  }
+
+  // Per-user keys from headers, fall back to env defaults
+  const apiKey = req.headers.get("X-Intervals-Key") || DEFAULT_API_KEY;
+  const athleteId = req.headers.get("X-Intervals-Athlete") || DEFAULT_ATHLETE_ID;
+
+  if (!apiKey || !athleteId) return respond({ error: "Intervals.icu not configured. Add your API key in Settings." }, 400);
 
   const url = new URL(req.url);
   const endpoint = (url.searchParams.get("endpoint") || "").trim();
@@ -40,8 +57,8 @@ export default async (req) => {
   const qs = sanitizedParams.toString();
   const sanitizedEndpoint = qs ? `${baseName}?${qs}` : baseName;
 
-  const baseUrl = `https://intervals.icu/api/v1/athlete/${ATHLETE_ID}`;
-  const credentials = btoa(`API_KEY:${API_KEY}`);
+  const baseUrl = `https://intervals.icu/api/v1/athlete/${athleteId}`;
+  const credentials = btoa(`API_KEY:${apiKey}`);
 
   try {
     const response = await fetch(`${baseUrl}/${sanitizedEndpoint}`, {

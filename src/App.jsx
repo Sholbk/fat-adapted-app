@@ -6,8 +6,9 @@ import { getSessionTypeFromWorkouts } from "./utils/classification.js";
 import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
 import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum } from "./utils/storage.js";
 import { apiFetch } from "./utils/api.js";
-import { isSupabaseConfigured, getSession, onAuthChange, backupToCloud } from "./utils/supabase.js";
+import { isSupabaseConfigured, getSession, onAuthChange, backupToCloud, restoreFromCloud } from "./utils/supabase.js";
 
+import LandingPage from "./pages/LandingPage.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import MobileNav from "./components/MobileNav.jsx";
 import Topbar from "./components/Topbar.jsx";
@@ -51,13 +52,30 @@ function App() {
   const [saved, setSaved] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [authSession, setAuthSession] = useState(null);
-  const [authForm, setAuthForm] = useState({ email: "", password: "", mode: "login" });
   const [syncing, setSyncing] = useState(false);
 
+  const [authLoading, setAuthLoading] = useState(true);
+
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
-    getSession().then(s => setAuthSession(s));
-    const { data } = onAuthChange(s => setAuthSession(s));
+    if (!isSupabaseConfigured()) { setAuthLoading(false); return; }
+    getSession().then(async (s) => {
+      setAuthSession(s);
+      if (s?.user?.id) {
+        await restoreFromCloud(s.user.id);
+        const restored = getSettings();
+        if (restored) { setSettings(restored); setDraft(restored); }
+      }
+      setAuthLoading(false);
+    });
+    const { data } = onAuthChange(async (s) => {
+      setAuthSession(s);
+      if (s?.user?.id) {
+        await restoreFromCloud(s.user.id);
+        const restored = getSettings();
+        if (restored) { setSettings(restored); setDraft(restored); }
+        setTick(t => t + 1);
+      }
+    });
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -100,10 +118,11 @@ function App() {
     if (fetched.has(m)) return;
     const [y, mo] = m.split("-").map(Number);
     const s = fmt(new Date(y, mo - 1, -6)), e = fmt(new Date(y, mo, 6));
+    const iCfg = settings.intervalsApiKey ? { apiKey: settings.intervalsApiKey, athleteId: settings.intervalsAthleteId } : undefined;
     Promise.all([
-      apiFetch(`wellness?oldest=${s}&newest=${e}`).catch(() => []),
-      apiFetch(`events?oldest=${s}&newest=${e}`).catch(() => []),
-      apiFetch(`activities?oldest=${s}&newest=${e}`).catch(() => []),
+      apiFetch(`wellness?oldest=${s}&newest=${e}`, iCfg).catch(() => []),
+      apiFetch(`events?oldest=${s}&newest=${e}`, iCfg).catch(() => []),
+      apiFetch(`activities?oldest=${s}&newest=${e}`, iCfg).catch(() => []),
     ]).then(([w, ev, act]) => {
       setWellness(prev => {
         const map = new Map(prev.map(x => [x.id, x]));
@@ -230,7 +249,23 @@ function App() {
     if (removed) showToast(`Removed ${removed.name.split("(")[0].trim()}`, () => { setTLog(date, [...getTLog(date), removed]); refresh(); });
   }
 
-  const userName = settings.name || "Stephanie";
+  const userName = settings.name || authSession?.user?.email?.split("@")[0] || "Athlete";
+
+  if (authLoading) return (
+    <div className="landing-loading">
+      <span className="sb-logo" style={{ width: 48, height: 48, fontSize: "1.5rem" }}>F</span>
+      <p>Loading...</p>
+    </div>
+  );
+
+  if (!authSession) return (
+    <div className={settings.darkMode ? "dark" : ""}>
+      <div className="toast-container">
+        {toasts.map(t => <Toast key={t.id} message={t.message} onDone={() => dismissToast(t.id)} onUndo={t.onUndo} />)}
+      </div>
+      <LandingPage showToast={showToast} />
+    </div>
+  );
 
   if (loading && wellness.length === 0) return (
     <div className={`layout${settings.darkMode ? " dark" : ""}`}>
@@ -310,7 +345,6 @@ function App() {
             settings={settings} setSettings={setSettings} setDraft={setDraft}
             refresh={refresh} showToast={showToast}
             authSession={authSession} setAuthSession={setAuthSession}
-            authForm={authForm} setAuthForm={setAuthForm}
             syncing={syncing} setSyncing={setSyncing}
           />
         )}
