@@ -1,4 +1,4 @@
-const CACHE_NAME = "fuelflow-v1";
+const CACHE_NAME = "fastfuel-v2";
 const STATIC_ASSETS = ["/", "/index.html"];
 
 self.addEventListener("install", (e) => {
@@ -24,17 +24,14 @@ self.addEventListener("fetch", (e) => {
   // Don't cache API calls
   if (url.pathname.startsWith("/api/")) return;
 
+  // Network-first: try network, fall back to cache
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const fetchPromise = fetch(e.request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => cached);
-
-      return cached || fetchPromise;
-    })
+    fetch(e.request).then((response) => {
+      if (response.ok) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+      }
+      return response;
+    }).catch(() => caches.match(e.request))
   );
 });
