@@ -385,6 +385,14 @@
   transition: border-color 0.15s;
 }
 .daily-notes:focus { outline: none; border-color: #1e8ad3; }
+.mood-save-btn {
+  margin-top: 0.5rem; padding: 0.5rem 1.5rem; background: #043bb1; color: #fff; border: none;
+  border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: background 0.15s; float: right;
+}
+.mood-save-btn:hover { background: #1e8ad3; }
+.dark .mood-save-btn { background: #1e8ad3; }
+.dark .mood-save-btn:hover { background: #4da6e8; }
 
 /* ── Recipe Builder ── */
 .recipe-builder { background: #fefefe; border: 1px solid #888888; border-radius: 14px; padding: 1.25rem; margin-bottom: 1.25rem; }

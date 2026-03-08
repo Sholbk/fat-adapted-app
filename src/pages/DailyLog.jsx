@@ -174,7 +174,8 @@ export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRe
             </button>
           ))}
         </div>
-        <textarea className="daily-notes" placeholder="Energy levels, mood, digestion, anything on your mind..." value={getNotes(date)} onChange={e => { setNotes(date, e.target.value); refresh(); }} />
+        <textarea className="daily-notes" placeholder="Energy levels, mood, digestion, anything on your mind..." value={getNotes(date)} onChange={e => { setNotes(date, e.target.value); }} />
+        <button className="mood-save-btn" onClick={() => { refresh(); showToast("Notes saved"); }}>Save</button>
       </div>
     </>
   );
