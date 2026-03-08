@@ -254,7 +254,7 @@ function App() {
 
   if (authLoading) return (
     <div className="landing-loading">
-      <span className="sb-logo" style={{ width: 48, height: 48, fontSize: "1.5rem" }}>F</span>
+      <span className="sb-logo" style={{ width: 48, height: 48 }}><svg viewBox="0 0 192 192" width="28" height="28"><path d="M108 28L68 100h28L80 164l52-80h-30z" fill="#fff"/></svg></span>
       <p>Loading...</p>
     </div>
   );

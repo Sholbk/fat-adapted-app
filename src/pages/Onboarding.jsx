@@ -67,7 +67,7 @@ export default function Onboarding({ authSession, onComplete }) {
       <div className="onboarding-bg" />
       <div className="onboarding-card">
         <div className="onboarding-header">
-          <span className="sb-logo" style={{ width: 36, height: 36, fontSize: "1.1rem" }}>F</span>
+          <span className="sb-logo" style={{ width: 36, height: 36 }}><svg viewBox="0 0 192 192" width="22" height="22"><path d="M108 28L68 100h28L80 164l52-80h-30z" fill="#fff"/></svg></span>
           <span className="onboarding-brand">FastFuel</span>
         </div>
 
