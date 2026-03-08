@@ -9,6 +9,7 @@ import { apiFetch } from "./utils/api.js";
 import { isSupabaseConfigured, getSession, onAuthChange, backupToCloud, restoreFromCloud } from "./utils/supabase.js";
 
 import LandingPage from "./pages/LandingPage.jsx";
+import Onboarding from "./pages/Onboarding.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import MobileNav from "./components/MobileNav.jsx";
 import Topbar from "./components/Topbar.jsx";
@@ -265,6 +266,13 @@ function App() {
       </div>
       <LandingPage showToast={showToast} />
     </div>
+  );
+
+  // Existing users with a name set skip onboarding
+  const needsOnboarding = !settings.onboardingDone && !settings.name;
+
+  if (needsOnboarding) return (
+    <Onboarding authSession={authSession} onComplete={(s) => { setSettings(s); setDraft(s); setFetched(new Set()); setTick(t => t + 1); }} />
   );
 
   if (loading && wellness.length === 0) return (

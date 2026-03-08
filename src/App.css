@@ -844,12 +844,73 @@
 .conn-help { font-size: 0.7rem; color: #999; margin-bottom: 0.5rem; }
 .dark .conn-help { color: #666; }
 
+/* ── Onboarding ── */
+.onboarding {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.onboarding-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 40%, #043bb1 100%);
+}
+.onboarding-card {
+  position: relative; z-index: 1; background: #fff; border-radius: 20px;
+  padding: 2.5rem; max-width: 480px; width: 100%; margin: 1rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.onboarding-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+.onboarding-brand { font-size: 1.1rem; font-weight: 800; color: #000; }
+.onboarding-progress { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.onboarding-dot {
+  flex: 1; height: 4px; border-radius: 2px; background: #e0e0e0; transition: background 0.3s;
+}
+.onboarding-dot.active { background: #043bb1; }
+.onboarding-dot.done { background: #10bc10; }
+.onboarding-card h2 { font-size: 1.3rem; font-weight: 700; color: #000; margin: 0 0 0.25rem; }
+.onboarding-sub { font-size: 0.8rem; color: #777; margin: 0 0 1.5rem; }
+.onboarding-fields { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.ob-field { display: flex; flex-direction: column; gap: 0.25rem; }
+.ob-field span { font-size: 0.75rem; font-weight: 600; color: #555; }
+.ob-field input, .ob-field select {
+  background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px;
+  padding: 0.65rem 0.75rem; font-size: 0.9rem; font-family: inherit;
+  outline: none; transition: border-color 0.15s; color: #000;
+}
+.ob-field input:focus, .ob-field select:focus { border-color: #043bb1; }
+.ob-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.ob-hint { font-size: 0.75rem; color: #999; margin: 0.25rem 0 0; line-height: 1.4; }
+.ob-conn-intro { font-size: 0.8rem; color: #777; margin: 0 0 0.5rem; }
+
+.onboarding-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+.ob-back {
+  flex: 0 0 auto; padding: 0.7rem 1.25rem; background: #f0f0f0; border: 1px solid #ddd;
+  border-radius: 10px; font-size: 0.9rem; font-weight: 600; color: #555;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.ob-back:hover { background: #e0e0e0; }
+.ob-next {
+  flex: 1; padding: 0.7rem 1.25rem; background: #043bb1; color: #fff; border: none;
+  border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: background 0.15s;
+}
+.ob-next:hover { background: #1e8ad3; }
+.ob-next:disabled { opacity: 0.4; cursor: not-allowed; }
+.ob-skip {
+  display: block; width: 100%; margin-top: 0.75rem; background: none; border: none;
+  color: #999; font-size: 0.75rem; cursor: pointer; font-family: inherit;
+  text-align: center; transition: color 0.15s;
+}
+.ob-skip:hover { color: #1e8ad3; }
+
 @media (max-width: 768px) {
   .landing-content { flex-direction: column; gap: 2rem; text-align: center; padding: 1.5rem; }
   .landing-hero h1 { font-size: 1.8rem; }
   .landing-features { align-items: center; }
   .landing-feat { text-align: left; }
   .landing-auth { flex: none; width: 100%; max-width: 360px; }
+  .onboarding-card { padding: 1.5rem; margin: 0.75rem; }
+  .ob-row { grid-template-columns: 1fr; }
 }
 
 /* ── Responsive ── */
