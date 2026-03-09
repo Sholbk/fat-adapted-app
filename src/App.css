@@ -1181,6 +1181,8 @@ a.landing-badge:hover { background: rgba(255,255,255,0.12); }
 .fp-content ul { padding-left: 1.25rem; margin: 0 0 0.75rem; }
 .fp-content li { font-size: 0.85rem; line-height: 1.7; color: rgba(255,255,255,0.7); margin-bottom: 0.3rem; }
 .fp-content code { background: rgba(255,255,255,0.08); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.8rem; }
+.fp-content a { color: #7db8f0; text-decoration: none; }
+.fp-content a:hover { color: #a8d4ff; text-decoration: underline; }
 .fp-ref {
   background: rgba(255,255,255,0.04); border-left: 3px solid var(--ff-blue-light, #7db8f0);
   padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0;
