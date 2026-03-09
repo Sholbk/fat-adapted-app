@@ -336,6 +336,39 @@
 .zone-col-group[data-group="MIT"] { background: #fff3cd; color: #886600; }
 .zone-col-group[data-group="HIT"] { background: #ffd4d4; color: #a01030; }
 
+/* Session Focus two-column layout */
+.sf-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 1100px) { .sf-columns { grid-template-columns: 1fr; } }
+.sf-col h3 { margin-top: 0; }
+.sf-attribution { font-size: 0.75rem; color: var(--ff-text-muted); font-style: italic; margin: -0.5rem 0 0.75rem; }
+
+/* Friel Periodization */
+.friel-current {
+  background: var(--ff-card); border: 1px solid var(--ff-border); border-radius: 12px;
+  padding: 1rem; margin-bottom: 0.75rem;
+}
+.friel-weeks { font-size: 0.75rem; color: var(--ff-text-muted); font-weight: 600; margin-left: 0.5rem; }
+.friel-desc { font-size: 0.85rem; color: var(--ff-text); margin: 0.5rem 0 0.25rem; }
+.friel-focus { font-size: 0.8rem; color: var(--ff-text-muted); line-height: 1.45; }
+.friel-phases { display: flex; flex-direction: column; gap: 0.2rem; margin-bottom: 1rem; }
+.friel-phase-btn {
+  display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem;
+  background: var(--ff-card); border: 1px solid var(--ff-border); border-radius: 8px;
+  font-size: 0.8rem; cursor: pointer; font-family: inherit; transition: all 0.15s; text-align: left;
+}
+.friel-phase-btn:hover { background: #f0f0f0; }
+.friel-phase-btn.active { border-color: var(--ff-blue-deep); background: #e8f0ff; }
+.friel-phase-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.friel-phase-label { font-weight: 700; color: var(--ff-text); min-width: 90px; }
+.friel-phase-weeks { color: var(--ff-text-muted); font-size: 0.75rem; }
+.friel-principles {
+  background: var(--ff-card); border: 1px solid var(--ff-border); border-radius: 12px; padding: 1rem;
+}
+.friel-principles h4 { font-size: 0.85rem; font-weight: 700; color: var(--ff-text); margin: 0 0 0.5rem; }
+.friel-principles ul { margin: 0; padding-left: 1.1rem; }
+.friel-principles li { font-size: 0.8rem; color: var(--ff-text-muted); line-height: 1.5; margin-bottom: 0.4rem; }
+.friel-principles li strong { color: var(--ff-text); }
+
 /* Meal Ideas */
 .idea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .idea { background: var(--ff-card); border: 1px solid var(--ff-border); border-radius: 10px; padding: 1rem; }
@@ -738,6 +771,13 @@
 .dark .zone-col-group[data-group="LIT"] { background: #1a3a1a; color: #50d050; }
 .dark .zone-col-group[data-group="MIT"] { background: #3a3a1a; color: #e8c010; }
 .dark .zone-col-group[data-group="HIT"] { background: #3a1a1a; color: #ff6080; }
+.dark .friel-current { background: #1a1a2e; border-color: #3a3a5a; }
+.dark .friel-phase-btn { background: #1a1a2e; border-color: #3a3a5a; color: #e0e0e0; }
+.dark .friel-phase-btn:hover { background: #252540; }
+.dark .friel-phase-btn.active { background: #1a2a4a; border-color: #4da6e8; }
+.dark .friel-phase-label { color: #e0e0e0; }
+.dark .friel-principles { background: #1a1a2e; border-color: #3a3a5a; }
+.dark .friel-principles li strong { color: #e0e0e0; }
 .dark .mp-head h3 { color: #e0e0e0; }
 .dark .mp-food-name { color: #e0e0e0; }
 .dark .mp-food-macros { color: #888; }

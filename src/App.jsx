@@ -453,7 +453,7 @@ function App() {
         )}
 
         {page === "phase" && (
-          <PhaseOfTraining session={session} sType={sType} wellness={wellness} />
+          <PhaseOfTraining session={session} sType={sType} wellness={wellness} settings={settings} setSettings={setSettings} />
         )}
 
         {page === "meals" && (
