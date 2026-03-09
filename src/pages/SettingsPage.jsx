@@ -119,7 +119,7 @@ export default function SettingsPage({ date, draft, updateDraft, handleSave, sav
       )}
 
       {authSession && (
-        <button className="sett-signout" onClick={async () => { clearAllData(); setStoredUserId(null); await signOut(); setAuthSession(null); showToast("Signed out"); }}>Sign Out</button>
+        <button className="sett-signout" onClick={async () => { clearAllData(); setStoredUserId(null); await signOut(); window.location.reload(); }}>Sign Out</button>
       )}
     </div>
   );

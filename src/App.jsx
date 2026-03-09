@@ -64,7 +64,7 @@ function App() {
 
   function handleUserSwitch(newUserId) {
     const storedId = getStoredUserId();
-    if (storedId && storedId !== newUserId) {
+    if (storedId !== newUserId) {
       clearAllData();
       setSettings(DEFAULT_SETTINGS);
       setDraft(DEFAULT_SETTINGS);
