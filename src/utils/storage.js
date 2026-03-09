@@ -62,6 +62,15 @@ export const COMMON_SUPPS = [
   "Fish Oil", "Vitamin D", "Caffeine", "BCAA", "Collagen", "Multivitamin"
 ];
 
+export function clearAllData() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith("ff-") || key === "ff_recent_foods")) keys.push(key);
+  }
+  keys.forEach(k => localStorage.removeItem(k));
+}
+
 export function getMood(d) {
   return localStorage.getItem(`ff-mood-${d}`) || "";
 }

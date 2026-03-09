@@ -4,7 +4,7 @@ import "./App.css";
 import { fmt, today, parseICS } from "./utils/parsing.js";
 import { getSessionTypeFromWorkouts } from "./utils/classification.js";
 import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
-import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum } from "./utils/storage.js";
+import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, clearAllData } from "./utils/storage.js";
 import { apiFetch } from "./utils/api.js";
 import { isSupabaseConfigured, getSession, onAuthChange, backupToCloud, restoreFromCloud } from "./utils/supabase.js";
 
@@ -91,12 +91,26 @@ function App() {
       clearTimeout(timeout);
       setAuthLoading(false);
     });
-    const { data } = onAuthChange(async (s) => {
-      setAuthSession(s);
-      if (s?.user?.id) {
+    let currentUserId = s?.user?.id || null;
+    const { data } = onAuthChange(async (newSession) => {
+      const newUserId = newSession?.user?.id || null;
+      // User changed or signed out — clear old user's local data
+      if (newUserId !== currentUserId) {
+        clearAllData();
+        setSettings(DEFAULT_SETTINGS);
+        setDraft(DEFAULT_SETTINGS);
+        setWellness([]);
+        setPlanned([]);
+        setEvents([]);
+        setActivities([]);
+        setFetched(new Set());
+      }
+      currentUserId = newUserId;
+      setAuthSession(newSession);
+      if (newSession?.user?.id) {
         try {
           await Promise.race([
-            restoreFromCloud(s.user.id),
+            restoreFromCloud(newSession.user.id),
             new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 800)),
           ]);
           const restored = getSettings();
