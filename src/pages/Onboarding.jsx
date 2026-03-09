@@ -139,10 +139,8 @@ export default function Onboarding({ authSession, onComplete }) {
                 <input type="number" value={data.goalWeight} onChange={e => update({ goalWeight: e.target.value })} placeholder="e.g. 155" autoFocus />
               </label>
               <p className="ob-hint">
-                {data.weight && data.goalWeight && Number(data.goalWeight) < Number(data.weight)
-                  ? `We'll target a 500 cal/day deficit to help you lose ${Number(data.weight) - Number(data.goalWeight)} lbs.`
-                  : data.weight && data.goalWeight && Number(data.goalWeight) > Number(data.weight)
-                  ? `We'll add 500 cal/day to help you gain ${Number(data.goalWeight) - Number(data.weight)} lbs.`
+                {data.weight && data.goalWeight && Number(data.goalWeight) !== Number(data.weight)
+                  ? "Macros will be calculated based on your goal weight."
                   : "Set the same as your current weight to maintain."}
               </p>
               <label className="ob-field">

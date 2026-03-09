@@ -115,8 +115,11 @@ export default function SettingsPage({ date, draft, updateDraft, handleSave, sav
               showToast(error ? `Backup failed: ${error.message}` : "Data backed up to cloud");
             }}>{syncing ? "Syncing..." : "Backup Now"}</button>
           </div>
-          <button className="cloud-signout" onClick={async () => { await signOut(); setAuthSession(null); showToast("Signed out"); }}>Sign Out</button>
         </div>
+      )}
+
+      {authSession && (
+        <button className="sett-signout" onClick={async () => { await signOut(); setAuthSession(null); showToast("Signed out"); }}>Sign Out</button>
       )}
     </div>
   );

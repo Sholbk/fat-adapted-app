@@ -123,7 +123,7 @@ function App() {
   });
 
   const W = settings.goalWeight > 0 ? settings.goalWeight : settings.weight;
-  const calAdj = settings.goalWeight > 0 && settings.goalWeight < settings.weight ? -500 : settings.goalWeight > settings.weight ? 500 : 0;
+  const calAdj = 0;
   const backupTimer = React.useRef(null);
   const backupInFlight = React.useRef(false);
   const refresh = () => {

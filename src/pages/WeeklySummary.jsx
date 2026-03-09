@@ -42,7 +42,7 @@ const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function WeeklySummary({ date, setDate, setPage, planned, wellness, settings }) {
   const W = settings.weight;
-  const calAdj = settings.goalWeight < W ? -500 : settings.goalWeight > W ? 500 : 0;
+  const calAdj = 0;
   const weekDates = getWeekDates(date);
   const weekData = weekDates.map(d => getDayTotals(d));
   const weekTargets = weekDates.map(d => {
