@@ -20,7 +20,7 @@ export function TermsContent() {
       <p>You are responsible for the accuracy of data you provide. FastFuel stores your settings and nutrition logs to provide the service. See our Privacy Policy for details on data handling.</p>
 
       <h3>6. Third-Party Integrations</h3>
-      <p>FastFuel integrates with third-party services including Athletica.ai, Intervals.icu, Strava, and FatSecret. Your use of these services is governed by their respective terms. FastFuel is not responsible for the accuracy or availability of third-party data.</p>
+      <p>FastFuel integrates with third-party services including Athletica.ai, Intervals.icu, Strava, Garmin Connect, FatSecret, and any other services connected through Intervals.icu. Your use of these services is governed by their respective terms. FastFuel is not responsible for the accuracy or availability of third-party data.</p>
 
       <h3>7. Limitation of Liability</h3>
       <p>FastFuel and its creators shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the App, including but not limited to health outcomes, training decisions, or data loss.</p>
