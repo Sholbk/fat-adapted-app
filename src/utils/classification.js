@@ -1,22 +1,23 @@
 export function classifyWorkout(summary) {
   const s = summary.toLowerCase();
-  if (s.includes("hiit") || s.includes("vo2") || s.includes("interval")) return "vo2max";
-  if (s.includes("threshold") || s.includes("strength endurance") || s.includes("se ")) return "threshold";
-  if (s.includes("tempo")) return "upperTempo";
-  if (s.includes("aerobic") || s.includes("steady") || s.includes("development")) return "endurance";
+  if (s.includes("sprint") || s.includes("rst") || s.includes("sit") || s.includes("all-out") || s.includes("all out")) return "anaerobic";
+  if (s.includes("hiit") || s.includes("vo2") || s.includes("interval") || s.includes("30:30") || s.includes("30\"")) return "vo2max";
+  if (s.includes("threshold") || s.includes("strength endurance") || s.includes("se ") || s.includes("ftp")) return "threshold";
+  if (s.includes("tempo") || s.includes("sweet spot") || s.includes("run off the bike") || /\brob\b/.test(s)) return "upperTempo";
+  if (s.includes("technique") || s.includes("tec") || s.includes("drill")) return "endurance";
+  if (s.includes("aerobic") || s.includes("steady") || s.includes("development") || s.includes("easy") || s.includes("recovery")) return "endurance";
   if (s.includes("strength") || s.includes("weight training") || s.includes("conditioning") || s.includes("s&c") || s.includes("gym")) return "endurance";
-  if (s.includes("run off the bike") || s.includes("rob")) return "upperTempo";
   return "endurance";
 }
 
 export function classifyByIntensity(intensity) {
   if (!intensity || intensity === 0) return "rest";
-  if (intensity <= 55) return "endurance";
-  if (intensity <= 65) return "lowerTempo";
-  if (intensity <= 75) return "upperTempo";
-  if (intensity <= 88) return "threshold";
-  if (intensity <= 100) return "vo2max";
-  return "anaerobic";
+  if (intensity <= 78) return "endurance";       // Z1–Z2: <78% HRmax (LIT)
+  if (intensity <= 82) return "lowerTempo";       // Z3a: 78–82% HRmax (MIT)
+  if (intensity <= 88) return "upperTempo";       // Z3b: 82–88% HRmax (MIT)
+  if (intensity <= 93) return "threshold";        // Z4: 88–93% HRmax (HIT)
+  if (intensity <= 120) return "vo2max";          // Z5–Z6: 93–120% MAP (HIT)
+  return "anaerobic";                             // Z7: >120% MAP (HIT)
 }
 
 export function getSessionType(load) {

@@ -1,23 +1,73 @@
 import { SESSION_CONFIG } from "../utils/macros.js";
 
+const ZONE_MAP = [
+  { zone: "Z1", name: "Recovery", hrRange: "< 68%", rpe: "1–2", group: "LIT", color: "#999", key: "endurance" },
+  { zone: "Z2", name: "Endurance", hrRange: "68–78%", rpe: "3–4", group: "LIT", color: "#10bc10", key: "endurance" },
+  { zone: "Z3a", name: "Tempo", hrRange: "78–82%", rpe: "5", group: "MIT", color: "#e8c010", key: "lowerTempo" },
+  { zone: "Z3b", name: "Tempo+", hrRange: "82–88%", rpe: "6–7", group: "MIT", color: "#e87010", key: "upperTempo" },
+  { zone: "Z4", name: "Threshold", hrRange: "88–93%", rpe: "8", group: "HIT", color: "#e85040", key: "threshold" },
+  { zone: "Z5–Z6", name: "VO2max", hrRange: "93–120% MAP", rpe: "9", group: "HIT", color: "#cc0050", key: "vo2max" },
+  { zone: "Z7", name: "Sprint", hrRange: "> 120% MAP", rpe: "10", group: "HIT", color: "#800030", key: "anaerobic" },
+];
+
+function zoneGroupLabel(group) {
+  if (group === "LIT") return "Low Intensity Training";
+  if (group === "MIT") return "Moderate Intensity Training";
+  return "High Intensity Training";
+}
+
 export default function PhaseOfTraining({ session, sType, wellness }) {
+  const activeZone = ZONE_MAP.find(z => z.key === sType) || ZONE_MAP[1];
+
   return (
     <div className="page-content">
       <h2>Training Session Focus</h2>
+
+      {/* Current session badge */}
       <div className="phase-current">
-        <div className="phase-badge" style={{ background: session.color }}>{session.label}</div>
+        <div className="phase-badge" style={{ background: session.color }}>
+          {session.label} — {session.zone}
+        </div>
+        <p className="phase-group-tag" style={{ color: activeZone.color }}>
+          {activeZone.group} — {zoneGroupLabel(activeZone.group)}
+        </p>
         <p>{session.note}</p>
       </div>
 
       <TrainingLoadChart wellness={wellness} />
 
+      {/* 7-Zone Table */}
+      <h3>Athletica.ai Training Zones</h3>
+      <div className="zone-table">
+        <div className="zone-header">
+          <span className="zone-col-zone">Zone</span>
+          <span className="zone-col-name">Type</span>
+          <span className="zone-col-hr">%HRmax</span>
+          <span className="zone-col-rpe">RPE</span>
+          <span className="zone-col-group">Class</span>
+        </div>
+        {ZONE_MAP.map(z => (
+          <div key={z.zone} className={`zone-row ${z.key === sType ? "active" : ""}`}>
+            <span className="zone-col-zone">
+              <span className="phase-dot" style={{ background: z.color }} />
+              {z.zone}
+            </span>
+            <span className="zone-col-name">{z.name}</span>
+            <span className="zone-col-hr">{z.hrRange}</span>
+            <span className="zone-col-rpe">{z.rpe}</span>
+            <span className="zone-col-group" data-group={z.group}>{z.group}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Fat-Adapted Fueling Guide */}
       <h3>Fat-Adapted Fueling Guide</h3>
       <div className="phase-table">
-        {Object.entries(SESSION_CONFIG).map(([key, s]) => (
+        {Object.entries(SESSION_CONFIG).filter(([k]) => k !== "rest").map(([key, s]) => (
           <div key={key} className={`phase-row ${key === sType ? "active" : ""}`}>
             <span className="phase-dot" style={{ background: s.color }} />
-            <span className="phase-name">{s.label}</span>
-            <span className="phase-target">{s.target}</span>
+            <span className="phase-name">{s.label} <span className="phase-zone-tag">{s.zone}</span></span>
+            <span className="phase-target">{s.fuel.during}</span>
             <span className="phase-carb">{Math.round(s.fatRatio * 100)}% fat / {Math.round((1 - s.fatRatio) * 100)}% CHO</span>
           </div>
         ))}

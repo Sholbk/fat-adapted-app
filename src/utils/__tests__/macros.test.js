@@ -140,28 +140,28 @@ describe("classifyByIntensity", () => {
     expect(classifyByIntensity(0)).toBe("rest");
   });
 
-  it("50 → endurance", () => {
+  it("50 → endurance (Z1–Z2: <78%)", () => {
     expect(classifyByIntensity(50)).toBe("endurance");
   });
 
-  it("60 → lowerTempo", () => {
-    expect(classifyByIntensity(60)).toBe("lowerTempo");
+  it("80 → lowerTempo (Z3a: 78–82%)", () => {
+    expect(classifyByIntensity(80)).toBe("lowerTempo");
   });
 
-  it("70 → upperTempo", () => {
-    expect(classifyByIntensity(70)).toBe("upperTempo");
+  it("85 → upperTempo (Z3b: 82–88%)", () => {
+    expect(classifyByIntensity(85)).toBe("upperTempo");
   });
 
-  it("85 → threshold", () => {
-    expect(classifyByIntensity(85)).toBe("threshold");
+  it("90 → threshold (Z4: 88–93%)", () => {
+    expect(classifyByIntensity(90)).toBe("threshold");
   });
 
-  it("95 → vo2max", () => {
-    expect(classifyByIntensity(95)).toBe("vo2max");
+  it("100 → vo2max (Z5–Z6: 93–120% MAP)", () => {
+    expect(classifyByIntensity(100)).toBe("vo2max");
   });
 
-  it("110 → anaerobic", () => {
-    expect(classifyByIntensity(110)).toBe("anaerobic");
+  it("125 → anaerobic (Z7: >120% MAP)", () => {
+    expect(classifyByIntensity(125)).toBe("anaerobic");
   });
 });
 

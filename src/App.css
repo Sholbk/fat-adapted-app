@@ -312,6 +312,29 @@
 .phase-name { font-weight: 700; color: var(--ff-text); min-width: 110px; }
 .phase-target { flex: 1; color: var(--ff-text-muted); }
 .phase-carb { color: var(--ff-blue); font-weight: 600; white-space: nowrap; }
+.phase-zone-tag { font-size: 0.7rem; font-weight: 600; color: var(--ff-text-muted); margin-left: 0.25rem; }
+.phase-group-tag { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.35rem; }
+
+/* Zone Table */
+.zone-table { display: flex; flex-direction: column; gap: 0; margin-bottom: 1.25rem; }
+.zone-header {
+  display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.85rem;
+  font-size: 0.7rem; font-weight: 700; color: var(--ff-text-muted); text-transform: uppercase; letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--ff-border);
+}
+.zone-row {
+  display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 0.85rem;
+  font-size: 0.8rem; border-bottom: 1px solid var(--ff-border); background: var(--ff-card);
+}
+.zone-row.active { background: #e8f0ff; border-left: 3px solid var(--ff-blue-deep); }
+.zone-col-zone { min-width: 70px; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+.zone-col-name { min-width: 100px; font-weight: 600; color: var(--ff-text); }
+.zone-col-hr { flex: 1; color: var(--ff-text-muted); }
+.zone-col-rpe { min-width: 50px; text-align: center; color: var(--ff-text-muted); }
+.zone-col-group { min-width: 50px; font-weight: 700; font-size: 0.7rem; text-align: center; padding: 0.15rem 0.5rem; border-radius: 10px; }
+.zone-col-group[data-group="LIT"] { background: #d4f5d4; color: #1a7a1a; }
+.zone-col-group[data-group="MIT"] { background: #fff3cd; color: #886600; }
+.zone-col-group[data-group="HIT"] { background: #ffd4d4; color: #a01030; }
 
 /* Meal Ideas */
 .idea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
@@ -708,6 +731,13 @@
 .dark .phase-current p { color: #ccc; }
 .dark .phase-name { color: #e0e0e0; }
 .dark .phase-target { color: #888; }
+.dark .zone-row { background: #1a1a2e; border-bottom-color: #2a2a4a; }
+.dark .zone-row.active { background: #1a2a4a; border-left-color: #4da6e8; }
+.dark .zone-header { border-bottom-color: #3a3a5a; }
+.dark .zone-col-name { color: #e0e0e0; }
+.dark .zone-col-group[data-group="LIT"] { background: #1a3a1a; color: #50d050; }
+.dark .zone-col-group[data-group="MIT"] { background: #3a3a1a; color: #e8c010; }
+.dark .zone-col-group[data-group="HIT"] { background: #3a1a1a; color: #ff6080; }
 .dark .mp-head h3 { color: #e0e0e0; }
 .dark .mp-food-name { color: #e0e0e0; }
 .dark .mp-food-macros { color: #888; }
