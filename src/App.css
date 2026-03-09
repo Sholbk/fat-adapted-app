@@ -738,6 +738,15 @@
   font-size: 0.9rem; font-family: inherit; cursor: pointer; font-weight: 600; transition: background 0.2s, color 0.2s;
 }
 .sett-signout:hover { background: var(--ff-blue-deep); color: #fff; }
+.sett-footer-links {
+  display: flex; gap: 1.5rem; justify-content: center; margin-top: 2rem;
+  padding-top: 1.5rem; border-top: 1px solid var(--ff-border);
+}
+.sett-footer-links button {
+  background: none; border: none; color: var(--ff-text-muted); font-size: 0.8rem;
+  font-family: inherit; cursor: pointer; padding: 0.25rem 0; transition: color 0.15s;
+}
+.sett-footer-links button:hover { color: var(--ff-blue); }
 .cloud-toggle {
   background: none; border: none; color: var(--ff-blue); font-size: 0.75rem; cursor: pointer;
   font-family: inherit; text-align: center; padding: 0;

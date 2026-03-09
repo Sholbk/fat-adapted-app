@@ -119,7 +119,9 @@ const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
         </div>
       </div>
 
-      <AICoachCard date={date} planned={planned} wellness={wellness} settings={settings} />
+      {settings.intervalsApiKey && settings.intervalsAthleteId && (
+        <AICoachCard date={date} planned={planned} wellness={wellness} settings={settings} />
+      )}
 
       <div className="cards-row cards-row-2">
         <div className="card">

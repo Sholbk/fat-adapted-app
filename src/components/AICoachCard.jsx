@@ -78,7 +78,7 @@ export default function AICoachCard({ date, planned, wellness, settings, calAdj,
       </div>
 
       {loading && <p className="ai-coach-loading">Analyzing your last 7 days...</p>}
-      {error && <p className="ai-coach-error">{error}</p>}
+      {error && <p className="ai-coach-loading">Collecting Data</p>}
 
       {advice && !loading && (
         <>

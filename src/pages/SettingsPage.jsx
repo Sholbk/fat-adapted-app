@@ -1,10 +1,31 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { getWeightLog, addWeightEntry, getSettings, clearAllData, setStoredUserId } from "../utils/storage.js";
 import { signOut, backupToCloud, saveApiKeys } from "../utils/supabase.js";
+import { TermsContent, PrivacyContent, ResourcesContent } from "../components/FooterPages.jsx";
 
 export default function SettingsPage({ date, draft, updateDraft, handleSave, saved, settings, setSettings, setDraft, refresh, showToast, authSession, setAuthSession, syncing, setSyncing }) {
+  const [footerPage, setFooterPage] = useState(null);
+
+  useEffect(() => {
+    if (footerPage) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [footerPage]);
+
   return (
     <div className="page-content">
+      {footerPage && (
+        <div className="fp-overlay" onClick={() => setFooterPage(null)}>
+          <div className="fp-modal" onClick={e => e.stopPropagation()}>
+            <button className="fp-close" onClick={() => setFooterPage(null)} aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            {footerPage === "terms" && <TermsContent />}
+            {footerPage === "privacy" && <PrivacyContent />}
+            {footerPage === "resources" && <ResourcesContent />}
+          </div>
+        </div>
+      )}
       <h2>Settings</h2>
       <p className="page-sub">Set your goals and personal info. Macros will adjust automatically.</p>
 
@@ -121,6 +142,12 @@ export default function SettingsPage({ date, draft, updateDraft, handleSave, sav
       {authSession && (
         <button className="sett-signout" onClick={async () => { clearAllData(); setStoredUserId(null); await signOut(); window.location.reload(); }}>Sign Out</button>
       )}
+
+      <div className="sett-footer-links">
+        <button onClick={() => setFooterPage("terms")}>Terms & Conditions</button>
+        <button onClick={() => setFooterPage("privacy")}>Privacy</button>
+        <button onClick={() => setFooterPage("resources")}>Resources</button>
+      </div>
     </div>
   );
 }
