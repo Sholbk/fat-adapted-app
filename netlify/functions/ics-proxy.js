@@ -43,7 +43,9 @@ export default async (req) => {
       headers: {
         "Content-Type": "text/calendar",
         "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "CDN-Cache-Control": "no-store",
+        "Netlify-CDN-Cache-Control": "no-store",
       },
     });
   } catch {

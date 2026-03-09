@@ -62,6 +62,7 @@ function App() {
   const [syncing, setSyncing] = useState(false);
 
   const [authLoading, setAuthLoading] = useState(true);
+  const hasRestoredCloud = React.useRef(false);
 
   function handleUserSwitch(newUserId) {
     const storedId = getStoredUserId();
@@ -74,8 +75,25 @@ function App() {
       setEvents([]);
       setActivities([]);
       setFetched(new Set());
+      // Allow one cloud restore for the new user
+      hasRestoredCloud.current = false;
     }
     setStoredUserId(newUserId);
+  }
+
+  async function doCloudRestore(userId) {
+    if (hasRestoredCloud.current) return;
+    hasRestoredCloud.current = true;
+    try {
+      await Promise.race([
+        restoreFromCloud(userId),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 800)),
+      ]);
+      const restored = getSettings();
+      if (restored) { setSettings(restored); setDraft(restored); }
+    } catch (e) {
+      console.warn("Cloud restore failed:", e);
+    }
   }
 
   useEffect(() => {
@@ -94,19 +112,12 @@ function App() {
         // Only restore from cloud if no local settings exist (fresh login/new device)
         const localSettings = getSettings();
         if (!localSettings || !localSettings.name) {
-          try {
-            await Promise.race([
-              restoreFromCloud(s.user.id),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 800)),
-            ]);
-            const restored = getSettings();
-            if (restored) { setSettings(restored); setDraft(restored); }
-          } catch (e) {
-            console.warn("Cloud restore failed:", e);
-          }
+          await doCloudRestore(s.user.id);
+        } else {
+          // Local settings exist — they are the source of truth, skip cloud restore
+          hasRestoredCloud.current = true;
         }
       } else {
-        // No session — clear any leftover data
         handleUserSwitch(null);
       }
       clearTimeout(timeout);
@@ -116,28 +127,17 @@ function App() {
       setAuthLoading(false);
     });
     const { data } = onAuthChange(async (event, newSession) => {
-      const newUserId = newSession?.user?.id || null;
-
-      // Only handle actual sign-in/sign-out, ignore token refreshes
-      if (event === "TOKEN_REFRESHED") {
+      // Ignore everything except actual sign-in/sign-out
+      if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
         setAuthSession(newSession);
         return;
       }
 
+      const newUserId = newSession?.user?.id || null;
       handleUserSwitch(newUserId);
       setAuthSession(newSession);
-      // Only restore from cloud on actual new sign-in (not page reload)
       if (newSession?.user?.id && event === "SIGNED_IN") {
-        try {
-          await Promise.race([
-            restoreFromCloud(newSession.user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 800)),
-          ]);
-          const restored = getSettings();
-          if (restored) { setSettings(restored); setDraft(restored); }
-        } catch (e) {
-          console.warn("Cloud restore failed:", e);
-        }
+        await doCloudRestore(newSession.user.id);
         setTick(t => t + 1);
       }
     });
