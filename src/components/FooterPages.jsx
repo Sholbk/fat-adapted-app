@@ -27,6 +27,12 @@ export function TermsContent() {
 
       <h3>8. Changes to Terms</h3>
       <p>We may update these terms at any time. Continued use of the App after changes constitutes acceptance of the new terms.</p>
+
+      <h3>9. Copyright & Contact</h3>
+      <p>FastFuel is created by <strong>Dragonfly Web Designs, LLC</strong>, Stephanie Holbrook. All content, design, and code are copyrighted and all rights reserved.</p>
+      <p>785 E Apache Street, Silver City, New Mexico 88061<br />
+      <a href="mailto:stephanie@dragonflywebdesigns.com">stephanie@dragonflywebdesigns.com</a><br />
+      623-910-1711</p>
     </div>
   );
 }
@@ -75,7 +81,10 @@ export function PrivacyContent() {
       <p>You can delete all your data at any time from the Settings page. This removes all local data and cloud backups.</p>
 
       <h3>Contact</h3>
-      <p>Questions about your data? Contact us at the email listed in your account settings.</p>
+      <p>FastFuel is created by <strong>Dragonfly Web Designs, LLC</strong>, Stephanie Holbrook. All content, design, and code are copyrighted and all rights reserved.</p>
+      <p>785 E Apache Street, Silver City, New Mexico 88061<br />
+      <a href="mailto:stephanie@dragonflywebdesigns.com">stephanie@dragonflywebdesigns.com</a><br />
+      623-910-1711</p>
     </div>
   );
 }
