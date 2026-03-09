@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { getFuelTests, saveFuelTests } from "../utils/storage.js";
+import { useState } from "react";
+import { getFuelTests, saveFuelTests, getRaceFuels, saveRaceFuels } from "../utils/storage.js";
 
 const FEEL_OPTIONS = [
   { value: "great", label: "Great", face: "\u{1F601}" },
@@ -58,6 +58,136 @@ export default function FuelTesting({ date, refresh, showToast }) {
           ))}
         </div>
       )}
+
+      <BestRaceFuels refresh={refresh} showToast={showToast} />
+    </div>
+  );
+}
+
+const RACE_CATEGORIES = [
+  { key: "short", label: "Short Race", desc: "Sprint tri, 5K, 10K, crit" },
+  { key: "mid", label: "Mid-Distance", desc: "Olympic tri, half marathon, 70.3" },
+  { key: "long", label: "Long Course", desc: "Full Ironman, marathon, century ride" },
+];
+
+const FUEL_WINDOWS = ["Pre-Race", "During", "Post-Race"];
+
+function BestRaceFuels({ refresh, showToast }) {
+  const [fuels, setFuels] = useState(() => getRaceFuels());
+  const [editing, setEditing] = useState(null); // "short" | "mid" | "long" | null
+  const [draft, setDraft] = useState({ items: [] });
+
+  function startEdit(cat) {
+    const existing = fuels[cat] || [];
+    setDraft({ items: existing.length > 0 ? existing : [{ name: "", timing: "During", notes: "" }] });
+    setEditing(cat);
+  }
+
+  function updateItem(idx, field, value) {
+    setDraft(d => {
+      const items = [...d.items];
+      items[idx] = { ...items[idx], [field]: value };
+      return { items };
+    });
+  }
+
+  function addItem() {
+    setDraft(d => ({ items: [...d.items, { name: "", timing: "During", notes: "" }] }));
+  }
+
+  function removeItem(idx) {
+    setDraft(d => ({ items: d.items.filter((_, i) => i !== idx) }));
+  }
+
+  function save() {
+    const cleaned = draft.items.filter(i => i.name.trim());
+    const updated = { ...fuels, [editing]: cleaned };
+    saveRaceFuels(updated);
+    setFuels(updated);
+    setEditing(null);
+    refresh();
+    showToast("Race fuel plan saved");
+  }
+
+  return (
+    <div className="rf-section">
+      <h3 className="rf-title">Best Race Fuels</h3>
+      <p className="rf-sub">Select your tried-and-tested fuels for each race distance. Build your race-day plan from what works.</p>
+
+      <div className="rf-grid">
+        {RACE_CATEGORIES.map(cat => {
+          const items = fuels[cat.key] || [];
+          const isEditing = editing === cat.key;
+
+          return (
+            <div key={cat.key} className="rf-card settings-card">
+              <div className="rf-card-head">
+                <div>
+                  <h4>{cat.label}</h4>
+                  <span className="rf-card-desc">{cat.desc}</span>
+                </div>
+                {!isEditing && (
+                  <button className="rf-edit-btn" onClick={() => startEdit(cat.key)}>
+                    {items.length > 0 ? "Edit" : "+ Add"}
+                  </button>
+                )}
+              </div>
+
+              {isEditing ? (
+                <div className="rf-edit">
+                  {draft.items.map((item, idx) => (
+                    <div key={idx} className="rf-edit-row">
+                      <input
+                        type="text"
+                        className="cloud-input"
+                        placeholder="Fuel item (e.g. Maurten Gel 100)"
+                        value={item.name}
+                        onChange={e => updateItem(idx, "name", e.target.value)}
+                      />
+                      <select
+                        className="cloud-input"
+                        value={item.timing}
+                        onChange={e => updateItem(idx, "timing", e.target.value)}
+                      >
+                        {FUEL_WINDOWS.map(w => <option key={w} value={w}>{w}</option>)}
+                      </select>
+                      <input
+                        type="text"
+                        className="cloud-input"
+                        placeholder="Notes (amount, timing detail)"
+                        value={item.notes}
+                        onChange={e => updateItem(idx, "notes", e.target.value)}
+                      />
+                      {draft.items.length > 1 && (
+                        <button type="button" className="rf-remove" onClick={() => removeItem(idx)} aria-label="Remove">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button type="button" className="rf-add-btn" onClick={addItem}>+ Add Item</button>
+                  <div className="rf-edit-actions">
+                    <button className="use-plan-btn" style={{ fontSize: "0.8rem", padding: "0.5rem 1.25rem" }} onClick={save}>Save</button>
+                    <button className="copy-meals-btn" onClick={() => setEditing(null)}>Cancel</button>
+                  </div>
+                </div>
+              ) : items.length > 0 ? (
+                <div className="rf-items">
+                  {items.map((item, idx) => (
+                    <div key={idx} className="rf-item">
+                      <strong>{item.name}</strong>
+                      <span className="ft-card-timing">{item.timing}</span>
+                      {item.notes && <span className="rf-item-notes">{item.notes}</span>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rf-empty">No fuels selected yet</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

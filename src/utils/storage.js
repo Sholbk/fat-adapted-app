@@ -108,6 +108,9 @@ export function saveFuelTests(tests) {
   localStorage.setItem("ff-fuel-tests", JSON.stringify(tests));
 }
 
+export function getRaceFuels() { return safeGet("ff-race-fuels", { short: [], mid: [], long: [] }); }
+export function saveRaceFuels(fuels) { localStorage.setItem("ff-race-fuels", JSON.stringify(fuels)); }
+
 export function sum(entries) {
   return entries.reduce((a, e) => ({
     fat: a.fat + e.fat,
