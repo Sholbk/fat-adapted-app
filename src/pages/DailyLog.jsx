@@ -24,10 +24,10 @@ const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
       <div className="cards-row">
         <div className="card">
           <h2>Non-Training Fuel</h2>
-          <MacroRow label="Fat" consumed={mealTotals.fat} target={Math.max(macros.fat - fuelRecTotal.fat, 0)} color="#fe00a4" />
-          <MacroRow label="Protein" consumed={mealTotals.protein} target={Math.max(macros.protein - fuelRecTotal.protein, 0)} color="#043bb1" />
-          <MacroRow label="Carbs" consumed={mealTotals.carbs} target={Math.max(macros.carbs - fuelRecTotal.carbs, 0)} color="#10bc10" />
-          <div className="card-cal"><span>{mealTotals.cal}</span> / {Math.max(macros.cal - fuelRecTotal.cal, 0)} kcal</div>
+          <MacroRow label="Fat" consumed={mealTotals.fat} target={macros.fat} color="#fe00a4" />
+          <MacroRow label="Protein" consumed={mealTotals.protein} target={macros.protein} color="#043bb1" />
+          <MacroRow label="Carbs" consumed={mealTotals.carbs} target={macros.carbs} color="#10bc10" />
+          <div className="card-cal"><span>{mealTotals.cal}</span> / {macros.cal} kcal</div>
         </div>
 
         <div className="card">
@@ -292,7 +292,7 @@ function CollapsibleMeal({ mealKey, label, entries, macros, fuelRecTotal, addMea
           {entries.length > 0 && <span className="meal-count">{entries.length}</span>}
         </div>
         {mSum.cal > 0 && <span className="meal-head-cal">{mSum.cal} kcal</span>}
-        <span className="meal-rec">Rec: {Math.round(Math.max(macros.cal - fuelRecTotal.cal, 0) / MEALS.length)} cals</span>
+        <span className="meal-rec">Rec: {Math.round(macros.cal / MEALS.length)} cals</span>
         <span className={`meal-chevron${collapsed ? " meal-chevron-down" : ""}`}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
         </span>

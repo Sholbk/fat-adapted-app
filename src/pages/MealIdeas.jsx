@@ -227,7 +227,7 @@ function printShoppingListPDF(grouped, weekLabel, planType) {
 
 
 export default function MealIdeas({ date, macros, fuelRecTotal, session, sType, refresh, showToast, setPage }) {
-  const mf = Math.max(macros.fat - fuelRecTotal.fat, 0), mp = Math.max(macros.protein - fuelRecTotal.protein, 0), mc = Math.max(macros.carbs - fuelRecTotal.carbs, 0), mcal = Math.max(macros.cal - fuelRecTotal.cal, 0);
+  const mf = macros.fat, mp = macros.protein, mc = macros.carbs, mcal = macros.cal;
   const lowCarb = ["rest", "endurance", "lowerTempo"].includes(sType);
   const midCarb = sType === "upperTempo";
   const dist = DIST_PCTS.map(d => ({ ...d, fat: Math.round(mf * d.pct), protein: Math.round(mp * d.pct), carbs: Math.round(mc * d.pct), cal: Math.round(mcal * d.pct) }));
