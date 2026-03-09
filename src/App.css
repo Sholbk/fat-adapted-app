@@ -368,6 +368,50 @@
 .friel-principles ul { margin: 0; padding-left: 1.1rem; }
 .friel-principles li { font-size: 0.8rem; color: var(--ff-text-muted); line-height: 1.5; margin-bottom: 0.4rem; }
 .friel-principles li strong { color: var(--ff-text); }
+.friel-auto-tag { font-size: 0.7rem; font-weight: 600; color: var(--ff-blue); margin-left: 0.5rem; }
+.friel-auto-note { font-size: 0.7rem; color: var(--ff-text-muted); font-style: italic; margin: 0.25rem 0 0.75rem; }
+.friel-section-title { font-size: 0.85rem; font-weight: 700; color: var(--ff-text); margin: 0.75rem 0 0.5rem; }
+
+/* Race Calendar */
+.race-form {
+  display: flex; gap: 0.4rem; margin-bottom: 0.5rem; flex-wrap: wrap;
+}
+.race-input {
+  flex: 1; min-width: 100px; padding: 0.4rem 0.6rem; border: 1px solid var(--ff-border);
+  border-radius: 6px; font-size: 0.8rem; font-family: inherit; background: var(--ff-card); color: var(--ff-text);
+}
+.race-date { max-width: 150px; }
+.race-select {
+  width: 50px; padding: 0.4rem; border: 1px solid var(--ff-border); border-radius: 6px;
+  font-size: 0.8rem; font-family: inherit; font-weight: 700; background: var(--ff-card); color: var(--ff-text);
+}
+.race-add-btn {
+  padding: 0.4rem 0.75rem; background: var(--ff-blue-deep); color: #fff; border: none;
+  border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.race-add-btn:hover { opacity: 0.9; }
+.race-legend { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
+.race-legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; color: var(--ff-text-muted); }
+.race-pri-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.race-pri-badge[data-pri="A"] { background: #800030; }
+.race-pri-badge[data-pri="B"] { background: #e85040; }
+.race-pri-badge[data-pri="C"] { background: #e8c010; color: #333; }
+.race-list { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
+.race-item {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.65rem;
+  background: var(--ff-card); border: 1px solid var(--ff-border); border-radius: 8px; font-size: 0.8rem;
+}
+.race-item-name { font-weight: 700; color: var(--ff-text); flex: 1; }
+.race-item-date { color: var(--ff-text-muted); font-size: 0.75rem; }
+.race-item-countdown { font-weight: 700; color: var(--ff-blue); font-size: 0.75rem; min-width: 50px; text-align: right; }
+.race-remove {
+  background: none; border: none; color: #c00; font-size: 1.1rem; cursor: pointer;
+  padding: 0 0.25rem; line-height: 1; font-weight: 700;
+}
+.race-remove:hover { color: #f00; }
 
 /* Meal Ideas */
 .idea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
@@ -778,6 +822,10 @@
 .dark .friel-phase-label { color: #e0e0e0; }
 .dark .friel-principles { background: #1a1a2e; border-color: #3a3a5a; }
 .dark .friel-principles li strong { color: #e0e0e0; }
+.dark .race-input { background: #252540; border-color: #3a3a5a; color: #e0e0e0; }
+.dark .race-select { background: #252540; border-color: #3a3a5a; color: #e0e0e0; }
+.dark .race-item { background: #1a1a2e; border-color: #3a3a5a; }
+.dark .race-item-name { color: #e0e0e0; }
 .dark .mp-head h3 { color: #e0e0e0; }
 .dark .mp-food-name { color: #e0e0e0; }
 .dark .mp-food-macros { color: #888; }
