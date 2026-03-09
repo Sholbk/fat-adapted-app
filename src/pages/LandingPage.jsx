@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { signIn, signUp } from "../utils/supabase.js";
 
 function AuthCard({ mode, setMode, email, setEmail, password, setPassword, busy, handleSubmit }) {
@@ -47,11 +47,32 @@ export default function LandingPage({ showToast }) {
     authRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
+  const [footerPage, setFooterPage] = useState(null);
+
+  useEffect(() => {
+    if (footerPage) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [footerPage]);
+
   const authProps = { mode, setMode, email, setEmail, password, setPassword, busy, handleSubmit };
 
   return (
     <div className="landing">
       <div className="landing-bg" />
+
+      {footerPage && (
+        <div className="fp-overlay" onClick={() => setFooterPage(null)}>
+          <div className="fp-modal" onClick={e => e.stopPropagation()}>
+            <button className="fp-close" onClick={() => setFooterPage(null)} aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            {footerPage === "terms" && <TermsContent />}
+            {footerPage === "privacy" && <PrivacyContent />}
+            {footerPage === "methodology" && <MethodologyContent />}
+          </div>
+        </div>
+      )}
 
       {/* ── Section 1: Hero + Auth ── */}
       <section className="landing-section landing-hero-section">
@@ -192,6 +213,169 @@ export default function LandingPage({ showToast }) {
         <p>Connect your training plan. Let the science handle the rest.</p>
         <button className="landing-cta-btn" onClick={scrollToAuth}>Get Started</button>
       </section>
+
+      {/* ── Footer ── */}
+      <footer className="landing-footer">
+        <div className="landing-footer-inner">
+          <div className="landing-footer-brand">
+            <span className="sb-logo" style={{ width: 28, height: 28 }}>
+              <svg viewBox="0 0 192 192" width="16" height="16"><path d="M108 28L68 100h28L80 164l52-80h-30z" fill="#fff"/></svg>
+            </span>
+            <span>FastFuel</span>
+          </div>
+          <nav className="landing-footer-links">
+            <button onClick={() => setFooterPage("terms")}>Terms & Conditions</button>
+            <button onClick={() => setFooterPage("privacy")}>Privacy</button>
+            <button onClick={() => setFooterPage("methodology")}>Methodology & Resources</button>
+          </nav>
+          <div className="landing-footer-copy">&copy; {new Date().getFullYear()} FastFuel. All rights reserved.</div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function TermsContent() {
+  return (
+    <div className="fp-content">
+      <h2>Terms & Conditions</h2>
+      <p className="fp-updated">Last updated: March 2026</p>
+
+      <h3>1. Acceptance of Terms</h3>
+      <p>By accessing or using FastFuel ("the App"), you agree to be bound by these Terms & Conditions. If you do not agree, do not use the App.</p>
+
+      <h3>2. Description of Service</h3>
+      <p>FastFuel is a nutrition planning tool for endurance athletes. It generates macro targets based on training data and user-provided settings. FastFuel is not a medical device and does not provide medical advice.</p>
+
+      <h3>3. Not Medical Advice</h3>
+      <p>The information provided by FastFuel is for informational and educational purposes only. It is not intended as a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider before making changes to your diet or exercise program.</p>
+
+      <h3>4. Beta Service</h3>
+      <p>FastFuel is currently in beta. The service is provided "as is" without warranties of any kind. Features, calculations, and availability may change without notice.</p>
+
+      <h3>5. User Data</h3>
+      <p>You are responsible for the accuracy of data you provide. FastFuel stores your settings and nutrition logs to provide the service. See our Privacy Policy for details on data handling.</p>
+
+      <h3>6. Third-Party Integrations</h3>
+      <p>FastFuel integrates with third-party services including Athletica.ai, Intervals.icu, Strava, and FatSecret. Your use of these services is governed by their respective terms. FastFuel is not responsible for the accuracy or availability of third-party data.</p>
+
+      <h3>7. Limitation of Liability</h3>
+      <p>FastFuel and its creators shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the App, including but not limited to health outcomes, training decisions, or data loss.</p>
+
+      <h3>8. Changes to Terms</h3>
+      <p>We may update these terms at any time. Continued use of the App after changes constitutes acceptance of the new terms.</p>
+    </div>
+  );
+}
+
+function PrivacyContent() {
+  return (
+    <div className="fp-content">
+      <h2>Privacy Policy</h2>
+      <p className="fp-updated">Last updated: March 2026</p>
+
+      <h3>What We Collect</h3>
+      <p>FastFuel collects only the data necessary to provide the service:</p>
+      <ul>
+        <li><strong>Account data:</strong> Email address for authentication (via Supabase)</li>
+        <li><strong>Profile data:</strong> Weight, height, age, gender — used to calculate your macro targets</li>
+        <li><strong>Nutrition logs:</strong> Meals, training fuel, hydration, and supplements you log</li>
+        <li><strong>Integration data:</strong> Workout data from Athletica.ai, Intervals.icu, and Strava (accessed via your API keys)</li>
+      </ul>
+
+      <h3>How We Store It</h3>
+      <ul>
+        <li>Profile and nutrition data is stored locally on your device (localStorage) and optionally backed up to Supabase cloud storage</li>
+        <li>API keys for third-party integrations are stored in Supabase (encrypted at rest)</li>
+        <li>We do not store your third-party passwords</li>
+      </ul>
+
+      <h3>What We Don't Do</h3>
+      <ul>
+        <li>We do not sell your data to third parties</li>
+        <li>We do not use your data for advertising</li>
+        <li>We do not share your data with other users</li>
+        <li>We do not track you across other websites</li>
+      </ul>
+
+      <h3>Third-Party Services</h3>
+      <p>FastFuel connects to external services at your request. Data shared with these services is governed by their privacy policies:</p>
+      <ul>
+        <li>Supabase (authentication & cloud backup)</li>
+        <li>Athletica.ai (training calendar)</li>
+        <li>Intervals.icu (workout & wellness data)</li>
+        <li>FatSecret (food database search)</li>
+        <li>Anthropic (AI Coach macro recommendations)</li>
+      </ul>
+
+      <h3>Data Deletion</h3>
+      <p>You can delete all your data at any time from the Settings page. This removes all local data and cloud backups.</p>
+
+      <h3>Contact</h3>
+      <p>Questions about your data? Contact us at the email listed in your account settings.</p>
+    </div>
+  );
+}
+
+function MethodologyContent() {
+  return (
+    <div className="fp-content">
+      <h2>Methodology & Resources</h2>
+      <p className="fp-updated">The science behind FastFuel's macro calculations</p>
+
+      <h3>Fat-Adapted Baseline</h3>
+      <p>FastFuel's daily macro split is based on research into keto-adapted endurance athletes. The baseline diet targets approximately 70% fat, 20% protein, and 10% carbohydrates of total calories — consistent with the dietary patterns of elite low-carbohydrate athletes.</p>
+      <div className="fp-ref">
+        <strong>Key Study:</strong> Volek JS, et al. "Metabolic characteristics of keto-adapted ultra-endurance runners." <em>Metabolism — Clinical and Experimental</em>, 65 (2016): 100-110.
+        <p>Findings: LC athletes consuming ~70% fat / 10% carb / 20% protein showed 2.3x higher peak fat oxidation (1.54 vs 0.67 g/min) and derived 88% of energy from fat during submaximal exercise, while maintaining normal muscle glycogen levels.</p>
+      </div>
+
+      <h3>Protein Target: 2.0 g/kg</h3>
+      <p>The FASTER study LC athletes averaged 2.1 g/kg protein intake. FastFuel uses 2.0 g/kg as a well-supported target for fat-adapted endurance athletes, balancing muscle preservation and recovery with the fat-adapted macro split.</p>
+
+      <h3>EPOC-Adjusted Daily Calories</h3>
+      <p>High-intensity sessions create Excess Post-exercise Oxygen Consumption (EPOC) — elevated metabolic rate and fat oxidation that persists for hours after training. FastFuel adds a small EPOC bonus to daily calories on HIT days (5-10%), allocated primarily to fat to match the body's post-exercise fuel preference.</p>
+      <div className="fp-ref">
+        <strong>Research basis:</strong> Higher exercise intensity increases both the magnitude and duration of EPOC. HIIT significantly boosts post-exercise fat metabolism more than steady-state exercise.
+        <p>Peak fat oxidation occurs at moderate intensity (~60-75% VO2max), but the elevated metabolic demand during EPOC recovery results in higher total fat oxidation after high-intensity work.</p>
+      </div>
+
+      <h3>Periodized Nutrition</h3>
+      <p>FastFuel periodizes carbohydrate intake based on training intensity — the same approach used by elite WorldTour cycling teams. Carbs are not restricted year-round; they are manipulated based on training load with lower intake during base training and targeted intake during high-intensity and competition days.</p>
+      <div className="fp-ref">
+        <strong>Training fuel carbs (g/kg body weight):</strong>
+        <ul>
+          <li>Rest / Endurance / Lower Tempo: 0 g/kg (fat-fueled)</li>
+          <li>Upper Tempo: 0.5 g/kg</li>
+          <li>Threshold: 1.0 g/kg</li>
+          <li>VO2max / Anaerobic: 1.5 g/kg</li>
+        </ul>
+      </div>
+
+      <h3>5-Window Fuel Timing</h3>
+      <p>Training fuel is distributed across five windows to optimize substrate availability and recovery:</p>
+      <ol>
+        <li><strong>4-24h Pre:</strong> Set glycogen and fat stores</li>
+        <li><strong>&gt;1h Pre:</strong> Top-up fuel without GI distress</li>
+        <li><strong>During (early):</strong> Fat-based fuels for low/moderate intensity</li>
+        <li><strong>During (later):</strong> Carbs introduced as glycogen depletes</li>
+        <li><strong>Post:</strong> Recovery protein + fat (+ carbs after HIT)</li>
+      </ol>
+
+      <h3>BMR & TDEE Calculation</h3>
+      <p>FastFuel uses the Mifflin-St Jeor equation for Basal Metabolic Rate with a 1.55 activity multiplier for endurance athletes:</p>
+      <div className="fp-ref">
+        <strong>Mifflin-St Jeor:</strong> BMR = 10 x weight(kg) + 6.25 x height(cm) - 5 x age + gender offset (+5 male, -161 female)
+        <p>TDEE = BMR x 1.55 x (1 + EPOC bonus)</p>
+      </div>
+
+      <h3>Integrations</h3>
+      <ul>
+        <li><a href="https://athletica.ai" target="_blank" rel="noopener noreferrer">Athletica.ai</a> — Training calendar & workout planning</li>
+        <li><a href="https://intervals.icu" target="_blank" rel="noopener noreferrer">Intervals.icu</a> — Workout data, wellness metrics, HRV, sleep</li>
+        <li><a href="https://www.strava.com" target="_blank" rel="noopener noreferrer">Strava</a> — Activity tracking</li>
+        <li><a href="https://www.fatsecret.com" target="_blank" rel="noopener noreferrer">FatSecret</a> — Food database for meal logging</li>
+      </ul>
     </div>
   );
 }
