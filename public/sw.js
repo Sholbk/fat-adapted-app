@@ -1,4 +1,4 @@
-const CACHE_NAME = "fastfuel-v3";
+const CACHE_NAME = "fastfuel-v4";
 const STATIC_ASSETS = ["/", "/index.html"];
 
 self.addEventListener("install", (e) => {

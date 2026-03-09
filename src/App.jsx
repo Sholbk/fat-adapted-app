@@ -154,7 +154,7 @@ function App() {
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  });
+  }, []);
 
   const W = settings.goalWeight > 0 ? settings.goalWeight : settings.weight;
   const calAdj = 0;
@@ -197,15 +197,35 @@ function App() {
   useEffect(() => {
     const icsUrl = getIcsUrl(settings.athleticaUrl);
     if (!icsUrl) { setPlanned([]); return; }
-    fetch(icsUrl, { cache: "no-store" }).then(r => r.text()).then(t => { setPlanned(parseICS(t)); }).catch(() => { showToast("Couldn't load training plan from Athletica"); });
-  }, [settings.athleticaUrl, authSession?.user?.id]);
+    const controller = new AbortController();
+    fetch(icsUrl, { cache: "no-store", signal: controller.signal })
+      .then(r => r.text())
+      .then(t => { setPlanned(parseICS(t)); })
+      .catch(e => { if (e.name !== "AbortError") showToast("Couldn't load training plan from Athletica"); });
+    return () => controller.abort();
+  }, [settings.athleticaUrl]);
+
+  // Clear cached Intervals.icu data when credentials change
+  const intervalsKeyRef = React.useRef(settings.intervalsApiKey);
+  const intervalsAthleteRef = React.useRef(settings.intervalsAthleteId);
+  useEffect(() => {
+    if (intervalsKeyRef.current !== settings.intervalsApiKey || intervalsAthleteRef.current !== settings.intervalsAthleteId) {
+      intervalsKeyRef.current = settings.intervalsApiKey;
+      intervalsAthleteRef.current = settings.intervalsAthleteId;
+      setWellness([]);
+      setEvents([]);
+      setActivities([]);
+      setFetched(new Set());
+    }
+  }, [settings.intervalsApiKey, settings.intervalsAthleteId]);
 
   useEffect(() => {
     const m = date.slice(0, 7);
     if (fetched.has(m)) return;
+    const iCfg = settings.intervalsApiKey ? { apiKey: settings.intervalsApiKey, athleteId: settings.intervalsAthleteId } : undefined;
+    if (!iCfg) { setLoading(false); return; }
     const [y, mo] = m.split("-").map(Number);
     const s = fmt(new Date(y, mo - 1, -6)), e = fmt(new Date(y, mo, 6));
-    const iCfg = settings.intervalsApiKey ? { apiKey: settings.intervalsApiKey, athleteId: settings.intervalsAthleteId } : undefined;
     Promise.all([
       apiFetch(`wellness?oldest=${s}&newest=${e}`, iCfg).catch(() => []),
       apiFetch(`events?oldest=${s}&newest=${e}`, iCfg).catch(() => []),
@@ -233,7 +253,7 @@ function App() {
       setFetched(prev => new Set(prev).add(m));
       setLoading(false);
     }).catch(() => { setLoading(false); showToast("Couldn't load data from Intervals.icu"); });
-  }, [date]);
+  }, [date, settings.intervalsApiKey, settings.intervalsAthleteId]);
 
   function shiftDate(n) {
     if (n === 0) { setDate(today()); return; }
