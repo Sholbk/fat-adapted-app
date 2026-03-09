@@ -33,7 +33,7 @@ export async function getSession() {
 
 export function onAuthChange(callback) {
   if (!supabase) return { data: { subscription: { unsubscribe: () => {} } } };
-  return supabase.auth.onAuthStateChange((_event, session) => callback(session));
+  return supabase.auth.onAuthStateChange((event, session) => callback(event, session));
 }
 
 // Data sync — saves all localStorage keys with "ff-" prefix to cloud

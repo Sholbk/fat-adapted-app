@@ -111,11 +111,18 @@ function App() {
       clearTimeout(timeout);
       setAuthLoading(false);
     });
-    const { data } = onAuthChange(async (newSession) => {
+    const { data } = onAuthChange(async (event, newSession) => {
       const newUserId = newSession?.user?.id || null;
+
+      // Only handle actual sign-in/sign-out, ignore token refreshes
+      if (event === "TOKEN_REFRESHED") {
+        setAuthSession(newSession);
+        return;
+      }
+
       handleUserSwitch(newUserId);
       setAuthSession(newSession);
-      if (newSession?.user?.id) {
+      if (newSession?.user?.id && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
         try {
           await Promise.race([
             restoreFromCloud(newSession.user.id),
