@@ -606,9 +606,42 @@
   font-size: 0.8rem; font-weight: 600; color: var(--ff-blue); cursor: pointer; font-family: inherit; transition: all 0.15s;
 }
 .export-btn:hover { background: #e8f0ff; border-color: var(--ff-blue); }
+
+/* Summary cards */
+.ws-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+@media (max-width: 1100px) { .ws-cards { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px) { .ws-cards { grid-template-columns: 1fr 1fr; } }
+.ws-card {
+  background: var(--ff-card); border: 1px solid var(--ff-border); border-radius: 12px;
+  padding: 1rem; text-align: center;
+}
+.ws-card h3 { font-size: 0.75rem; font-weight: 700; color: var(--ff-text-muted); text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 0.5rem; }
+.ws-compliance-ring { position: relative; display: inline-block; margin-bottom: 0.35rem; }
+.ws-compliance-pct { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.1rem; font-weight: 800; }
+.ws-compliance-detail { display: flex; justify-content: center; gap: 0.6rem; font-size: 0.7rem; font-weight: 600; }
+.ws-pie-wrap { margin-bottom: 0.35rem; }
+.ws-pie-legend { display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.7rem; color: var(--ff-text-muted); }
+.ws-pie-legend span { display: flex; align-items: center; gap: 0.3rem; justify-content: center; }
+.ws-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.ws-avg-cal { font-size: 0.7rem; color: var(--ff-text-muted); margin-top: 0.35rem; }
+.ws-mood-top { font-size: 1.3rem; font-weight: 800; color: var(--ff-text); }
+.ws-mood-sub { font-size: 0.7rem; color: var(--ff-text-muted); margin-bottom: 0.5rem; }
+.ws-mood-bars { display: flex; flex-direction: column; gap: 0.2rem; }
+.ws-mood-row { display: flex; align-items: center; gap: 0.35rem; font-size: 0.65rem; }
+.ws-mood-label { min-width: 38px; text-align: right; color: var(--ff-text-muted); }
+.ws-mood-bar-bg { flex: 1; height: 6px; background: #e8e8e8; border-radius: 3px; overflow: hidden; }
+.ws-mood-bar { height: 100%; background: var(--ff-blue); border-radius: 3px; }
+.ws-mood-count { min-width: 14px; color: var(--ff-text-muted); }
+.ws-sleep-big { font-size: 1.3rem; font-weight: 800; color: var(--ff-text); }
+.ws-sleep-sub { font-size: 0.7rem; color: var(--ff-text-muted); margin-bottom: 0.25rem; }
+.ws-sleep-score { font-size: 0.8rem; color: var(--ff-blue); }
+.ws-train-detail { font-size: 0.7rem; color: var(--ff-text-muted); margin-top: 0.25rem; }
+.ws-empty { font-size: 0.8rem; color: var(--ff-text-muted); padding: 1rem 0; }
+
+/* Daily breakdown */
 .weekly-grid { background: var(--ff-card); border: 1px solid var(--ff-border); border-radius: 14px; overflow: hidden; }
 .weekly-row {
-  display: grid; grid-template-columns: 70px 1fr 1fr 1fr 1fr; gap: 0.5rem;
+  display: grid; grid-template-columns: 70px 1fr 1fr 1fr 1fr 70px; gap: 0.5rem;
   padding: 0.65rem 1rem; border-bottom: 1px solid #eee; align-items: center; transition: background 0.1s;
 }
 .weekly-row:hover { background: #f5f7fa; }
@@ -617,14 +650,9 @@
 .weekly-row-header:hover { background: #f5f5f7; }
 .weekly-today { background: #e8f0ff; }
 .weekly-today:hover { background: #dce8fa; }
-.weekly-row-avg { background: #f5f5f7; font-weight: 700; }
-.weekly-row-avg:hover { background: #f5f5f7; }
 .weekly-day { display: flex; flex-direction: column; align-items: center; }
 .weekly-day strong { font-size: 0.8rem; color: #000; }
 .weekly-date-num { font-size: 0.65rem; color: #777; }
-.weekly-cell { display: flex; flex-direction: column; gap: 0.15rem; }
-.weekly-bar-bg { height: 6px; background: #e8e8e8; border-radius: 3px; overflow: hidden; }
-.weekly-bar { height: 100%; border-radius: 3px; transition: width 0.3s; }
 .weekly-nums { font-size: 0.65rem; color: #555; font-family: monospace; }
 
 /* ── Weight Log ── */
@@ -854,13 +882,13 @@
 .dark .weekly-row-header:hover { background: #252540; }
 .dark .weekly-today { background: #1a2a4a; }
 .dark .weekly-today:hover { background: #1a3050; }
-.dark .weekly-row-avg { background: #252540; }
-.dark .weekly-row-avg:hover { background: #252540; }
 .dark .weekly-row { border-bottom-color: #2a2a4a; }
 .dark .weekly-row:hover { background: #252540; }
 .dark .weekly-day strong { color: #e0e0e0; }
-.dark .weekly-bar-bg { background: #2a2a4a; }
 .dark .weekly-nums { color: #888; }
+.dark .ws-card { background: #1a1a2e; border-color: #3a3a5a; }
+.dark .ws-mood-bar-bg { background: #2a2a4a; }
+.dark .ws-empty { color: #666; }
 .dark .copy-meals-btn { background: #1a1a2e; border-color: #3a3a5a; color: #4da6e8; }
 .dark .copy-meals-btn:hover { background: #252540; }
 .dark .cloud-restore { background: #1a1a2e; color: #4da6e8; border-color: #1e8ad3; }
@@ -1092,7 +1120,7 @@
   .cards-row { grid-template-columns: 1fr; }
   .goals-row { flex-wrap: wrap; }
   .idea-grid { grid-template-columns: 1fr; }
-  .weekly-row { grid-template-columns: 50px 1fr 1fr; gap: 0.35rem; font-size: 0.75rem; }
+  .weekly-row { grid-template-columns: 50px 1fr 1fr 50px; gap: 0.35rem; font-size: 0.75rem; }
   .weekly-row > span:nth-child(4), .weekly-row > span:nth-child(5) { display: none; }
   .weekly-row-header > span:nth-child(4), .weekly-row-header > span:nth-child(5) { display: none; }
 
