@@ -1,11 +1,11 @@
 export const SESSION_CONFIG = {
-  rest: { label: "Rest Day", color: "#1e8ad3", target: "Recovery & repair", carbGkg: 0.5, proteinGkg: 1.6, calMul: 1.0, fuel: { pre: "Protein, healthy fats, low CHO", during: "N/A", post: "Protein" }, note: "Keep carbs low. Prioritize protein and healthy fats for recovery." },
-  endurance: { label: "Endurance", color: "#10bc10", target: "Increase fat oxidation", carbGkg: 0.8, proteinGkg: 1.8, calMul: 1.15, fuel: { pre: "Protein, healthy fats — restrict CHO", during: "Fat-based fuels, electrolytes. CHO only after ~120 min", post: "Protein" }, note: "Restrict carbs to maximize fat oxidation. CHO only after ~2 hours." },
-  lowerTempo: { label: "Lower Tempo", color: "#10bc10", target: "Fat oxidation + sustain intensity", carbGkg: 1.0, proteinGkg: 1.8, calMul: 1.2, fuel: { pre: "Protein, healthy fats — low CHO", during: "Fat-based fuels, electrolytes. CHO after ~90 min", post: "Protein" }, note: "Fat-fueled early, introduce CHO after ~90 min." },
-  upperTempo: { label: "Upper Tempo", color: "#1e8ad3", target: "Fat oxidation + sustain intensity", carbGkg: 1.5, proteinGkg: 2.0, calMul: 1.3, fuel: { pre: "Protein, healthy fats, moderate CHO", during: "Fat-based early, CHO after ~60 min", post: "Protein" }, note: "Low-to-moderate carbs pre. Add CHO after ~60 min." },
-  threshold: { label: "Threshold", color: "#043bb1", target: "Sustain intensity", carbGkg: 2.5, proteinGkg: 2.0, calMul: 1.4, fuel: { pre: "Protein, moderate CHO", during: "CHO, electrolytes, caffeine from ~30 min", post: "CHO + Protein" }, note: "Fuel this session. CHO + electrolytes + caffeine during." },
-  vo2max: { label: "VO2max", color: "#fe00a4", target: "Maximize work rate", carbGkg: 3.0, proteinGkg: 2.2, calMul: 1.5, fuel: { pre: "CHO + Protein — top up glycogen", during: "Electrolytes, caffeine. CHO from ~20 min", post: "CHO + Protein" }, note: "Full glycogen. AMPK not blunted here — fuel for max output." },
-  anaerobic: { label: "Anaerobic", color: "#fe00a4", target: "Maximize work rate", carbGkg: 3.0, proteinGkg: 2.2, calMul: 1.5, fuel: { pre: "CHO + Protein", during: "Electrolytes, caffeine from ~20 min", post: "CHO + Protein" }, note: "Full carb support for short maximal efforts." },
+  rest: { label: "Rest Day", color: "#1e8ad3", target: "Recovery & repair", proteinGkg: 1.6, fatRatio: 0.87, calMul: 1.0, fuel: { pre: "Protein, healthy fats, low CHO", during: "N/A", post: "Protein" }, note: "Keep carbs low. Prioritize protein and healthy fats for recovery." },
+  endurance: { label: "Endurance", color: "#10bc10", target: "Increase fat oxidation", proteinGkg: 1.8, fatRatio: 0.82, calMul: 1.15, fuel: { pre: "Protein, healthy fats — restrict CHO", during: "Fat-based fuels, electrolytes. CHO only after ~120 min", post: "Protein" }, note: "Restrict carbs to maximize fat oxidation. CHO only after ~2 hours." },
+  lowerTempo: { label: "Lower Tempo", color: "#10bc10", target: "Fat oxidation + sustain intensity", proteinGkg: 1.8, fatRatio: 0.78, calMul: 1.2, fuel: { pre: "Protein, healthy fats — low CHO", during: "Fat-based fuels, electrolytes. CHO after ~90 min", post: "Protein" }, note: "Fat-fueled early, introduce CHO after ~90 min." },
+  upperTempo: { label: "Upper Tempo", color: "#1e8ad3", target: "Fat oxidation + sustain intensity", proteinGkg: 2.0, fatRatio: 0.70, calMul: 1.3, fuel: { pre: "Protein, healthy fats, moderate CHO", during: "Fat-based early, CHO after ~60 min", post: "Protein" }, note: "Low-to-moderate carbs pre. Add CHO after ~60 min." },
+  threshold: { label: "Threshold", color: "#043bb1", target: "Sustain intensity", proteinGkg: 2.0, fatRatio: 0.55, calMul: 1.4, fuel: { pre: "Protein, moderate CHO", during: "CHO, electrolytes, caffeine from ~30 min", post: "CHO + Protein" }, note: "Fuel this session. CHO + electrolytes + caffeine during." },
+  vo2max: { label: "VO2max", color: "#fe00a4", target: "Maximize work rate", proteinGkg: 2.2, fatRatio: 0.45, calMul: 1.5, fuel: { pre: "CHO + Protein — top up glycogen", during: "Electrolytes, caffeine. CHO from ~20 min", post: "CHO + Protein" }, note: "Full glycogen. AMPK not blunted here — fuel for max output." },
+  anaerobic: { label: "Anaerobic", color: "#fe00a4", target: "Maximize work rate", proteinGkg: 2.2, fatRatio: 0.45, calMul: 1.5, fuel: { pre: "CHO + Protein", during: "Electrolytes, caffeine from ~20 min", post: "CHO + Protein" }, note: "Full carb support for short maximal efforts." },
 };
 
 export function calcMacros(type, lbs, heightIn, age, calAdj, gender) {
@@ -15,17 +15,20 @@ export function calcMacros(type, lbs, heightIn, age, calAdj, gender) {
   const safeAge = Math.max(age || 30, 1);
   const bmr = 10 * kg + 6.25 * heightCm - 5 * safeAge + (gender === "male" ? 5 : -161);
   const tdee = Math.max(bmr * 1.55 * s.calMul + (calAdj || 0), 0);
-  const p = Math.round(s.proteinGkg * kg), c = Math.round(s.carbGkg * kg);
-  return { cal: Math.round(tdee), fat: Math.round(Math.max(tdee - p * 4 - c * 4, 0) / 9), protein: p, carbs: c };
+  const p = Math.round(s.proteinGkg * kg);
+  const remaining = Math.max(tdee - p * 4, 0);
+  const fat = Math.round(remaining * s.fatRatio / 9);
+  const carbs = Math.round(remaining * (1 - s.fatRatio) / 4);
+  return { cal: Math.round(tdee), fat, protein: p, carbs };
 }
 
-export function calcFuelRec(sType, session, weightLbs) {
+export function calcFuelRec(sType, session, weightLbs, dailyMacros) {
   const kg = weightLbs / 2.205;
   if (sType === "rest") {
     const zero = { carbs: 0, protein: 0, fat: 0 };
     return { pre: zero, during: zero, post: zero };
   }
-  const totalCarb = Math.round(session.carbGkg * kg);
+  const totalCarb = dailyMacros ? dailyMacros.carbs : Math.round(kg * (1 - session.fatRatio) * 2);
   const totalPro = Math.round(session.proteinGkg * kg);
   // ~40% of daily carbs as training fuel (pre 30%, during 40%, post 30%)
   const trainCarb = Math.round(totalCarb * 0.4);

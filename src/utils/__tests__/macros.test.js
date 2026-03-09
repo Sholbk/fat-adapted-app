@@ -77,25 +77,29 @@ describe("calcFuelRec", () => {
   });
 
   it("endurance returns zero carbs for pre/during/post", () => {
-    const rec = calcFuelRec("endurance", SESSION_CONFIG.endurance, 150);
+    const macros = calcMacros("endurance", 150, 67, 30, 0, "female");
+    const rec = calcFuelRec("endurance", SESSION_CONFIG.endurance, 150, macros);
     expect(rec.pre.carbs).toBe(0);
     expect(rec.during.carbs).toBe(0);
     expect(rec.post.carbs).toBe(0);
   });
 
   it("threshold returns carbs in during phase", () => {
-    const rec = calcFuelRec("threshold", SESSION_CONFIG.threshold, 150);
+    const macros = calcMacros("threshold", 150, 67, 30, 0, "female");
+    const rec = calcFuelRec("threshold", SESSION_CONFIG.threshold, 150, macros);
     expect(rec.during.carbs).toBeGreaterThan(0);
   });
 
   it("vo2max returns carbs in during phase", () => {
-    const rec = calcFuelRec("vo2max", SESSION_CONFIG.vo2max, 150);
+    const macros = calcMacros("vo2max", 150, 67, 30, 0, "female");
+    const rec = calcFuelRec("vo2max", SESSION_CONFIG.vo2max, 150, macros);
     expect(rec.during.carbs).toBeGreaterThan(0);
   });
 
   it("returns valid numbers, no NaN", () => {
     for (const [key, cfg] of Object.entries(SESSION_CONFIG)) {
-      const rec = calcFuelRec(key, cfg, 150);
+      const macros = calcMacros(key, 150, 67, 30, 0, "female");
+      const rec = calcFuelRec(key, cfg, 150, macros);
       for (const phase of [rec.pre, rec.during, rec.post]) {
         for (const v of Object.values(phase)) {
           expect(Number.isNaN(v)).toBe(false);

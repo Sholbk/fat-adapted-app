@@ -18,7 +18,7 @@ export default function PhaseOfTraining({ session, sType, wellness }) {
             <span className="phase-dot" style={{ background: s.color }} />
             <span className="phase-name">{s.label}</span>
             <span className="phase-target">{s.target}</span>
-            <span className="phase-carb">{s.carbGkg} g/kg CHO</span>
+            <span className="phase-carb">{Math.round(s.fatRatio * 100)}% fat / {Math.round((1 - s.fatRatio) * 100)}% CHO</span>
           </div>
         ))}
       </div>

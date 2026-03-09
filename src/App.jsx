@@ -287,7 +287,7 @@ function App() {
   const sType = getSessionTypeFromWorkouts(dayWorkouts, load);
   const session = SESSION_CONFIG[sType];
   const macros = calcMacros(sType, W, settings.height, settings.age, calAdj, settings.gender);
-  const fuelRec = calcFuelRec(sType, session, W);
+  const fuelRec = calcFuelRec(sType, session, W, macros);
   const fuelRecTotal = sumFuelRec(fuelRec);
 
   const mealData = MEALS.map(m => ({ key: m, label: m[0].toUpperCase() + m.slice(1), entries: getLog(date, m) }));
