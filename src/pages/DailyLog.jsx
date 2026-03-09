@@ -33,8 +33,10 @@ const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
         <div className="card">
           <h2>Training Fuel</h2>
           <div className="fuel-recs">
-            <div className="fuel-r"><span className="fuel-ph">Pre</span><span>{session.fuel.pre}</span></div>
-            <div className="fuel-r"><span className="fuel-ph">During</span><span>{session.fuel.during}</span></div>
+            <div className="fuel-r"><span className="fuel-ph">4–24h Pre</span><span>{session.fuel.pre24h}</span></div>
+            <div className="fuel-r"><span className="fuel-ph">&gt;1h Pre</span><span>{session.fuel.pre1h}</span></div>
+            <div className="fuel-r"><span className="fuel-ph">During (early)</span><span>{session.fuel.duringEarly}</span></div>
+            <div className="fuel-r"><span className="fuel-ph">During (later)</span><span>{session.fuel.duringLater}</span></div>
             <div className="fuel-r"><span className="fuel-ph">Post</span><span>{session.fuel.post}</span></div>
           </div>
           <div className="fuel-rec-macros">

@@ -189,7 +189,7 @@ export default function PhaseOfTraining({ session, sType, wellness, settings, se
               <div key={key} className={`phase-row ${key === sType ? "active" : ""}`}>
                 <span className="phase-dot" style={{ background: s.color }} />
                 <span className="phase-name">{s.label} <span className="phase-zone-tag">{s.zone}</span></span>
-                <span className="phase-target">{s.fuel.during}</span>
+                <span className="phase-target">{s.fuelTarget}</span>
                 <span className="phase-carb">{Math.round(s.fatRatio * 100)}% fat / {Math.round((1 - s.fatRatio) * 100)}% CHO</span>
               </div>
             ))}
