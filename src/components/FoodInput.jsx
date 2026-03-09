@@ -19,6 +19,7 @@ function saveRecent(food) {
 export default function FoodInput({ onAdd, placeholder }) {
   const [name, setName] = useState("");
   const [qty, setQty] = useState("1");
+  const [cal, setCal] = useState("");
   const [fat, setFat] = useState("");
   const [pro, setPro] = useState("");
   const [carb, setCarb] = useState("");
@@ -87,12 +88,16 @@ export default function FoodInput({ onAdd, placeholder }) {
     }, 400);
   }
 
+  function calcCal(f, p, c) { return Math.round((+f || 0) * 9 + (+p || 0) * 4 + (+c || 0) * 4); }
+
   function scaleToQty(q, base) {
     if (!base) return;
     const a = +q || 0;
-    setFat(String(Math.round(base.fat * a)));
-    setPro(String(Math.round(base.protein * a)));
-    setCarb(String(Math.round(base.carbs * a)));
+    const f = Math.round(base.fat * a), p = Math.round(base.protein * a), c = Math.round(base.carbs * a);
+    setFat(String(f));
+    setPro(String(p));
+    setCarb(String(c));
+    setCal(String(calcCal(f, p, c)));
   }
 
   async function pick(f) {
@@ -111,6 +116,7 @@ export default function FoodInput({ onAdd, placeholder }) {
       setFat(String(Math.round(f.fat)));
       setPro(String(Math.round(f.protein)));
       setCarb(String(Math.round(f.carbs)));
+      setCal(String(calcCal(f.fat, f.protein, f.carbs)));
       return;
     }
     if (detail?.servings?.length > 0) {
@@ -122,6 +128,7 @@ export default function FoodInput({ onAdd, placeholder }) {
       setFat(String(Math.round(s.fat)));
       setPro(String(Math.round(s.protein)));
       setCarb(String(Math.round(s.carbs)));
+      setCal(String(calcCal(s.fat, s.protein, s.carbs)));
     } else {
       setServings([]);
       baseMacros.current = { fat: f.fat, protein: f.protein, carbs: f.carbs };
@@ -130,6 +137,7 @@ export default function FoodInput({ onAdd, placeholder }) {
       setFat(String(Math.round(f.fat)));
       setPro(String(Math.round(f.protein)));
       setCarb(String(Math.round(f.carbs)));
+      setCal(String(calcCal(f.fat, f.protein, f.carbs)));
     }
   }
 
@@ -161,6 +169,7 @@ export default function FoodInput({ onAdd, placeholder }) {
         setFat(String(food.fat));
         setPro(String(food.protein));
         setCarb(String(food.carbs));
+        setCal(String(calcCal(food.fat, food.protein, food.carbs)));
       } else {
         setScanMsg("Product not found. Try searching manually.");
         setTimeout(() => setScanMsg(""), 3000);
@@ -177,9 +186,12 @@ export default function FoodInput({ onAdd, placeholder }) {
     const servDesc = selServing ? selServing.desc : "serving";
     const q = +qty || 1;
     const label = `${name.trim()} (${q}${q !== 1 ? "x " : " "}${servDesc})`;
-    onAdd({ id: Date.now(), name: label, fat: +fat || 0, protein: +pro || 0, carbs: +carb || 0 });
+    const f = +fat || 0, p = +pro || 0, c = +carb || 0;
+    const calories = +cal || calcCal(f, p, c);
+    onAdd({ id: Date.now(), name: label, fat: f, protein: p, carbs: c, cal: calories });
     setName("");
     setQty("1");
+    setCal("");
     setFat("");
     setPro("");
     setCarb("");
@@ -234,9 +246,10 @@ export default function FoodInput({ onAdd, placeholder }) {
         ) : (
           <select className="fi-unit" disabled><option>serving</option></select>
         )}
-        <input type="number" placeholder="Fat" value={fat} onChange={e => { setFat(e.target.value); baseMacros.current = null; }} className="fi-n" min="0" />
-        <input type="number" placeholder="Pro" value={pro} onChange={e => { setPro(e.target.value); baseMacros.current = null; }} className="fi-n" min="0" />
-        <input type="number" placeholder="Carb" value={carb} onChange={e => { setCarb(e.target.value); baseMacros.current = null; }} className="fi-n" min="0" />
+        <input type="number" placeholder="Cal" value={cal} onChange={e => setCal(e.target.value)} className="fi-n fi-cal" min="0" />
+        <input type="number" placeholder="Fat" value={fat} onChange={e => { setFat(e.target.value); baseMacros.current = null; setCal(String(calcCal(e.target.value, pro, carb))); }} className="fi-n" min="0" />
+        <input type="number" placeholder="Pro" value={pro} onChange={e => { setPro(e.target.value); baseMacros.current = null; setCal(String(calcCal(fat, e.target.value, carb))); }} className="fi-n" min="0" />
+        <input type="number" placeholder="Carb" value={carb} onChange={e => { setCarb(e.target.value); baseMacros.current = null; setCal(String(calcCal(fat, pro, e.target.value))); }} className="fi-n" min="0" />
         {hasSpeech && <button type="button" className={`fi-scan${listening ? " fi-listening" : ""}`} onClick={toggleVoice} aria-label={listening ? "Stop listening" : "Voice search"} title={listening ? "Stop listening" : "Voice search"}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         </button>}
