@@ -35,7 +35,8 @@ function getIcsUrl(raw) {
     const parsed = new URL(raw);
     if (parsed.hostname !== "app.athletica.ai") return null;
   } catch { return null; }
-  return import.meta.env.DEV ? raw : `/api/ics-proxy?url=${encodeURIComponent(raw)}`;
+  const bust = `&_t=${Date.now()}`;
+  return import.meta.env.DEV ? raw : `/api/ics-proxy?url=${encodeURIComponent(raw)}${bust}`;
 }
 
 function Toast({ message, onDone, onUndo }) {
@@ -175,8 +176,8 @@ function App() {
   useEffect(() => {
     const icsUrl = getIcsUrl(settings.athleticaUrl);
     if (!icsUrl) { setPlanned([]); return; }
-    fetch(icsUrl).then(r => r.text()).then(t => { setPlanned(parseICS(t)); }).catch(() => { showToast("Couldn't load training plan from Athletica"); });
-  }, [settings.athleticaUrl]);
+    fetch(icsUrl, { cache: "no-store" }).then(r => r.text()).then(t => { setPlanned(parseICS(t)); }).catch(() => { showToast("Couldn't load training plan from Athletica"); });
+  }, [settings.athleticaUrl, authSession?.user?.id]);
 
   useEffect(() => {
     const m = date.slice(0, 7);

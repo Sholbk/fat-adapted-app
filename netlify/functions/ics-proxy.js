@@ -43,6 +43,7 @@ export default async (req) => {
       headers: {
         "Content-Type": "text/calendar",
         "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+        "Cache-Control": "no-store, no-cache, must-revalidate",
       },
     });
   } catch {
