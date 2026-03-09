@@ -5,30 +5,61 @@ export function TermsContent() {
       <p className="fp-updated">Last updated: March 2026</p>
 
       <h3>1. Acceptance of Terms</h3>
-      <p>By accessing or using FastFuel ("the App"), you agree to be bound by these Terms & Conditions. If you do not agree, do not use the App.</p>
+      <p>By accessing or using FastFuel ("the App"), you agree to be bound by these Terms & Conditions. If you do not agree, do not use the App. You represent and warrant that you are of legal age to form a binding contract (or if not, you have received your parent's or guardian's permission to use the App and have gotten your parent or guardian to agree to these Terms on your behalf).</p>
 
       <h3>2. Description of Service</h3>
-      <p>FastFuel is a nutrition planning tool for endurance athletes. It generates macro targets based on training data and user-provided settings. FastFuel is not a medical device and does not provide medical advice.</p>
+      <p>FastFuel is a nutrition planning tool for endurance athletes. It generates macro targets based on training data and user-provided settings. FastFuel is designed as a self-help tool and does not include the provision of medical care or other professional health services. You will only use the App for your own internal, personal, non-commercial use, and only in a manner that complies with all laws that apply to you.</p>
 
       <h3>3. Not Medical Advice</h3>
       <p>The information provided by FastFuel is for informational and educational purposes only. It is not intended as a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider before making changes to your diet or exercise program.</p>
+      <p>You acknowledge that no licensed medical professional/patient relationship is created by using information provided by or through the App. The content is not and should not be considered medical advice or a substitute for individual medical advice, diagnosis, or treatment. Do not disregard, avoid, or delay obtaining medical advice from a qualified health care professional because of something you may have read or received through the App.</p>
+      <p><strong>USE OF THE APP IS NOT FOR EMERGENCIES. IF YOU THINK YOU HAVE A MEDICAL EMERGENCY, CALL 911 OR GO TO THE NEAREST OPEN CLINIC OR EMERGENCY ROOM.</strong></p>
 
-      <h3>4. Beta Service</h3>
-      <p>FastFuel is currently in beta. The service is provided "as is" without warranties of any kind. Features, calculations, and availability may change without notice.</p>
+      <h3>4. Children's Privacy</h3>
+      <p>The Children's Online Privacy Protection Act ("COPPA") requires that online service providers obtain parental consent before they knowingly collect personally identifiable information from children under 13. We do not knowingly collect or solicit personally identifiable information from children under 13. If you are a child under 13, please do not attempt to register or send any personal information about yourself to us. If we learn we have collected personal information from a child under 13, we will delete that information as quickly as possible and terminate the associated account. If you believe that a child under 13 may have provided us personal information, please contact us at <a href="mailto:stephanie@dragonflywebdesigns.com">stephanie@dragonflywebdesigns.com</a>.</p>
 
-      <h3>5. User Data</h3>
-      <p>You are responsible for the accuracy of data you provide. FastFuel stores your settings and nutrition logs to provide the service. See our Privacy Policy for details on data handling.</p>
+      <h3>5. User Data & Conduct</h3>
+      <p>You promise to provide accurate, complete, and updated information about yourself. You are responsible for any activity associated with your account and for the accuracy of data you provide. FastFuel stores your settings and nutrition logs to provide the service. See our Privacy Policy for details on data handling.</p>
+      <p>You represent, warrant, and agree that you will not:</p>
+      <ul>
+        <li>Use the App in any manner that violates any applicable law or regulation</li>
+        <li>Attempt to obtain the password, account, or other security information from any other user</li>
+        <li>Violate the security of any computer network, or crack any passwords or security encryption codes</li>
+        <li>"Crawl," "scrape," or "spider" any page, data, or portion of the App (through manual or automated means)</li>
+        <li>Copy or store any significant portion of the content</li>
+        <li>Decompile, reverse engineer, or otherwise attempt to obtain the source code of the App</li>
+      </ul>
+      <p>A violation of any of the foregoing is grounds for termination of your right to use the App.</p>
 
-      <h3>6. Third-Party Integrations</h3>
+      <h3>6. Intellectual Property</h3>
+      <p>The materials displayed or available through the App, including but not limited to text, graphics, data, articles, photos, images, and illustrations ("Content") are protected by copyright and/or other intellectual property laws. You will not use, copy, reproduce, modify, translate, publish, broadcast, transmit, distribute, perform, upload, display, license, sell, or otherwise exploit for any purpose any Content not owned by you without the prior consent of the owner.</p>
+      <p>You understand that Dragonfly Web Designs, LLC owns the App and all associated intellectual property. You will not modify, publish, transmit, participate in the transfer or sale of, reproduce, or create derivative works based on the App.</p>
+
+      <h3>7. Third-Party Integrations</h3>
       <p>FastFuel integrates with third-party services including Athletica.ai, Intervals.icu, Strava, Garmin Connect, FatSecret, and any other services connected through Intervals.icu. Your use of these services is governed by their respective terms. FastFuel is not responsible for the accuracy or availability of third-party data.</p>
+      <p>FastFuel has no control over, and assumes no responsibility for, the content, accuracy, privacy policies, or practices of any third-party websites or services. By using the App, you release and hold us harmless from any and all liability arising from your use of any third-party website or service.</p>
 
-      <h3>7. Limitation of Liability</h3>
-      <p>FastFuel and its creators shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the App, including but not limited to health outcomes, training decisions, or data loss.</p>
+      <h3>8. Warranty Disclaimer</h3>
+      <p><strong>THE APP AND CONTENT ARE PROVIDED ON AN "AS-IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, WITHOUT LIMITATION, IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR THAT USE OF THE APP WILL BE UNINTERRUPTED OR ERROR-FREE.</strong></p>
+      <p>FastFuel is currently in beta. Features, calculations, and availability may change without notice.</p>
 
-      <h3>8. Changes to Terms</h3>
-      <p>We may update these terms at any time. Continued use of the App after changes constitutes acceptance of the new terms.</p>
+      <h3>9. Limitation of Liability</h3>
+      <p><strong>TO THE FULLEST EXTENT ALLOWED BY APPLICABLE LAW, UNDER NO CIRCUMSTANCES AND UNDER NO LEGAL THEORY (INCLUDING, WITHOUT LIMITATION, TORT, CONTRACT, STRICT LIABILITY, OR OTHERWISE) SHALL FASTFUEL OR DRAGONFLY WEB DESIGNS, LLC BE LIABLE TO YOU OR TO ANY OTHER PERSON FOR (A) ANY INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES OF ANY KIND, INCLUDING DAMAGES FOR LOST PROFITS, LOSS OF GOODWILL, WORK STOPPAGE, ACCURACY OF RESULTS, OR COMPUTER FAILURE OR MALFUNCTION, OR (B) ANY AMOUNT, IN THE AGGREGATE, IN EXCESS OF $100, OR (C) ANY MATTER BEYOND OUR REASONABLE CONTROL.</strong></p>
+      <p>This includes but is not limited to health outcomes, training decisions, dietary decisions, or data loss.</p>
 
-      <h3>9. Copyright & Contact</h3>
+      <h3>10. Indemnification</h3>
+      <p>You agree to indemnify and hold Dragonfly Web Designs, LLC, its affiliates, officers, agents, employees, and partners harmless for and against any and all claims, liabilities, damages (actual and consequential), losses, and expenses (including attorneys' fees) arising from or in any way related to (a) your use of the App (including any actions taken by a third party using your account), and (b) your violation of these Terms.</p>
+
+      <h3>11. Account Termination</h3>
+      <p>You may stop using the App at any time by deleting your account from the Settings page or contacting us at <a href="mailto:stephanie@dragonflywebdesigns.com">stephanie@dragonflywebdesigns.com</a>. FastFuel is also free to terminate or suspend access to your account for any reason at our discretion, including breach of these Terms. Account termination may result in the destruction of content associated with your account.</p>
+
+      <h3>12. Governing Law</h3>
+      <p>These Terms are governed by and will be construed under the laws of the State of New Mexico, without regard to the conflicts of laws provisions thereof. Any dispute arising from or relating to these Terms shall be resolved in the courts located in Grant County, New Mexico.</p>
+
+      <h3>13. Changes to Terms</h3>
+      <p>We may update these terms at any time. If we make material changes, we will attempt to notify you by email or through the App. Continued use of the App after changes constitutes acceptance of the new terms. If you do not agree with the new terms, you are free to reject them, but you will no longer be able to use the App.</p>
+
+      <h3>14. Copyright & Contact</h3>
       <p>FastFuel is created by <strong>Dragonfly Web Designs, LLC</strong>, Stephanie Holbrook. All content, design, and code are copyrighted and all rights reserved.</p>
       <p>785 E Apache Street, Silver City, New Mexico 88061<br />
       <a href="mailto:stephanie@dragonflywebdesigns.com">stephanie@dragonflywebdesigns.com</a><br />
@@ -43,21 +74,45 @@ export function PrivacyContent() {
       <h2>Privacy Policy</h2>
       <p className="fp-updated">Last updated: March 2026</p>
 
-      <h3>What We Collect</h3>
-      <p>FastFuel collects only the data necessary to provide the service:</p>
+      <p>Dragonfly Web Designs, LLC ("we" or "us" or "our") respects the privacy of our users ("user" or "you"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use FastFuel (the "Application"). Please read this Privacy Policy carefully. <strong>IF YOU DO NOT AGREE WITH THE TERMS OF THIS PRIVACY POLICY, PLEASE DO NOT ACCESS THE APPLICATION.</strong></p>
+      <p>We reserve the right to make changes to this Privacy Policy at any time and for any reason. We will alert you about any changes by updating the "Last updated" date of this Privacy Policy. You are encouraged to periodically review this Privacy Policy to stay informed of updates. Your continued use of the Application after any changes constitutes acceptance of the revised Privacy Policy.</p>
+
+      <h3>Collection of Your Information</h3>
+      <p>We may collect information about you in a variety of ways. The information we collect depends on the content and features you use:</p>
+
+      <p><strong>Personal Data</strong></p>
+      <p>Personally identifiable information that you voluntarily provide when creating an account or using the Application, such as your name, email address, and profile information.</p>
+
+      <p><strong>Health and Fitness Data</strong></p>
+      <p>With your consent, we may collect health and fitness information including: nutrition and dietary intake data; meal logs and food preferences; body measurements such as weight, height, and body composition; activity and exercise data; sleep data; heart rate variability (HRV), resting heart rate, and other wellness metrics from connected platforms (such as Intervals.icu, Garmin Connect, Strava, and similar services); hydration tracking; supplement intake; and health goals you set within the Application. This data is provided directly by you or synced from third-party devices and applications you choose to connect.</p>
+
+      <p><strong>Derivative Data</strong></p>
+      <p>Information our servers may automatically collect when you access the Application, such as usage patterns and interactions with the Application via server log files.</p>
+
+      <h3>Use of Your Information</h3>
+      <p>Having accurate information about you permits us to provide you with a smooth, efficient, and customized experience. We may use information collected about you via the Application to:</p>
       <ul>
-        <li><strong>Account data:</strong> Email address for authentication (via Supabase)</li>
-        <li><strong>Profile data:</strong> Weight, height, age, gender — used to calculate your macro targets</li>
-        <li><strong>Nutrition logs:</strong> Meals, training fuel, hydration, and supplements you log</li>
-        <li><strong>Integration data:</strong> Workout data from Athletica.ai, Intervals.icu, and Strava (accessed via your API keys)</li>
+        <li>Create and manage your account</li>
+        <li>Calculate personalized macro targets based on your profile and training data</li>
+        <li>Provide nutrition recommendations based on your health data, training plan, and goals</li>
+        <li>Analyze your nutritional intake, activity levels, and wellness data to optimize guidance</li>
+        <li>Track your progress toward health and fitness objectives</li>
+        <li>Improve our algorithms and personalization features</li>
+        <li>Monitor and analyze usage and trends to improve your experience</li>
+        <li>Notify you of updates to the Application</li>
       </ul>
 
-      <h3>How We Store It</h3>
+      <h3>Artificial Intelligence</h3>
+      <p>We may use artificial intelligence and machine learning technologies (via the AI Coach feature) to analyze nutrition, training, and health-related inputs in order to generate personalized insights and recommendations.</p>
+      <p>When AI features are used, your wellness data (mood, sleep quality, HRV, training load, macro compliance) may be sent to Anthropic's API to generate recommendations. Only the minimum data necessary to generate a recommendation is transmitted — no personally identifiable information such as your name, email, or account details is sent to the AI service. Anthropic does not use this data to train their models.</p>
+
+      <h3>How We Store Your Information</h3>
       <ul>
         <li>Profile and nutrition data is stored locally on your device (localStorage) and optionally backed up to Supabase cloud storage</li>
         <li>API keys for third-party integrations are stored in Supabase (encrypted at rest)</li>
         <li>We do not store your third-party passwords</li>
       </ul>
+      <p>We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse. Therefore, we cannot guarantee complete security.</p>
 
       <h3>What We Don't Do</h3>
       <ul>
@@ -65,6 +120,14 @@ export function PrivacyContent() {
         <li>We do not use your data for advertising</li>
         <li>We do not share your data with other users</li>
         <li>We do not track you across other websites</li>
+        <li>We do not use third-party advertising companies or serve ads within the Application</li>
+      </ul>
+
+      <h3>Disclosure of Your Information</h3>
+      <p>We may share information we have collected about you in the following situations:</p>
+      <ul>
+        <li><strong>By Law or to Protect Rights:</strong> If we believe the release of information about you is necessary to respond to legal process, to investigate or remedy potential violations of our policies, or to protect the rights, property, and safety of others, we may share your information as permitted or required by applicable law.</li>
+        <li><strong>Sale or Bankruptcy:</strong> If we reorganize or sell all or a portion of our assets, undergo a merger, or are acquired by another entity, we may transfer your information to the successor entity. If we go out of business or enter bankruptcy, your information would be an asset transferred or acquired by a third party. You acknowledge that such transfers may occur and that the transferee may decline to honor commitments we made in this Privacy Policy.</li>
       </ul>
 
       <h3>Third-Party Services</h3>
@@ -73,15 +136,28 @@ export function PrivacyContent() {
         <li>Supabase (authentication & cloud backup)</li>
         <li>Athletica.ai (training calendar)</li>
         <li>Intervals.icu (workout & wellness data)</li>
+        <li>Garmin Connect, Strava, and other services connected via Intervals.icu</li>
         <li>FatSecret (food database search)</li>
         <li>Anthropic (AI Coach macro recommendations)</li>
       </ul>
+      <p>The Application may contain links to third-party websites and services that are not affiliated with us. Once you have used these links to leave the Application, any information you provide to these third parties is not covered by this Privacy Policy. We are not responsible for the content or privacy and security practices and policies of any third parties.</p>
 
-      <h3>Data Deletion</h3>
-      <p>You can delete all your data at any time from the Settings page. This removes all local data and cloud backups.</p>
+      <h3>Do-Not-Track</h3>
+      <p>Most web browsers and some mobile operating systems include a Do-Not-Track ("DNT") feature or setting. No uniform technology standard for recognizing and implementing DNT signals has been finalized. As such, we do not currently respond to DNT browser signals or any other mechanism that automatically communicates your choice not to be tracked online. If a standard for online tracking is adopted that we must follow in the future, we will inform you about that practice in a revised version of this Privacy Policy.</p>
+
+      <h3>Children's Privacy</h3>
+      <p>We do not knowingly collect or solicit personally identifiable information from children under the age of 13. If you are a child under 13, please do not attempt to register or send any personal information about yourself to us. If we learn we have collected personal information from a child under 13, we will delete that information as quickly as possible. If you become aware of any data we have collected from children under age 13, please contact us using the contact information provided below.</p>
+
+      <h3>Your Options</h3>
+      <p><strong>Account Information:</strong> You may at any time review or change the information in your account or terminate your account from the Settings page or by contacting us. Upon your request to terminate your account, we will deactivate or delete your account and information from our active databases. However, some information may be retained in our files to prevent fraud, troubleshoot problems, assist with any investigations, enforce our Terms of Use, and/or comply with legal requirements.</p>
+      <p><strong>Data Deletion:</strong> You can delete all your data at any time from the Settings page. This removes all local data and cloud backups. You may also request data deletion by contacting us directly.</p>
+
+      <h3>California Privacy Rights</h3>
+      <p>California Civil Code Section 1798.83, also known as the "Shine The Light" law, permits our users who are California residents to request and obtain from us, once a year and free of charge, information about categories of personal information (if any) we disclosed to third parties for direct marketing purposes. If you are a California resident and would like to make such a request, please submit your request in writing to us using the contact information provided below.</p>
 
       <h3>Contact</h3>
-      <p>FastFuel is created by <strong>Dragonfly Web Designs, LLC</strong>, Stephanie Holbrook. All content, design, and code are copyrighted and all rights reserved.</p>
+      <p>If you have questions or comments about this Privacy Policy, please contact us at:</p>
+      <p><strong>Dragonfly Web Designs, LLC</strong>, Stephanie Holbrook. All content, design, and code are copyrighted and all rights reserved.</p>
       <p>785 E Apache Street, Silver City, New Mexico 88061<br />
       <a href="mailto:stephanie@dragonflywebdesigns.com">stephanie@dragonflywebdesigns.com</a><br />
       623-910-1711</p>
