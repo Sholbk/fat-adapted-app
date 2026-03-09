@@ -437,7 +437,7 @@ function App() {
           <DailyLog
             date={date} macros={macros} session={session} sType={sType}
             fuelRec={fuelRec} fuelRecTotal={fuelRecTotal}
-            dayWorkouts={dayWorkouts} wellness={wellness}
+            dayWorkouts={dayWorkouts} wellness={wellness} planned={planned}
             mealData={mealData} mealTotals={mealTotals}
             trainEntries={trainEntries} trainTotals={trainTotals} all={all}
             addMeal={addMeal} rmMeal={rmMeal} addTrain={addTrain} rmTrain={rmTrain}

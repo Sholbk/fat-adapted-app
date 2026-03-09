@@ -11,11 +11,12 @@ import WorkoutGlossary from "../components/WorkoutGlossary.jsx";
 import HydrationCard from "../components/HydrationCard.jsx";
 import SupplementsCard from "../components/SupplementsCard.jsx";
 import PieCharts from "../components/PieCharts.jsx";
+import AICoachCard from "../components/AICoachCard.jsx";
 
 const ZONE_LABELS = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7"];
 const ZONE_COLORS = ["#1e8ad3", "#10bc10", "#90c010", "#e8c010", "#e87010", "#fe00a4", "#cc0050"];
 
-export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRecTotal, dayWorkouts, wellness, mealData, mealTotals, trainEntries, trainTotals, all, addMeal, rmMeal, addTrain, rmTrain, refresh, showToast, settings }) {
+export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRecTotal, dayWorkouts, wellness, planned, mealData, mealTotals, trainEntries, trainTotals, all, addMeal, rmMeal, addTrain, rmTrain, refresh, showToast, settings }) {
   const wd = wellness.find(w => w.id === date) || {};
 const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
 
@@ -117,6 +118,8 @@ const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
           <WorkoutGlossary />
         </div>
       </div>
+
+      <AICoachCard date={date} planned={planned} wellness={wellness} settings={settings} />
 
       <div className="cards-row cards-row-2">
         <div className="card">

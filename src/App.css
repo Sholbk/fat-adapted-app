@@ -1212,6 +1212,50 @@ a.landing-badge:hover { background: rgba(255,255,255,0.12); }
   .ob-row { grid-template-columns: 1fr; }
 }
 
+/* ── AI Coach Card ── */
+.ai-coach-card {
+  background: linear-gradient(135deg, rgba(4,59,177,0.08), rgba(254,0,164,0.06));
+  border: 1px solid rgba(4,59,177,0.2); border-radius: 14px;
+  padding: 1rem 1.25rem; margin-bottom: 1rem;
+}
+.dark .ai-coach-card {
+  background: linear-gradient(135deg, rgba(4,59,177,0.15), rgba(254,0,164,0.1));
+  border-color: rgba(4,59,177,0.3);
+}
+.ai-coach-header {
+  display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;
+  font-weight: 700; font-size: 0.85rem; color: #043bb1;
+}
+.dark .ai-coach-header { color: #7db8f0; }
+.ai-coach-header svg { flex-shrink: 0; }
+.ai-coach-confidence { margin-left: auto; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.ai-coach-loading { font-size: 0.8rem; color: #888; margin: 0; }
+.ai-coach-error { font-size: 0.8rem; color: #e85040; margin: 0; }
+.ai-coach-reason { font-size: 0.85rem; font-weight: 600; margin: 0 0 0.25rem; line-height: 1.4; }
+.ai-coach-detail { font-size: 0.78rem; color: #666; margin: 0 0 0.5rem; line-height: 1.5; }
+.dark .ai-coach-detail { color: #aaa; }
+.ai-coach-adjustments { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.ai-coach-adj {
+  font-size: 0.8rem; font-weight: 700; padding: 0.2rem 0.6rem;
+  background: rgba(0,0,0,0.05); border-radius: 8px;
+}
+.dark .ai-coach-adj { background: rgba(255,255,255,0.08); }
+.ai-coach-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.ai-coach-apply, .ai-coach-dismiss, .ai-coach-refresh {
+  font-size: 0.75rem; font-weight: 600; padding: 0.35rem 0.75rem;
+  border-radius: 8px; border: none; cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.ai-coach-apply { background: #043bb1; color: #fff; }
+.ai-coach-apply:hover { background: #0550d4; }
+.ai-coach-dismiss { background: rgba(0,0,0,0.06); color: #666; }
+.dark .ai-coach-dismiss { background: rgba(255,255,255,0.08); color: #aaa; }
+.ai-coach-dismiss:hover { background: rgba(0,0,0,0.1); }
+.ai-coach-refresh { background: none; color: #043bb1; border: 1px solid rgba(4,59,177,0.2); }
+.dark .ai-coach-refresh { color: #7db8f0; border-color: rgba(125,184,240,0.2); }
+.ai-coach-refresh:hover { background: rgba(4,59,177,0.05); }
+.ai-coach-applied { opacity: 0.85; }
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .sidebar { display: none; }
