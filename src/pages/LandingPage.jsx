@@ -226,7 +226,7 @@ export default function LandingPage({ showToast }) {
           <nav className="landing-footer-links">
             <button onClick={() => setFooterPage("terms")}>Terms & Conditions</button>
             <button onClick={() => setFooterPage("privacy")}>Privacy</button>
-            <button onClick={() => setFooterPage("methodology")}>Methodology & Resources</button>
+            <button onClick={() => setFooterPage("methodology")}>Resources</button>
           </nav>
           <div className="landing-footer-copy">&copy; {new Date().getFullYear()} FastFuel. All rights reserved.</div>
         </div>
@@ -320,25 +320,17 @@ function PrivacyContent() {
 function MethodologyContent() {
   return (
     <div className="fp-content">
-      <h2>Methodology & Resources</h2>
+      <h2>Resources</h2>
       <p className="fp-updated">The science behind FastFuel's macro calculations</p>
 
       <h3>Fat-Adapted Baseline</h3>
       <p>FastFuel's daily macro split is based on research into keto-adapted endurance athletes. The baseline diet targets approximately 70% fat, 20% protein, and 10% carbohydrates of total calories — consistent with the dietary patterns of elite low-carbohydrate athletes.</p>
-      <div className="fp-ref">
-        <strong>Key Study:</strong> Volek JS, et al. "Metabolic characteristics of keto-adapted ultra-endurance runners." <em>Metabolism — Clinical and Experimental</em>, 65 (2016): 100-110.
-        <p>Findings: LC athletes consuming ~70% fat / 10% carb / 20% protein showed 2.3x higher peak fat oxidation (1.54 vs 0.67 g/min) and derived 88% of energy from fat during submaximal exercise, while maintaining normal muscle glycogen levels.</p>
-      </div>
 
       <h3>Protein Target: 2.0 g/kg</h3>
       <p>The FASTER study LC athletes averaged 2.1 g/kg protein intake. FastFuel uses 2.0 g/kg as a well-supported target for fat-adapted endurance athletes, balancing muscle preservation and recovery with the fat-adapted macro split.</p>
 
       <h3>EPOC-Adjusted Daily Calories</h3>
       <p>High-intensity sessions create Excess Post-exercise Oxygen Consumption (EPOC) — elevated metabolic rate and fat oxidation that persists for hours after training. FastFuel adds a small EPOC bonus to daily calories on HIT days (5-10%), allocated primarily to fat to match the body's post-exercise fuel preference.</p>
-      <div className="fp-ref">
-        <strong>Research basis:</strong> Higher exercise intensity increases both the magnitude and duration of EPOC. HIIT significantly boosts post-exercise fat metabolism more than steady-state exercise.
-        <p>Peak fat oxidation occurs at moderate intensity (~60-75% VO2max), but the elevated metabolic demand during EPOC recovery results in higher total fat oxidation after high-intensity work.</p>
-      </div>
 
       <h3>Periodized Nutrition</h3>
       <p>FastFuel periodizes carbohydrate intake based on training intensity — the same approach used by elite WorldTour cycling teams. Carbs are not restricted year-round; they are manipulated based on training load with lower intake during base training and targeted intake during high-intensity and competition days.</p>
@@ -367,6 +359,100 @@ function MethodologyContent() {
       <div className="fp-ref">
         <strong>Mifflin-St Jeor:</strong> BMR = 10 x weight(kg) + 6.25 x height(cm) - 5 x age + gender offset (+5 male, -161 female)
         <p>TDEE = BMR x 1.55 x (1 + EPOC bonus)</p>
+      </div>
+
+      {/* ── Expert Consensus ── */}
+      <h3 style={{ marginTop: "2.5rem", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "1.5rem" }}>Expert Consensus: Base Macros for Fat-Adapted Endurance Athletes</h3>
+      <p>All of these researchers and practitioners converge on one central principle: fat must become the dominant aerobic fuel, and carbohydrates must be reduced enough to allow that metabolic shift to occur.</p>
+
+      <h3>Dr. Stephen Phinney & Dr. Jeff Volek</h3>
+      <p><em>The Art and Science of Low Carbohydrate Performance (2012)</em></p>
+      <p>The most cited researchers in keto-adapted athletics. In their landmark FASTER Study, the fat-adapted athlete cohort ate a diet consisting of 10% carbohydrates, 19% protein, and 70% fat. Peak fat oxidation was 2.3-fold higher in the low-carb group (1.54 g/min vs 0.67 g/min), occurring at a higher percentage of VO2max — demonstrating that fat-adapted athletes burn more fat at higher intensities than previously thought possible.</p>
+      <p>Phinney and Volek's general recommendation for athletes:</p>
+      <ul>
+        <li><strong>Carbs:</strong> ≤50g/day to maintain ketosis (roughly 5-10% of calories)</li>
+        <li><strong>Protein:</strong> ~1.2-1.7g/kg of lean body mass (moderate — excess protein is gluconeogenic and impairs ketosis)</li>
+        <li><strong>Fat:</strong> 65-75%+ of total calories, filling the remainder</li>
+      </ul>
+      <div className="fp-ref">
+        <h4>Resources</h4>
+        <p><em>The Art and Science of Low Carbohydrate Performance</em> (Volek & Phinney, 2012)</p>
+        <p>FASTER Study: "Metabolic characteristics of keto-adapted ultra-endurance runners" — <em>Metabolism</em>, 2015</p>
+        <p>"Rethinking fat as a fuel for endurance exercise" — <em>European Journal of Sport Science</em>, 2015</p>
+      </div>
+
+      <h3>Dr. Phil Maffetone</h3>
+      <p>Maffetone is less dogmatic about hitting specific macro percentages and more focused on carbohydrate tolerance as an individual variable. He historically recommended no more than 40% of calories from natural carbohydrates, and as low as 20% for older or more carbohydrate-intolerant individuals. His Two-Week Keto Test uses a hard carb ceiling: no more than 50 grams of carbohydrates per day to trigger nutritional ketosis.</p>
+      <p>His MAF Method ties fat-burning directly to diet: a higher fat, lower natural carbohydrate intake directly affects fat-burning capacity, correlating to a lower respiratory quotient at rest and during submaximal exercise.</p>
+      <ul>
+        <li><strong>Carbs:</strong> Individualized; start at ≤50g/day for adaptation, then find personal tolerance</li>
+        <li><strong>Protein:</strong> "Adequate healthy protein" — quality emphasized over quantity</li>
+        <li><strong>Fat:</strong> Fill the rest with natural fats; no fear of dietary fat</li>
+      </ul>
+      <div className="fp-ref">
+        <h4>Resources</h4>
+        <p>philmaffetone.com — Macro-Managing Meals</p>
+        <p>The Two-Week Keto Test</p>
+        <p>Keto, Sports, and Human Performance</p>
+        <p><em>The Big Book of Endurance Training and Racing</em> (Maffetone)</p>
+      </div>
+
+      <h3>Dr. Paul Laursen & Dr. Daniel Plews</h3>
+      <p>These two brought the science into elite triathlon coaching. A ketogenic diet is defined in their research as fewer than 50g/day of carbohydrate and greater than 75% of calories from fat. Evidence from 3-4 week adaptations showed maintenance of both moderate and vigorous intensity endurance exercise, with increases in fat oxidation even at intensities up to 70% VO2max.</p>
+      <p>Plews personally follows this structure and used it to win his age group at the Kona World Championships with a course record.</p>
+      <ul>
+        <li><strong>Carbs:</strong> {"<"}50g/day baseline, with strategic increases pre-race or during race-day execution</li>
+        <li><strong>Protein:</strong> Moderate (~15-20% of calories); adequate but not high</li>
+        <li><strong>Fat:</strong> ≥70% of calories from quality sources</li>
+      </ul>
+      <div className="fp-ref">
+        <h4>Resources</h4>
+        <p>"Impact of Ketogenic Diet on Athletes: Current Insights" — <em>PMC / OAJSM</em>, 2019 (Plews, Zinn, et al.)</p>
+        <p>Dostal, Plews, Hofmann, Laursen et al. — <em>Frontiers in Physiology</em>, 2019 (12-week VLCHF study)</p>
+        <p>plewsandprof.com</p>
+      </div>
+
+      <h3>Peter Defty — Optimized Fat Metabolism (OFM)</h3>
+      <p>Defty takes a nuanced position that separates him from the pure keto camp. OFM is not a keto diet and not chronic low-carb either — but one stage involves getting into nutritional ketosis during the off-season or recovery blocks, while avoiding strict ketosis during high-volume or intense training phases.</p>
+      <p>His key philosophy: fat is your aerobic energy source, and glycogen/glucose is your "fight or flight" fuel. Strategic carbs are used wisely — race day may involve up to 90% of calories from carbs, but that represents a small percentage of overall weekly intake.</p>
+      <ul>
+        <li><strong>Carbs:</strong> Low baseline (personalized), strategic increases around key training and racing</li>
+        <li><strong>Protein:</strong> Moderate, always eaten with fat</li>
+        <li><strong>Fat:</strong> Dominant fuel; quality animal fats, organ meats, and MCTs emphasized</li>
+      </ul>
+      <div className="fp-ref">
+        <h4>Resources</h4>
+        <p>vespapower.com / ofm.io</p>
+        <p>Endurance Planet Podcast with Peter Defty</p>
+      </div>
+
+      <h3>Dr. Jonathan Edwards</h3>
+      <p>Dr. Edwards' work intersects with metabolic health and low-carbohydrate approaches. His specific macro frameworks are not as broadly documented in the peer-reviewed literature compared to the others on this list. For precise macro targets, cross-reference his recent interviews or publications directly.</p>
+
+      {/* ── Consensus Table ── */}
+      <h3 style={{ marginTop: "2rem" }}>Consensus Macro Ranges</h3>
+      <p>Synthesizing across all the above researchers and practitioners:</p>
+      <div className="fp-ref">
+        <p><strong>Baseline Fat-Adaptation:</strong> Fat 60-70% | Protein 15-20% | Carbs 10-20% / ≤75g/day</p>
+        <p><strong>Strict Ketogenic:</strong> Fat 70-80%+ | Protein 15-20% | Carbs {"<"}50g/day / 5-10%</p>
+        <p><strong>Race / Peak Training:</strong> Fat drops as carbs increase strategically | Protein holds steady | Carbs up to 30-60g/hr during long efforts</p>
+      </div>
+
+      <h3>Key Points of Universal Agreement</h3>
+      <ul>
+        <li>Carb restriction must be sustained long enough for full adaptation — generally a minimum of 3-6 weeks, often 3-6 months for peak fat oxidation</li>
+        <li>Protein should be moderate, not excessive (excess is anti-ketogenic)</li>
+        <li>Fat quality matters: prioritize whole food sources — grass-fed meats, fatty fish, eggs, butter, olive oil, coconut/MCT</li>
+        <li>Strategic carbohydrate use (around race day and high-intensity sessions) is NOT incompatible with fat adaptation once metabolic flexibility is established</li>
+        <li>Electrolyte management (especially sodium) is critical during transition and ongoing</li>
+      </ul>
+
+      {/* ── Additional Peer-Reviewed Resources ── */}
+      <h3 style={{ marginTop: "2rem" }}>Additional Peer-Reviewed Resources</h3>
+      <div className="fp-ref">
+        <p>"Effect of a Ketogenic LCHF Diet on Aerobic Capacity in Endurance Athletes" — Meta-Analysis (<em>PMC</em>, 2021)</p>
+        <p>"Ketogenic low-CHO, high-fat diet: the future of elite endurance sport?" — Burke (2021) — provides the counterpoint for the full debate</p>
+        <p>Maffetone PB, Laursen PB. "Athletes: Fit but Unhealthy?" — <em>Sports Medicine Open</em>, 2016</p>
       </div>
 
       <h3>Integrations</h3>
