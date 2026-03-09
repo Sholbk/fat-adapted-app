@@ -44,14 +44,32 @@ describe("calcMacros", () => {
     expect(Number.isFinite(m.carbs)).toBe(true);
   });
 
-  it("daily macros are fat-adapted baseline regardless of session type", () => {
+  it("HIT sessions get EPOC bonus calories (rest < vo2max)", () => {
     const args = [150, 67, 30, 0, "female"];
     const rest = calcMacros("rest", ...args);
     const vo2max = calcMacros("vo2max", ...args);
-    // Daily macros should be the same — extra carbs only in training fuel
-    expect(rest.cal).toBe(vo2max.cal);
-    expect(rest.carbs).toBe(vo2max.carbs);
-    expect(rest.fat).toBe(vo2max.fat);
+    // VO2max gets +8% EPOC bonus on TDEE
+    expect(vo2max.cal).toBeGreaterThan(rest.cal);
+    expect(vo2max.fat).toBeGreaterThan(rest.fat);
+    // EPOC bonus should be ~5-10% more calories
+    const pctDiff = (vo2max.cal - rest.cal) / rest.cal;
+    expect(pctDiff).toBeGreaterThan(0.05);
+    expect(pctDiff).toBeLessThan(0.15);
+  });
+
+  it("LIT sessions have same calories as rest (no EPOC)", () => {
+    const args = [150, 67, 30, 0, "female"];
+    const rest = calcMacros("rest", ...args);
+    const endurance = calcMacros("endurance", ...args);
+    expect(rest.cal).toBe(endurance.cal);
+    expect(rest.fat).toBe(endurance.fat);
+  });
+
+  it("protein is ~2.0 g/kg", () => {
+    const m = calcMacros("rest", 150, 67, 30, 0, "male");
+    const kg = 150 / 2.205;
+    const expectedPro = Math.round(2.0 * kg);
+    expect(m.protein).toBe(expectedPro);
   });
 
   it("calorie adjustment works (negative for weight loss, positive for gain)", () => {

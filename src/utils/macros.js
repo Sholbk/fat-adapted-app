@@ -1,4 +1,4 @@
-// Right Fuel Right Time — Dr. Dan Plews
+// Periodized fuel timing — 5-window model
 // fuel: { pre24h, pre1h, duringEarly, duringLater, post }
 export const SESSION_CONFIG = {
   rest: {
@@ -55,14 +55,25 @@ export const SESSION_CONFIG = {
 // Daily (non-training) macros are ALWAYS fat-adapted baseline.
 // Extra carbs for intensity are ONLY in training fuel (calcFuelRec).
 const BASE_FAT_RATIO = 0.85; // 85% fat / 15% carb split on remaining cals
-const BASE_PROTEIN_GKG = 1.8;
+const BASE_PROTEIN_GKG = 2.0; // FASTER study LC athletes: 2.1 g/kg avg
+
+// EPOC bonus: HIT sessions increase post-exercise metabolic rate & fat oxidation.
+// Bonus is applied to TDEE so the athlete eats enough to cover elevated recovery metabolism.
+const EPOC_BONUS = {
+  rest: 0, endurance: 0, lowerTempo: 0,
+  upperTempo: 0.03,  // +3% TDEE
+  threshold: 0.05,   // +5% TDEE
+  vo2max: 0.08,      // +8% TDEE
+  anaerobic: 0.10,   // +10% TDEE
+};
 
 export function calcMacros(type, lbs, heightIn, age, calAdj, gender) {
   const kg = Math.max((lbs || 150) / 2.205, 1);
   const heightCm = Math.max((heightIn || 67) * 2.54, 1);
   const safeAge = Math.max(age || 30, 1);
   const bmr = 10 * kg + 6.25 * heightCm - 5 * safeAge + (gender === "male" ? 5 : -161);
-  const tdee = Math.max(bmr * 1.55 + (calAdj || 0), 0);
+  const epoc = EPOC_BONUS[type] || 0;
+  const tdee = Math.max(bmr * 1.55 * (1 + epoc) + (calAdj || 0), 0);
   const p = Math.round(BASE_PROTEIN_GKG * kg);
   const remaining = Math.max(tdee - p * 4, 0);
   const fat = Math.round(remaining * BASE_FAT_RATIO / 9);
@@ -103,11 +114,11 @@ export function calcFuelRec(sType, session, weightLbs) {
       post: { carbs: 0, protein: Math.round(trainPro * 0.6), fat: 5 },
     };
   }
-  // threshold, vo2max, anaerobic
+  // threshold, vo2max, anaerobic — elevated post-exercise fat oxidation (EPOC)
   return {
     pre: { carbs: Math.round(trainCarb * 0.3), protein: Math.round(trainPro * 0.4), fat: 5 },
     during: { carbs: Math.round(trainCarb * 0.45), protein: 0, fat: 0 },
-    post: { carbs: Math.round(trainCarb * 0.25), protein: Math.round(trainPro * 0.6), fat: 5 },
+    post: { carbs: Math.round(trainCarb * 0.25), protein: Math.round(trainPro * 0.6), fat: 15 },
   };
 }
 
