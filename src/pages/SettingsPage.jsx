@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { getWeightLog, addWeightEntry, getSettings, clearAllData } from "../utils/storage.js";
+import { getWeightLog, addWeightEntry, getSettings, clearAllData, setStoredUserId } from "../utils/storage.js";
 import { signOut, backupToCloud, saveApiKeys } from "../utils/supabase.js";
 
 export default function SettingsPage({ date, draft, updateDraft, handleSave, saved, settings, setSettings, setDraft, refresh, showToast, authSession, setAuthSession, syncing, setSyncing }) {
@@ -119,7 +119,7 @@ export default function SettingsPage({ date, draft, updateDraft, handleSave, sav
       )}
 
       {authSession && (
-        <button className="sett-signout" onClick={async () => { clearAllData(); await signOut(); setAuthSession(null); showToast("Signed out"); }}>Sign Out</button>
+        <button className="sett-signout" onClick={async () => { clearAllData(); setStoredUserId(null); await signOut(); setAuthSession(null); showToast("Signed out"); }}>Sign Out</button>
       )}
     </div>
   );

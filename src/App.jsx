@@ -4,7 +4,7 @@ import "./App.css";
 import { fmt, today, parseICS } from "./utils/parsing.js";
 import { getSessionTypeFromWorkouts } from "./utils/classification.js";
 import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
-import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, clearAllData } from "./utils/storage.js";
+import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, clearAllData, getStoredUserId, setStoredUserId } from "./utils/storage.js";
 import { apiFetch } from "./utils/api.js";
 import { isSupabaseConfigured, getSession, onAuthChange, backupToCloud, restoreFromCloud } from "./utils/supabase.js";
 
@@ -62,6 +62,21 @@ function App() {
 
   const [authLoading, setAuthLoading] = useState(true);
 
+  function handleUserSwitch(newUserId) {
+    const storedId = getStoredUserId();
+    if (storedId && storedId !== newUserId) {
+      clearAllData();
+      setSettings(DEFAULT_SETTINGS);
+      setDraft(DEFAULT_SETTINGS);
+      setWellness([]);
+      setPlanned([]);
+      setEvents([]);
+      setActivities([]);
+      setFetched(new Set());
+    }
+    setStoredUserId(newUserId);
+  }
+
   useEffect(() => {
     if (!isSupabaseConfigured()) { setAuthLoading(false); return; }
 
@@ -74,6 +89,7 @@ function App() {
     getSession().then(async (s) => {
       setAuthSession(s);
       if (s?.user?.id) {
+        handleUserSwitch(s.user.id);
         try {
           await Promise.race([
             restoreFromCloud(s.user.id),
@@ -84,6 +100,9 @@ function App() {
         } catch (e) {
           console.warn("Cloud restore failed:", e);
         }
+      } else {
+        // No session — clear any leftover data
+        handleUserSwitch(null);
       }
       clearTimeout(timeout);
       setAuthLoading(false);
@@ -91,21 +110,9 @@ function App() {
       clearTimeout(timeout);
       setAuthLoading(false);
     });
-    let currentUserId = s?.user?.id || null;
     const { data } = onAuthChange(async (newSession) => {
       const newUserId = newSession?.user?.id || null;
-      // User changed or signed out — clear old user's local data
-      if (newUserId !== currentUserId) {
-        clearAllData();
-        setSettings(DEFAULT_SETTINGS);
-        setDraft(DEFAULT_SETTINGS);
-        setWellness([]);
-        setPlanned([]);
-        setEvents([]);
-        setActivities([]);
-        setFetched(new Set());
-      }
-      currentUserId = newUserId;
+      handleUserSwitch(newUserId);
       setAuthSession(newSession);
       if (newSession?.user?.id) {
         try {

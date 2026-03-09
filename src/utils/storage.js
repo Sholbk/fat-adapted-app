@@ -71,6 +71,15 @@ export function clearAllData() {
   keys.forEach(k => localStorage.removeItem(k));
 }
 
+export function getStoredUserId() {
+  return localStorage.getItem("ff-user-id") || null;
+}
+
+export function setStoredUserId(id) {
+  if (id) localStorage.setItem("ff-user-id", id);
+  else localStorage.removeItem("ff-user-id");
+}
+
 export function getMood(d) {
   return localStorage.getItem(`ff-mood-${d}`) || "";
 }
