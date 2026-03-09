@@ -270,12 +270,34 @@ function App() {
   const isPastOrToday = date <= today();
 
   let dayWorkouts;
-  if (dayEvents.length > 0) {
+  if (dayICS.length > 0) {
+    // Athletica ICS calendar takes priority — it's the user's actual training plan
+    dayWorkouts = dayICS.map(w => ({ ...w, status: "planned" }));
+    // Mark as completed if activities exist for this day
+    if (isPastOrToday && dayHasActivity) {
+      dayWorkouts = dayWorkouts.map(w => ({ ...w, status: "completed" }));
+    }
+    // Add unplanned activity indicators for extra Strava sessions beyond planned count
+    const extraActs = dayActs.length - dayICS.length;
+    if (extraActs > 0) {
+      for (let i = 0; i < extraActs; i++) {
+        const act = dayActs[dayICS.length + i];
+        dayWorkouts.push({
+          summary: `Strava Activity`,
+          description: "",
+          duration: "",
+          type: "",
+          source: "strava",
+          status: "unplanned",
+          startTime: act?.start_date_local?.slice(11, 16) || "",
+        });
+      }
+    }
+  } else if (dayEvents.length > 0) {
     dayWorkouts = dayEvents.map(e => {
       const status = isPastOrToday && dayHasActivity ? "completed" : "planned";
       return mapWorkout(e, status);
     });
-    // Add unplanned activity indicators for extra Strava sessions
     const extraActs = dayActs.length - dayEvents.length;
     if (extraActs > 0) {
       for (let i = 0; i < extraActs; i++) {
@@ -292,7 +314,6 @@ function App() {
       }
     }
   } else if (dayActs.length > 0) {
-    // No planned workouts but Strava activities exist
     dayWorkouts = dayActs.map(a => ({
       summary: `Strava Activity`,
       description: "",
@@ -303,7 +324,7 @@ function App() {
       startTime: a.start_date_local?.slice(11, 16) || "",
     }));
   } else {
-    dayWorkouts = dayICS.map(w => ({ ...w, status: "planned" }));
+    dayWorkouts = [];
   }
 
   const sType = getSessionTypeFromWorkouts(dayWorkouts, load);
