@@ -3,7 +3,7 @@ import { SESSION_CONFIG } from "../utils/macros.js";
 export default function PhaseOfTraining({ session, sType, wellness }) {
   return (
     <div className="page-content">
-      <h2>Phase of Training</h2>
+      <h2>Training Session Focus</h2>
       <div className="phase-current">
         <div className="phase-badge" style={{ background: session.color }}>{session.label}</div>
         <p>{session.note}</p>
@@ -11,7 +11,7 @@ export default function PhaseOfTraining({ session, sType, wellness }) {
 
       <TrainingLoadChart wellness={wellness} />
 
-      <h3>Carb Periodization Guide (Dr. Plews)</h3>
+      <h3>Fat-Adapted Fueling Guide</h3>
       <div className="phase-table">
         {Object.entries(SESSION_CONFIG).map(([key, s]) => (
           <div key={key} className={`phase-row ${key === sType ? "active" : ""}`}>

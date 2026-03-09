@@ -606,10 +606,10 @@
 .cloud-signout:hover { color: var(--ff-pink); }
 .sett-signout {
   display: block; width: 100%; max-width: 400px; margin: 1.5rem auto 0; padding: 0.65rem 1.2rem;
-  background: none; border: 1px solid #d44; color: #d44; border-radius: 8px;
-  font-size: 0.9rem; font-family: inherit; cursor: pointer; transition: background 0.2s, color 0.2s;
+  background: none; border: 1px solid var(--ff-blue-deep); color: var(--ff-blue-deep); border-radius: 8px;
+  font-size: 0.9rem; font-family: inherit; cursor: pointer; font-weight: 600; transition: background 0.2s, color 0.2s;
 }
-.sett-signout:hover { background: #d44; color: #fff; }
+.sett-signout:hover { background: var(--ff-blue-deep); color: #fff; }
 .cloud-toggle {
   background: none; border: none; color: var(--ff-blue); font-size: 0.75rem; cursor: pointer;
   font-family: inherit; text-align: center; padding: 0;
