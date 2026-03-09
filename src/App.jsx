@@ -91,15 +91,19 @@ function App() {
       setAuthSession(s);
       if (s?.user?.id) {
         handleUserSwitch(s.user.id);
-        try {
-          await Promise.race([
-            restoreFromCloud(s.user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 800)),
-          ]);
-          const restored = getSettings();
-          if (restored) { setSettings(restored); setDraft(restored); }
-        } catch (e) {
-          console.warn("Cloud restore failed:", e);
+        // Only restore from cloud if no local settings exist (fresh login/new device)
+        const localSettings = getSettings();
+        if (!localSettings || !localSettings.name) {
+          try {
+            await Promise.race([
+              restoreFromCloud(s.user.id),
+              new Promise((_, reject) => setTimeout(() => reject(new Error("Restore timed out")), 800)),
+            ]);
+            const restored = getSettings();
+            if (restored) { setSettings(restored); setDraft(restored); }
+          } catch (e) {
+            console.warn("Cloud restore failed:", e);
+          }
         }
       } else {
         // No session — clear any leftover data
@@ -122,7 +126,8 @@ function App() {
 
       handleUserSwitch(newUserId);
       setAuthSession(newSession);
-      if (newSession?.user?.id && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+      // Only restore from cloud on actual new sign-in (not page reload)
+      if (newSession?.user?.id && event === "SIGNED_IN") {
         try {
           await Promise.race([
             restoreFromCloud(newSession.user.id),
@@ -172,7 +177,16 @@ function App() {
   const dismissToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
 
   function updateDraft(s) { setDraft(d => ({ ...d, ...s })); setSaved(false); }
-  function handleSave() { setSettings(draft); saveSettings(draft); setSaved(true); setTimeout(() => setSaved(false), 2000); }
+  function handleSave() {
+    setSettings(draft);
+    saveSettings(draft);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+    // Immediately backup to cloud so restore never overwrites with stale data
+    if (authSession?.user?.id) {
+      backupToCloud(authSession.user.id).catch(e => console.warn("Settings backup failed:", e));
+    }
+  }
   const prevPage = React.useRef(page);
   if (prevPage.current === "settings" && page !== "settings") {
     setDraft(settings);
