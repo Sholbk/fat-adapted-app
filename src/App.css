@@ -1281,6 +1281,24 @@ a.landing-badge:hover { background: rgba(255,255,255,0.12); }
 .ob-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .ob-hint { font-size: 0.75rem; color: #999; margin: 0.25rem 0 0; line-height: 1.4; }
 .ob-conn-intro { font-size: 0.8rem; color: #777; margin: 0 0 0.5rem; }
+.ob-conn-section {
+  border: 1px solid rgba(0,0,0,0.1); border-radius: 12px;
+  padding: 1rem; margin-bottom: 0.75rem; background: rgba(0,0,0,0.02);
+}
+.ob-conn-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
+.ob-conn-header h4 { margin: 0; font-size: 0.9rem; font-weight: 700; }
+.ob-conn-tag {
+  font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem;
+  border-radius: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.ob-conn-recommended { background: rgba(4,59,177,0.12); color: #043bb1; }
+.ob-conn-optional { background: rgba(0,0,0,0.06); color: #888; }
+.ob-conn-desc { font-size: 0.78rem; color: #666; margin: 0 0 0.5rem; line-height: 1.45; }
+.ob-conn-help {
+  font-size: 0.72rem; color: #888; margin: 0.35rem 0 0; line-height: 1.5;
+}
+.ob-conn-help a { color: #043bb1; font-weight: 600; text-decoration: none; }
+.ob-conn-help a:hover { text-decoration: underline; }
 
 .onboarding-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
 .ob-back {

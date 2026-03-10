@@ -152,20 +152,40 @@ export default function Onboarding({ authSession, onComplete }) {
 
           {step === 2 && (
             <>
-              <p className="ob-conn-intro">These are optional. You can always add them later in Settings.</p>
-              <label className="ob-field">
-                <span>Intervals.icu API Key</span>
-                <input type="password" value={data.intervalsApiKey} onChange={e => update({ intervalsApiKey: e.target.value })} placeholder="From Intervals.icu Settings > Developer" autoFocus />
-              </label>
-              <label className="ob-field">
-                <span>Intervals.icu Athlete ID</span>
-                <input type="text" value={data.intervalsAthleteId} onChange={e => update({ intervalsAthleteId: e.target.value })} placeholder="e.g. i338079" />
-              </label>
-              <label className="ob-field">
-                <span>Athletica.ai Calendar URL</span>
-                <input type="url" value={data.athleticaUrl} onChange={e => update({ athleticaUrl: e.target.value })} placeholder="https://app.athletica.ai/.../athletica.ics" />
-              </label>
-              <p className="ob-hint">Connecting Intervals.icu lets FastFuel auto-adjust your macros based on your training plan and completed workouts.</p>
+              <div className="ob-conn-section">
+                <div className="ob-conn-header">
+                  <h4>Athletica.ai Calendar URL</h4>
+                  <span className="ob-conn-tag ob-conn-recommended">Recommended</span>
+                </div>
+                <p className="ob-conn-desc">Required for individual workout calculations. FastFuel reads your training plan to calculate daily nutrition targets.</p>
+                <label className="ob-field">
+                  <input type="url" value={data.athleticaUrl} onChange={e => update({ athleticaUrl: e.target.value })} placeholder="https://app.athletica.ai/.../athletica.ics" autoFocus />
+                </label>
+                <p className="ob-conn-help">
+                  <a href="https://app.athletica.ai" target="_blank" rel="noopener noreferrer">Find your URL</a>: Athletica.ai &rarr; Preferences &rarr; Training Plan &rarr; Calendar Sync &rarr; copy the Training Calendar URL.
+                </p>
+              </div>
+
+              <div className="ob-conn-section">
+                <div className="ob-conn-header">
+                  <h4>Intervals.icu</h4>
+                  <span className="ob-conn-tag ob-conn-optional">Optional</span>
+                </div>
+                <p className="ob-conn-desc">Only needed if you want workout confirmation, mood/sleep/HRV tracking, and AI-powered automatic diet adjustments.</p>
+                <label className="ob-field">
+                  <span>API Key</span>
+                  <input type="password" value={data.intervalsApiKey} onChange={e => update({ intervalsApiKey: e.target.value })} placeholder="From Intervals.icu Settings > Developer" />
+                </label>
+                <label className="ob-field">
+                  <span>Athlete ID</span>
+                  <input type="text" value={data.intervalsAthleteId} onChange={e => update({ intervalsAthleteId: e.target.value })} placeholder="e.g. i338079" />
+                </label>
+                <p className="ob-conn-help">
+                  <a href="https://intervals.icu" target="_blank" rel="noopener noreferrer">Find your credentials</a>: Intervals.icu &rarr; Settings &rarr; Developer &rarr; copy your API Key and Athlete ID.
+                </p>
+              </div>
+
+              <p className="ob-hint">You can always add or change these later in Settings.</p>
             </>
           )}
         </div>
