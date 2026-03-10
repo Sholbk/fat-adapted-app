@@ -5,6 +5,7 @@ import { backupToCloud, saveApiKeys } from "../utils/supabase.js";
 const STEPS = [
   { key: "profile", title: "About You", subtitle: "Let's personalize your nutrition targets" },
   { key: "goals", title: "Your Goals", subtitle: "We'll calculate your daily macros based on this" },
+  { key: "races", title: "Race Calendar", subtitle: "Add your races to auto-calculate training phases and nutrition periodization" },
   { key: "connections", title: "Connect Your Training", subtitle: "Optional — link your training platforms for auto-synced nutrition" },
 ];
 
@@ -22,8 +23,12 @@ export default function Onboarding({ authSession, onComplete }) {
     intervalsApiKey: "",
     intervalsAthleteId: "",
     athleticaUrl: "",
+    races: [],
   });
   const [saving, setSaving] = useState(false);
+  const [raceName, setRaceName] = useState("");
+  const [raceDate, setRaceDate] = useState("");
+  const [racePriority, setRacePriority] = useState("A");
 
   function update(fields) {
     setData(d => ({ ...d, ...fields }));
@@ -50,6 +55,7 @@ export default function Onboarding({ authSession, onComplete }) {
       intervalsApiKey: data.intervalsApiKey.trim(),
       intervalsAthleteId: data.intervalsAthleteId.trim(),
       athleticaUrl: data.athleticaUrl.trim(),
+      races: data.races,
       waterTarget: 100,
       darkMode: false,
       onboardingDone: true,
@@ -152,6 +158,51 @@ export default function Onboarding({ authSession, onComplete }) {
 
           {step === 2 && (
             <>
+              <p className="ob-conn-desc">Your A race anchors your periodization — training phases and nutrition will auto-adjust based on weeks until race day. B and C races are optional.</p>
+
+              <div className="ob-race-form">
+                <input type="text" className="ob-race-input" placeholder="Race name" value={raceName} onChange={e => setRaceName(e.target.value)} autoFocus />
+                <input type="date" className="ob-race-input ob-race-date" value={raceDate} onChange={e => setRaceDate(e.target.value)} />
+                <select className="ob-race-select" value={racePriority} onChange={e => setRacePriority(e.target.value)}>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                </select>
+                <button className="ob-race-add" onClick={() => {
+                  if (!raceName.trim() || !raceDate) return;
+                  const nextRaces = [...data.races, { name: raceName.trim(), date: raceDate, priority: racePriority }]
+                    .sort((a, b) => a.date.localeCompare(b.date));
+                  update({ races: nextRaces });
+                  setRaceName("");
+                  setRaceDate("");
+                }}>Add</button>
+              </div>
+
+              <div className="ob-race-legend">
+                <span><strong>A</strong> — Full periodization anchor (Peak + Race taper)</span>
+                <span><strong>B</strong> — Mini taper (reduced volume 3-5 days)</span>
+                <span><strong>C</strong> — No taper (counts as a hard workout)</span>
+              </div>
+
+              {data.races.length > 0 && (
+                <div className="ob-race-list">
+                  {data.races.map((r, i) => (
+                    <div key={i} className="ob-race-item">
+                      <span className="ob-race-pri" data-pri={r.priority}>{r.priority}</span>
+                      <span className="ob-race-name">{r.name}</span>
+                      <span className="ob-race-date-label">{new Date(r.date + "T12:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                      <button className="ob-race-remove" onClick={() => update({ races: data.races.filter((_, j) => j !== i) })}>&times;</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="ob-hint">You can add or change races later on the Phase of Training page.</p>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
               <div className="ob-conn-section">
                 <div className="ob-conn-header">
                   <h4>Athletica.ai Calendar URL</h4>
@@ -164,6 +215,7 @@ export default function Onboarding({ authSession, onComplete }) {
                 <p className="ob-conn-help">
                   <a href="https://app.athletica.ai" target="_blank" rel="noopener noreferrer">Find your URL</a>: Athletica.ai &rarr; Preferences &rarr; Training Plan &rarr; Calendar Sync &rarr; copy the Training Calendar URL.
                 </p>
+                <p className="ob-conn-help">You can also use any Intervals.icu calendar link (.ics) here.</p>
               </div>
 
               <div className="ob-conn-section">
@@ -204,7 +256,7 @@ export default function Onboarding({ authSession, onComplete }) {
           )}
         </div>
 
-        {step === 2 && (
+        {step === 3 && (
           <button className="ob-skip" onClick={finish} disabled={saving}>Skip — I'll set this up later</button>
         )}
       </div>

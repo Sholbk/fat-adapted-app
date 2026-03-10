@@ -1305,6 +1305,32 @@ a.landing-badge:hover { background: rgba(255,255,255,0.12); }
 .ob-conn-help a { color: #043bb1; font-weight: 600; text-decoration: none; }
 .ob-conn-help a:hover { text-decoration: underline; }
 
+/* Onboarding Race Calendar */
+.ob-race-form { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; align-items: center; }
+.ob-race-input { flex: 1; font-size: 0.82rem; padding: 0.5rem 0.65rem; border-radius: 8px; border: 1px solid rgba(0,0,0,0.12); font-family: inherit; }
+.ob-race-date { max-width: 160px; }
+.ob-race-select { font-size: 0.82rem; padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(0,0,0,0.12); font-family: inherit; font-weight: 700; }
+.ob-race-add { font-size: 0.8rem; font-weight: 700; padding: 0.5rem 1rem; border-radius: 8px; border: none; background: #043bb1; color: #fff; cursor: pointer; font-family: inherit; }
+.ob-race-add:hover { background: #0550d4; }
+.ob-race-legend { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.72rem; color: #888; margin-bottom: 0.75rem; }
+.ob-race-legend strong { font-weight: 800; }
+.ob-race-list { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.75rem; }
+.ob-race-item {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; background: rgba(0,0,0,0.02);
+}
+.ob-race-pri {
+  font-size: 0.7rem; font-weight: 800; width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0;
+}
+.ob-race-pri[data-pri="A"] { background: #800030; }
+.ob-race-pri[data-pri="B"] { background: #e85040; }
+.ob-race-pri[data-pri="C"] { background: #e8c010; color: #333; }
+.ob-race-name { font-size: 0.82rem; font-weight: 600; flex: 1; }
+.ob-race-date-label { font-size: 0.75rem; color: #888; }
+.ob-race-remove { background: none; border: none; font-size: 1.1rem; color: #999; cursor: pointer; padding: 0 0.25rem; }
+.ob-race-remove:hover { color: #e85040; }
+
 .onboarding-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
 .ob-back {
   flex: 0 0 auto; padding: 0.7rem 1.25rem; background: #f0f0f0; border: 1px solid #ddd;
