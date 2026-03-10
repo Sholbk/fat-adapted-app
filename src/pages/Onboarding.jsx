@@ -171,7 +171,7 @@ export default function Onboarding({ authSession, onComplete }) {
                   <h4>Intervals.icu</h4>
                   <span className="ob-conn-tag ob-conn-optional">Optional</span>
                 </div>
-                <p className="ob-conn-desc">Only needed if you want workout confirmation, mood/sleep/HRV tracking, and AI-powered automatic diet adjustments.</p>
+                <p className="ob-conn-desc">Only needed if you want workout confirmation, mood/sleep/HRV tracking, and AI-powered automatic diet adjustments. Intervals.icu connects to 100+ apps including Garmin, Strava, Polar, Wahoo, Suunto, Coros, Zwift, Oura, and WHOOP.</p>
                 <label className="ob-field">
                   <span>API Key</span>
                   <input type="password" value={data.intervalsApiKey} onChange={e => update({ intervalsApiKey: e.target.value })} placeholder="From Intervals.icu Settings > Developer" />
@@ -182,6 +182,9 @@ export default function Onboarding({ authSession, onComplete }) {
                 </label>
                 <p className="ob-conn-help">
                   <a href="https://intervals.icu" target="_blank" rel="noopener noreferrer">Find your credentials</a>: Intervals.icu &rarr; Settings &rarr; Developer &rarr; copy your API Key and Athlete ID.
+                </p>
+                <p className="ob-conn-help">
+                  Intervals.icu also has a <a href="https://intervals.icu" target="_blank" rel="noopener noreferrer">calendar link</a> and integrates with Athletica.ai, so your training data flows automatically between platforms.
                 </p>
               </div>
 

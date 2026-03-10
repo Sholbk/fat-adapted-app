@@ -102,24 +102,35 @@ export default function SettingsPage({ date, draft, updateDraft, handleSave, sav
 
       <div className="settings-card">
         <h3>Connections</h3>
-        <div className="settings-grid" style={{ marginBottom: "0.75rem" }}>
-          <label className="sett-field">
-            <span>Intervals.icu API Key</span>
-            <input type="password" placeholder="Your API key from Intervals.icu settings" value={draft.intervalsApiKey || ""} onChange={e => updateDraft({ intervalsApiKey: e.target.value })} />
-          </label>
-          <label className="sett-field">
-            <span>Intervals.icu Athlete ID</span>
-            <input type="text" placeholder="e.g. i338079" value={draft.intervalsAthleteId || ""} onChange={e => updateDraft({ intervalsAthleteId: e.target.value })} />
-          </label>
+
+        <h4 className="conn-section-label">Athletica.ai <span className="ob-conn-tag ob-conn-recommended">Recommended</span></h4>
+        <p className="conn-help">Required for individual workout calculations. FastFuel reads your training plan to calculate daily nutrition targets.</p>
+        <div className="settings-grid" style={{ marginBottom: "0.5rem" }}>
           <label className="sett-field">
             <span>Athletica Calendar URL</span>
             <input type="url" placeholder="https://app.athletica.ai/.../athletica.ics" value={draft.athleticaUrl || ""} onChange={e => updateDraft({ athleticaUrl: e.target.value })} />
           </label>
         </div>
-        <p className="conn-help">Get your Intervals.icu API key from <strong>Settings &gt; Developer</strong> in your Intervals.icu account.</p>
-        <div className="conn-list">
-          <div className={`conn${draft.intervalsApiKey && draft.intervalsAthleteId ? " connected" : ""}`}><div className="conn-info"><strong>Intervals.icu</strong><span>Wellness data, training load, fitness metrics</span></div><span className={`conn-status${draft.intervalsApiKey && draft.intervalsAthleteId ? " on" : ""}`}>{draft.intervalsApiKey && draft.intervalsAthleteId ? "Connected" : "Not configured"}</span></div>
+        <p className="conn-help"><a href="https://app.athletica.ai" target="_blank" rel="noopener noreferrer">Find your URL</a>: Athletica.ai &rarr; Preferences &rarr; Training Plan &rarr; Calendar Sync &rarr; copy the Training Calendar URL.</p>
+
+        <h4 className="conn-section-label" style={{ marginTop: "1.25rem" }}>Intervals.icu <span className="ob-conn-tag ob-conn-optional">Optional</span></h4>
+        <p className="conn-help">Only needed if you want workout confirmation, mood/sleep/HRV tracking, and AI-powered automatic diet adjustments. Connects to 100+ apps including Garmin, Strava, Polar, Wahoo, Suunto, Coros, Zwift, Oura, and WHOOP.</p>
+        <div className="settings-grid" style={{ marginBottom: "0.5rem" }}>
+          <label className="sett-field">
+            <span>API Key</span>
+            <input type="password" placeholder="From Intervals.icu Settings > Developer" value={draft.intervalsApiKey || ""} onChange={e => updateDraft({ intervalsApiKey: e.target.value })} />
+          </label>
+          <label className="sett-field">
+            <span>Athlete ID</span>
+            <input type="text" placeholder="e.g. i338079" value={draft.intervalsAthleteId || ""} onChange={e => updateDraft({ intervalsAthleteId: e.target.value })} />
+          </label>
+        </div>
+        <p className="conn-help"><a href="https://intervals.icu" target="_blank" rel="noopener noreferrer">Find your credentials</a>: Intervals.icu &rarr; Settings &rarr; Developer &rarr; copy your API Key and Athlete ID.</p>
+        <p className="conn-help">Intervals.icu also has a calendar link and integrates with Athletica.ai, so your training data flows automatically between platforms.</p>
+
+        <div className="conn-list" style={{ marginTop: "1rem" }}>
           <div className={`conn${draft.athleticaUrl ? " connected" : ""}`}><div className="conn-info"><strong>Athletica.ai</strong><span>Planned workouts, training plan calendar</span></div><span className={`conn-status${draft.athleticaUrl ? " on" : ""}`}>{draft.athleticaUrl ? "Connected" : "Not configured"}</span></div>
+          <div className={`conn${draft.intervalsApiKey && draft.intervalsAthleteId ? " connected" : ""}`}><div className="conn-info"><strong>Intervals.icu</strong><span>Wellness data, training load, fitness metrics, 100+ app integrations</span></div><span className={`conn-status${draft.intervalsApiKey && draft.intervalsAthleteId ? " on" : ""}`}>{draft.intervalsApiKey && draft.intervalsAthleteId ? "Connected" : "Not configured"}</span></div>
           <div className="conn connected"><div className="conn-info"><strong>FatSecret</strong><span>Food search, nutrition data, and barcode lookup</span></div><span className="conn-status on">Connected</span></div>
         </div>
       </div>
