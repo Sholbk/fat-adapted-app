@@ -3,7 +3,7 @@ import "./App.css";
 
 import { fmt, today, parseICS } from "./utils/parsing.js";
 import { getSessionTypeFromWorkouts } from "./utils/classification.js";
-import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec } from "./utils/macros.js";
+import { SESSION_CONFIG, calcMacros, calcFuelRec, sumFuelRec, calcPhaseFromARace } from "./utils/macros.js";
 import { MEALS, getSettings, saveSettings, DEFAULT_SETTINGS, getLog, setLog, getTLog, setTLog, sum, clearAllData, getStoredUserId, setStoredUserId } from "./utils/storage.js";
 import { apiFetch } from "./utils/api.js";
 import { isSupabaseConfigured, getSession, onAuthChange, backupToCloud, restoreFromCloud } from "./utils/supabase.js";
@@ -349,8 +349,11 @@ function App() {
 
   const sType = getSessionTypeFromWorkouts(dayWorkouts, load);
   const session = SESSION_CONFIG[sType];
-  const macros = calcMacros(sType, W, settings.height, settings.age, calAdj, settings.gender);
-  const fuelRec = calcFuelRec(sType, session, W);
+  const races = settings?.races || [];
+  const aRace = races.find(r => r.priority === "A");
+  const currentPhase = calcPhaseFromARace(aRace?.date) || settings?.trainingPhase || "base1";
+  const macros = calcMacros(sType, W, settings.height, settings.age, calAdj, settings.gender, currentPhase);
+  const fuelRec = calcFuelRec(sType, session, W, currentPhase);
   const fuelRecTotal = sumFuelRec(fuelRec);
 
   const mealData = MEALS.map(m => ({ key: m, label: m[0].toUpperCase() + m.slice(1), entries: getLog(date, m) }));
@@ -442,6 +445,7 @@ function App() {
             trainEntries={trainEntries} trainTotals={trainTotals} all={all}
             addMeal={addMeal} rmMeal={rmMeal} addTrain={addTrain} rmTrain={rmTrain}
             refresh={refresh} showToast={showToast} settings={settings}
+            currentPhase={currentPhase}
           />
         )}
 

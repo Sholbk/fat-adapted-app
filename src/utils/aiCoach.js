@@ -3,9 +3,6 @@ import { MEALS, getLog, getTLog, sum, getMood, getNotes } from "./storage.js";
 import { getSessionTypeFromWorkouts } from "./classification.js";
 import { calcMacros } from "./macros.js";
 
-const CACHE_KEY = "ff-ai-coach";
-const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
-
 function getWeekDates(currentDate) {
   const dates = [];
   const d = new Date(currentDate + "T00:00:00");
@@ -23,29 +20,11 @@ function getDayTotals(date) {
   return sum([...mealEntries, ...trainEntries]);
 }
 
-export function getCachedCoach() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const cached = JSON.parse(raw);
-    if (Date.now() - cached.ts > CACHE_TTL) return null;
-    return cached.data;
-  } catch { return null; }
-}
-
-function saveCache(data) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
-}
-
-export function clearCoachCache() {
-  localStorage.removeItem(CACHE_KEY);
-}
-
-export async function fetchCoachAdvice(date, planned, wellness, settings) {
+function buildWeekData(date, planned, wellness, settings) {
   const weekDates = getWeekDates(date);
   const W = settings.goalWeight > 0 ? settings.goalWeight : settings.weight;
 
-  const weekData = weekDates.map(d => {
+  return weekDates.map(d => {
     const consumed = getDayTotals(d);
     const wd = wellness.find(w => w.id === d) || {};
     const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
@@ -65,15 +44,30 @@ export async function fetchCoachAdvice(date, planned, wellness, settings) {
     if (load > 0) entry.load = Math.round(load);
     return entry;
   });
+}
 
+export async function fetchCoachReply(date, planned, wellness, settings, chatMessages) {
+  const url = import.meta.env.DEV ? "/.netlify/functions/ai-coach" : "/.netlify/functions/ai-coach";
+  const W = settings.goalWeight > 0 ? settings.goalWeight : settings.weight;
   const currentMacros = calcMacros("rest", W, settings.height, settings.age, 0, settings.gender);
 
-  const url = import.meta.env.DEV ? "/.netlify/functions/ai-coach" : "/.netlify/functions/ai-coach";
+  // First message: include full week data for context
+  // Follow-up messages: only send conversation history (context is in the first message)
+  const isFirstMessage = !chatMessages || chatMessages.length === 0;
+
+  const payload = { settings: { weight: settings.weight, height: settings.height, age: settings.age, gender: settings.gender } };
+
+  if (isFirstMessage) {
+    payload.weekData = buildWeekData(date, planned, wellness, settings);
+    payload.currentMacros = currentMacros;
+  } else {
+    payload.messages = chatMessages;
+  }
 
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ weekData, currentMacros, settings: { weight: settings.weight, height: settings.height, age: settings.age, gender: settings.gender } }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -81,7 +75,5 @@ export async function fetchCoachAdvice(date, planned, wellness, settings) {
     throw new Error(err.error || "AI coach request failed");
   }
 
-  const data = await res.json();
-  saveCache(data);
-  return data;
+  return await res.json();
 }

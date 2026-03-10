@@ -111,6 +111,13 @@ export function saveFuelTests(tests) {
 export function getRaceFuels() { return safeGet("ff-race-fuels", { short: [], mid: [], long: [] }); }
 export function saveRaceFuels(fuels) { localStorage.setItem("ff-race-fuels", JSON.stringify(fuels)); }
 
+export function getCoachChat() { return safeGet("ff-ai-chat", []); }
+export function saveCoachChat(messages) {
+  const trimmed = messages.slice(-20);
+  localStorage.setItem("ff-ai-chat", JSON.stringify(trimmed));
+}
+export function clearCoachChat() { localStorage.removeItem("ff-ai-chat"); }
+
 export function sum(entries) {
   return entries.reduce((a, e) => ({
     fat: a.fat + e.fat,

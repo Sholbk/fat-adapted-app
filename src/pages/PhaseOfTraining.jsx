@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SESSION_CONFIG } from "../utils/macros.js";
+import { SESSION_CONFIG, calcPhaseFromARace } from "../utils/macros.js";
 import { saveSettings } from "../utils/storage.js";
 
 const ZONE_MAP = [
@@ -50,28 +50,6 @@ const PRIORITY_CONFIG = {
   C: { label: "C Race", color: "#e8c010", desc: "No taper — counts as a hard workout" },
 };
 
-// Calculate current Friel phase based on weeks out from A race
-// Working backwards from race day:
-//   Race: 1 week, Peak: 2 weeks, Build2: 4 weeks, Build1: 4 weeks,
-//   Base3: 4 weeks, Base2: 4 weeks, Base1: 4 weeks, Prep: 3 weeks
-function calcPhaseFromARace(raceDate) {
-  if (!raceDate) return null;
-  const now = new Date();
-  const race = new Date(raceDate + "T12:00");
-  const diffMs = race - now;
-  const weeksOut = Math.ceil(diffMs / (7 * 24 * 60 * 60 * 1000));
-
-  if (weeksOut < 0) return "transition";   // race already passed
-  if (weeksOut <= 1) return "race";         // race week
-  if (weeksOut <= 3) return "peak";         // 2 weeks
-  if (weeksOut <= 7) return "build2";       // 4 weeks
-  if (weeksOut <= 11) return "build1";      // 4 weeks
-  if (weeksOut <= 15) return "base3";       // 4 weeks
-  if (weeksOut <= 19) return "base2";       // 4 weeks
-  if (weeksOut <= 23) return "base1";       // 4 weeks
-  if (weeksOut <= 26) return "preparation"; // 3 weeks
-  return "transition";                      // > 26 weeks out
-}
 
 function weeksUntil(dateStr) {
   const now = new Date();

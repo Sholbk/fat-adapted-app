@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcMacros, calcFuelRec, SESSION_CONFIG } from "../macros.js";
+import { calcMacros, calcFuelRec, SESSION_CONFIG, PHASE_CONFIG, calcPhaseFromARace } from "../macros.js";
 import {
   classifyWorkout,
   classifyByIntensity,
@@ -199,5 +199,88 @@ describe("getSessionTypeFromWorkouts", () => {
       { summary: "easy steady ride" },         // endurance
     ];
     expect(getSessionTypeFromWorkouts(workouts, 0)).toBe("threshold");
+  });
+});
+
+// ── calcMacros with phase ───────────────────────────────────────────────────
+
+describe("calcMacros with phase", () => {
+  const args = [150, 67, 30, 0, "female"];
+
+  it("no phase param behaves same as before (backward compatible)", () => {
+    const noPhase = calcMacros("rest", ...args);
+    const nullPhase = calcMacros("rest", ...args, null);
+    expect(noPhase.cal).toBe(nullPhase.cal);
+    expect(noPhase.fat).toBe(nullPhase.fat);
+  });
+
+  it("base1 phase increases fat ratio (more fat, less carbs)", () => {
+    const noPhase = calcMacros("rest", ...args);
+    const base1 = calcMacros("rest", ...args, "base1");
+    expect(base1.fat).toBeGreaterThanOrEqual(noPhase.fat);
+    expect(base1.carbs).toBeLessThanOrEqual(noPhase.carbs);
+  });
+
+  it("build2 phase has more carbs than base1", () => {
+    const base = calcMacros("rest", ...args, "base1");
+    const build = calcMacros("rest", ...args, "build2");
+    expect(build.carbs).toBeGreaterThan(base.carbs);
+    expect(build.fat).toBeLessThan(base.fat);
+  });
+
+  it("transition phase has lower calories (calAdj = -150)", () => {
+    const base = calcMacros("rest", ...args, "base1");
+    const trans = calcMacros("rest", ...args, "transition");
+    expect(trans.cal).toBeLessThan(base.cal);
+  });
+
+  it("peak phase shifts fat down, carbs up vs base", () => {
+    const base = calcMacros("rest", ...args, "base1");
+    const peak = calcMacros("rest", ...args, "peak");
+    expect(peak.carbs).toBeGreaterThan(base.carbs);
+    expect(peak.fat).toBeLessThan(base.fat);
+  });
+
+  it("unknown phase falls back gracefully", () => {
+    const m = calcMacros("rest", ...args, "nonexistent");
+    expect(Number.isFinite(m.cal)).toBe(true);
+  });
+});
+
+// ── calcFuelRec with phase ──────────────────────────────────────────────────
+
+describe("calcFuelRec with phase", () => {
+  it("build2 increases training carbs vs base1", () => {
+    const base = calcFuelRec("threshold", SESSION_CONFIG.threshold, 150, "base1");
+    const build = calcFuelRec("threshold", SESSION_CONFIG.threshold, 150, "build2");
+    const baseC = base.pre.carbs + base.during.carbs + base.post.carbs;
+    const buildC = build.pre.carbs + build.during.carbs + build.post.carbs;
+    expect(buildC).toBeGreaterThan(baseC);
+  });
+
+  it("rest day is zero carbs regardless of phase", () => {
+    const rec = calcFuelRec("rest", SESSION_CONFIG.rest, 150, "peak");
+    expect(rec.pre.carbs + rec.during.carbs + rec.post.carbs).toBe(0);
+  });
+
+  it("peak phase has more training carbs than base1 for vo2max", () => {
+    const base = calcFuelRec("vo2max", SESSION_CONFIG.vo2max, 150, "base1");
+    const peak = calcFuelRec("vo2max", SESSION_CONFIG.vo2max, 150, "peak");
+    const baseC = base.pre.carbs + base.during.carbs + base.post.carbs;
+    const peakC = peak.pre.carbs + peak.during.carbs + peak.post.carbs;
+    expect(peakC).toBeGreaterThan(baseC);
+  });
+});
+
+// ── calcPhaseFromARace ──────────────────────────────────────────────────────
+
+describe("calcPhaseFromARace", () => {
+  it("returns null for no race date", () => {
+    expect(calcPhaseFromARace(null)).toBeNull();
+    expect(calcPhaseFromARace("")).toBeNull();
+  });
+
+  it("returns 'transition' for past race date", () => {
+    expect(calcPhaseFromARace("2020-01-01")).toBe("transition");
   });
 });

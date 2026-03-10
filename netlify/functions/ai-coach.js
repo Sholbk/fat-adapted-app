@@ -32,34 +32,34 @@ export default async (req) => {
     return respond({ error: "Invalid JSON" }, 400);
   }
 
-  const { weekData, currentMacros, settings } = body;
-  if (!weekData || !currentMacros || !settings) {
+  const { weekData, currentMacros, settings, messages } = body;
+  if (!settings) {
     return respond({ error: "Missing required fields" }, 400);
   }
 
-  const systemPrompt = `You are an AI nutrition coach for fat-adapted endurance athletes. The athlete uses a fat-adapted baseline diet (85% fat, 15% carbs) with extra training carbs only for high-intensity sessions.
+  const systemPrompt = `You are an AI nutrition coach for fat-adapted endurance athletes. The athlete uses a fat-adapted baseline diet (~85% fat, ~15% carbs) with extra training carbs only for high-intensity sessions.
 
-Your job: analyze their last 7 days of data and recommend specific macro adjustments. Be concise and actionable.
+You are having a conversation with the athlete. Be warm, concise, and actionable.
 
-RULES:
+CONVERSATION RULES:
+- Greet the athlete and reference their data (HRV, sleep, today's session, recent patterns).
+- Ask ONE follow-up question at a time about how they feel, energy levels, carb tolerance, GI comfort, or recovery.
+- Listen to their answers and adapt your advice accordingly.
+- Keep messages to 1-3 sentences. Be conversational, not clinical.
 - Keep the fat-adapted philosophy. Never suggest high-carb diets.
-- Small adjustments only (max ±200 cal, ±20g any macro).
-- If everything looks good, say so — don't change things unnecessarily.
-- Always explain WHY in one sentence.
-- Return ONLY valid JSON, no markdown, no code fences.
 
-Return this exact JSON structure:
-{
-  "calAdj": <number, calories to add/subtract from daily target>,
-  "fatAdj": <number, grams to add/subtract>,
-  "proteinAdj": <number, grams to add/subtract>,
-  "carbAdj": <number, grams to add/subtract>,
-  "reason": "<one sentence explaining the adjustment>",
-  "detail": "<2-3 sentences with more context>",
-  "confidence": "<low|medium|high>"
-}`;
+WHEN READY TO SUGGEST AN ADJUSTMENT:
+- Include a JSON block in your message wrapped in <adjustment> tags.
+- Small adjustments only (max +/-200 cal, +/-20g any macro).
+- Format: <adjustment>{"calAdj":0,"fatAdj":0,"proteinAdj":0,"carbAdj":0,"confidence":"medium"}</adjustment>
+- You can include an adjustment alongside conversational text.
+- Only suggest adjustments when you have enough context from the conversation.
+- If everything looks good, say so — don't change things unnecessarily.`;
 
-  const userPrompt = `Athlete profile:
+  // Build the context message with athlete data
+  let contextBlock = "";
+  if (weekData && currentMacros) {
+    contextBlock = `Athlete profile:
 - Weight: ${settings.weight} lbs, Height: ${settings.height} in, Age: ${settings.age}, Gender: ${settings.gender}
 - Current daily targets: ${currentMacros.cal} cal, ${currentMacros.fat}g fat, ${currentMacros.protein}g protein, ${currentMacros.carbs}g carbs
 
@@ -76,9 +76,24 @@ ${weekData.map(d => {
   parts.push(`target=${d.target.cal}cal/${d.target.fat}gF/${d.target.protein}gP/${d.target.carbs}gC`);
   if (d.notes) parts.push(`notes="${d.notes}"`);
   return parts.join(", ");
-}).join("\n")}
+}).join("\n")}`;
+  }
 
-Based on this data, what macro adjustments (if any) should be made?`;
+  // Build multi-turn messages array
+  const apiMessages = [];
+
+  if (messages && messages.length > 0) {
+    // Conversation continuation — context was in the first message
+    for (const m of messages) {
+      apiMessages.push({ role: m.role, content: m.content });
+    }
+  } else {
+    // First message — include full data context
+    apiMessages.push({
+      role: "user",
+      content: contextBlock + "\n\nGreet me and ask how I'm feeling today. Reference my data.",
+    });
+  }
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -90,9 +105,9 @@ Based on this data, what macro adjustments (if any) should be made?`;
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 512,
+        max_tokens: 1024,
         system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
+        messages: apiMessages,
       }),
     });
 
@@ -105,20 +120,20 @@ Based on this data, what macro adjustments (if any) should be made?`;
     const data = await res.json();
     const text = data.content?.[0]?.text || "";
 
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      // Try to extract JSON from response
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        parsed = JSON.parse(match[0]);
-      } else {
-        return respond({ error: "Could not parse AI response", raw: text }, 502);
+    // Check if the response contains an adjustment
+    const adjMatch = text.match(/<adjustment>([\s\S]*?)<\/adjustment>/);
+    let adjustment = null;
+    let message = text.replace(/<adjustment>[\s\S]*?<\/adjustment>/, "").trim();
+
+    if (adjMatch) {
+      try {
+        adjustment = JSON.parse(adjMatch[1]);
+      } catch {
+        // Ignore parse errors for adjustment block
       }
     }
 
-    return respond(parsed);
+    return respond({ message, adjustment });
   } catch (e) {
     console.error("AI coach error:", e);
     return respond({ error: "Failed to get AI recommendation" }, 500);

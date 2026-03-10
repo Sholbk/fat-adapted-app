@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SESSION_CONFIG } from "../utils/macros.js";
+import { SESSION_CONFIG, PHASE_CONFIG } from "../utils/macros.js";
 import { classifyWorkout, classifyByIntensity } from "../utils/classification.js";
 import { MEALS, getLog, setLog, getMood, setMood, getNotes, setNotes, sum } from "../utils/storage.js";
 import { fmt } from "../utils/parsing.js";
@@ -16,12 +16,17 @@ import AICoachCard from "../components/AICoachCard.jsx";
 const ZONE_LABELS = ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7"];
 const ZONE_COLORS = ["#1e8ad3", "#10bc10", "#90c010", "#e8c010", "#e87010", "#fe00a4", "#cc0050"];
 
-export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRecTotal, dayWorkouts, wellness, planned, mealData, mealTotals, trainEntries, trainTotals, all, addMeal, rmMeal, addTrain, rmTrain, refresh, showToast, settings }) {
+export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRecTotal, dayWorkouts, wellness, planned, mealData, mealTotals, trainEntries, trainTotals, all, addMeal, rmMeal, addTrain, rmTrain, refresh, showToast, settings, currentPhase }) {
   const wd = wellness.find(w => w.id === date) || {};
 const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
+  const phaseInfo = PHASE_CONFIG[currentPhase] || PHASE_CONFIG.base1;
 
   return (
     <>
+      <div className="phase-nutrition-banner">
+        <span className="phase-nutrition-label">{phaseInfo.label}</span>
+        <span className="phase-nutrition-tip">{phaseInfo.tip}</span>
+      </div>
       <div className="cards-row">
         <div className="card">
           <h2>Non-Training Fuel</h2>

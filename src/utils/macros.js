@@ -67,17 +67,52 @@ const EPOC_BONUS = {
   anaerobic: 0.10,   // +10% TDEE
 };
 
-export function calcMacros(type, lbs, heightIn, age, calAdj, gender) {
+// Phase-based modifiers for periodized nutrition (NIH research).
+// fatRatioAdj: added to BASE_FAT_RATIO. trainCarbMul: scales TRAIN_CARB_GKG.
+export const PHASE_CONFIG = {
+  transition:  { fatRatioAdj: 0,     trainCarbMul: 0.8, calAdj: -150, proteinMul: 1.05, label: "Recovery Phase",           tip: "Lower calories, adequate protein for tissue repair. Focus on nutrient-dense foods." },
+  preparation: { fatRatioAdj: +0.03, trainCarbMul: 0.8, calAdj: 0,    proteinMul: 1.0,  label: "Preparation Phase",        tip: "Building foundation. Keep carbs low, maximize fat adaptation." },
+  base1:       { fatRatioAdj: +0.03, trainCarbMul: 0.9, calAdj: 0,    proteinMul: 1.0,  label: "Base 1 — Train Low",       tip: "Restrict carbs to maximize fat oxidation. High fat, moderate protein." },
+  base2:       { fatRatioAdj: +0.02, trainCarbMul: 0.9, calAdj: 0,    proteinMul: 1.0,  label: "Base 2 — Train Low",       tip: "Continued fat adaptation. Volume increasing, keep carbs low." },
+  base3:       { fatRatioAdj: +0.01, trainCarbMul: 1.0, calAdj: 0,    proteinMul: 1.0,  label: "Base 3 — Peak Volume",     tip: "Highest volume week. Baseline carb allowance returns." },
+  build1:      { fatRatioAdj: -0.05, trainCarbMul: 1.2, calAdj: 0,    proteinMul: 1.0,  label: "Build 1 — Fuel the Work",  tip: "Intensity rising. More carbs around hard sessions." },
+  build2:      { fatRatioAdj: -0.07, trainCarbMul: 1.3, calAdj: 0,    proteinMul: 1.0,  label: "Build 2 — Fuel the Work",  tip: "Peak intensity. Increased carb support for race-pace efforts." },
+  peak:        { fatRatioAdj: -0.10, trainCarbMul: 1.5, calAdj: 0,    proteinMul: 1.0,  label: "Peak — Train the Gut",     tip: "Practice race-day nutrition. High carbs around key sessions." },
+  race:        { fatRatioAdj: -0.10, trainCarbMul: 1.5, calAdj: 0,    proteinMul: 1.0,  label: "Race Week",                tip: "Glycogen loading. Race-day fueling protocol." },
+};
+
+// Calculate current Friel phase based on weeks out from A race
+export function calcPhaseFromARace(raceDate) {
+  if (!raceDate) return null;
+  const now = new Date();
+  const race = new Date(raceDate + "T12:00");
+  const diffMs = race - now;
+  const weeksOut = Math.ceil(diffMs / (7 * 24 * 60 * 60 * 1000));
+  if (weeksOut < 0) return "transition";
+  if (weeksOut <= 1) return "race";
+  if (weeksOut <= 3) return "peak";
+  if (weeksOut <= 7) return "build2";
+  if (weeksOut <= 11) return "build1";
+  if (weeksOut <= 15) return "base3";
+  if (weeksOut <= 19) return "base2";
+  if (weeksOut <= 23) return "base1";
+  if (weeksOut <= 26) return "preparation";
+  return "transition";
+}
+
+export function calcMacros(type, lbs, heightIn, age, calAdj, gender, phase) {
   const kg = Math.max((lbs || 150) / 2.205, 1);
   const heightCm = Math.max((heightIn || 67) * 2.54, 1);
   const safeAge = Math.max(age || 30, 1);
   const bmr = 10 * kg + 6.25 * heightCm - 5 * safeAge + (gender === "male" ? 5 : -161);
   const epoc = EPOC_BONUS[type] || 0;
-  const tdee = Math.max(bmr * 1.55 * (1 + epoc) + (calAdj || 0), 0);
-  const p = Math.round(BASE_PROTEIN_GKG * kg);
+  const pc = phase ? (PHASE_CONFIG[phase] || {}) : {};
+  const tdee = Math.max(bmr * 1.55 * (1 + epoc) + (calAdj || 0) + (pc.calAdj || 0), 0);
+  const p = Math.round(BASE_PROTEIN_GKG * (pc.proteinMul || 1) * kg);
   const remaining = Math.max(tdee - p * 4, 0);
-  const fat = Math.round(remaining * BASE_FAT_RATIO / 9);
-  const carbs = Math.round(remaining * (1 - BASE_FAT_RATIO) / 4);
+  const fatRatio = Math.min(Math.max(BASE_FAT_RATIO + (pc.fatRatioAdj || 0), 0.5), 0.95);
+  const fat = Math.round(remaining * fatRatio / 9);
+  const carbs = Math.round(remaining * (1 - fatRatio) / 4);
   return { cal: Math.round(tdee), fat, protein: p, carbs };
 }
 
@@ -91,13 +126,14 @@ const TRAIN_CARB_GKG = {
   anaerobic: 1.5,    // full CHO support for sprints
 };
 
-export function calcFuelRec(sType, session, weightLbs) {
+export function calcFuelRec(sType, session, weightLbs, phase) {
   const kg = weightLbs / 2.205;
   if (sType === "rest") {
     const zero = { carbs: 0, protein: 0, fat: 0 };
     return { pre: zero, during: zero, post: zero };
   }
-  const trainCarb = Math.round((TRAIN_CARB_GKG[sType] || 0) * kg);
+  const pc = phase ? (PHASE_CONFIG[phase] || {}) : {};
+  const trainCarb = Math.round((TRAIN_CARB_GKG[sType] || 0) * kg * (pc.trainCarbMul || 1));
   const trainPro = Math.round(session.proteinGkg * kg * 0.25);
 
   if (["endurance", "lowerTempo"].includes(sType)) {

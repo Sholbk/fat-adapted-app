@@ -1327,6 +1327,16 @@ a.landing-badge:hover { background: rgba(255,255,255,0.12); }
   .fp-content h2 { font-size: 1.2rem; }
 }
 
+/* ── Phase Nutrition Banner ── */
+.phase-nutrition-banner {
+  display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem;
+  background: var(--ff-card); border-left: 4px solid #fe00a4; border-radius: 8px;
+  margin-bottom: 1rem; font-size: 0.85rem;
+}
+.dark .phase-nutrition-banner { background: #1a1a2e; }
+.phase-nutrition-label { font-weight: 700; white-space: nowrap; color: var(--ff-text); }
+.phase-nutrition-tip { color: var(--ff-text-muted); }
+
 /* ── AI Coach Card ── */
 .ai-coach-card {
   background: linear-gradient(135deg, rgba(4,59,177,0.08), rgba(254,0,164,0.06));
@@ -1370,6 +1380,83 @@ a.landing-badge:hover { background: rgba(255,255,255,0.12); }
 .dark .ai-coach-refresh { color: #7db8f0; border-color: rgba(125,184,240,0.2); }
 .ai-coach-refresh:hover { background: rgba(4,59,177,0.05); }
 .ai-coach-applied { opacity: 0.85; }
+
+/* ── AI Chat Interface ── */
+.ai-chat-card { display: flex; flex-direction: column; }
+.ai-chat-card .ai-coach-header { margin-bottom: 0.75rem; }
+.ai-chat-reset {
+  margin-left: auto; font-size: 0.7rem; font-weight: 600; padding: 0.25rem 0.6rem;
+  border-radius: 6px; border: 1px solid rgba(4,59,177,0.2); background: none;
+  color: #043bb1; cursor: pointer; font-family: inherit;
+}
+.dark .ai-chat-reset { color: #7db8f0; border-color: rgba(125,184,240,0.2); }
+.ai-chat-reset:hover { background: rgba(4,59,177,0.05); }
+
+.ai-chat-thread {
+  max-height: 300px; overflow-y: auto; display: flex; flex-direction: column;
+  gap: 0.5rem; padding: 0.5rem 0; margin-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+.ai-chat-msg { display: flex; flex-direction: column; max-width: 85%; }
+.ai-chat-assistant { align-self: flex-start; }
+.ai-chat-user { align-self: flex-end; }
+
+.ai-chat-bubble {
+  font-size: 0.82rem; line-height: 1.5; padding: 0.5rem 0.75rem; border-radius: 12px;
+  white-space: pre-wrap; word-break: break-word;
+}
+.ai-chat-assistant .ai-chat-bubble {
+  background: rgba(4,59,177,0.08); color: #222;
+  border-bottom-left-radius: 4px;
+}
+.dark .ai-chat-assistant .ai-chat-bubble {
+  background: rgba(4,59,177,0.18); color: #ddd;
+}
+.ai-chat-user .ai-chat-bubble {
+  background: #043bb1; color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.ai-chat-typing { color: #888; font-style: italic; }
+.ai-chat-error { color: #888; font-style: italic; }
+
+.ai-chat-adjustment {
+  margin-top: 0.35rem; padding: 0.5rem 0.75rem;
+  background: rgba(0,0,0,0.04); border-radius: 10px;
+}
+.dark .ai-chat-adjustment { background: rgba(255,255,255,0.06); }
+
+.ai-chat-quick {
+  display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.5rem;
+}
+.ai-chat-quick-btn {
+  font-size: 0.72rem; font-weight: 600; padding: 0.3rem 0.65rem;
+  border-radius: 16px; border: 1px solid rgba(4,59,177,0.2);
+  background: none; color: #043bb1; cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.dark .ai-chat-quick-btn { color: #7db8f0; border-color: rgba(125,184,240,0.25); }
+.ai-chat-quick-btn:hover { background: rgba(4,59,177,0.08); }
+.ai-chat-quick-btn:disabled { opacity: 0.5; cursor: default; }
+
+.ai-chat-input-row { display: flex; gap: 0.4rem; }
+.ai-chat-input {
+  flex: 1; font-size: 0.82rem; padding: 0.5rem 0.75rem;
+  border-radius: 10px; border: 1px solid rgba(0,0,0,0.15);
+  background: #fff; color: #222; font-family: inherit; outline: none;
+}
+.dark .ai-chat-input {
+  background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #ddd;
+}
+.ai-chat-input:focus { border-color: #043bb1; }
+.dark .ai-chat-input:focus { border-color: #7db8f0; }
+
+.ai-chat-send {
+  font-size: 0.78rem; font-weight: 700; padding: 0.5rem 1rem;
+  border-radius: 10px; border: none; background: #043bb1; color: #fff;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.ai-chat-send:hover { background: #0550d4; }
+.ai-chat-send:disabled { opacity: 0.4; cursor: default; }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
