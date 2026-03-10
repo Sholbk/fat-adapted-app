@@ -1,12 +1,21 @@
+const WORKOUT_KEYWORDS = {
+  anaerobic: ["sprint", "rst", "sit", "all-out", "all out"],
+  vo2max: ["hiit", "vo2", "interval", "30:30", '30"'],
+  threshold: ["threshold", "strength endurance", "se ", "ftp"],
+  upperTempo: ["tempo", "sweet spot", "run off the bike"],
+  endurance: [
+    "technique", "tec", "drill",
+    "aerobic", "steady", "development", "easy", "recovery",
+    "strength", "weight training", "conditioning", "s&c", "gym",
+  ],
+};
+
 export function classifyWorkout(summary) {
   const s = summary.toLowerCase();
-  if (s.includes("sprint") || s.includes("rst") || s.includes("sit") || s.includes("all-out") || s.includes("all out")) return "anaerobic";
-  if (s.includes("hiit") || s.includes("vo2") || s.includes("interval") || s.includes("30:30") || s.includes("30\"")) return "vo2max";
-  if (s.includes("threshold") || s.includes("strength endurance") || s.includes("se ") || s.includes("ftp")) return "threshold";
-  if (s.includes("tempo") || s.includes("sweet spot") || s.includes("run off the bike") || /\brob\b/.test(s)) return "upperTempo";
-  if (s.includes("technique") || s.includes("tec") || s.includes("drill")) return "endurance";
-  if (s.includes("aerobic") || s.includes("steady") || s.includes("development") || s.includes("easy") || s.includes("recovery")) return "endurance";
-  if (s.includes("strength") || s.includes("weight training") || s.includes("conditioning") || s.includes("s&c") || s.includes("gym")) return "endurance";
+  if (/\brob\b/.test(s)) return "upperTempo";
+  for (const [type, keywords] of Object.entries(WORKOUT_KEYWORDS)) {
+    if (keywords.some(kw => s.includes(kw))) return type;
+  }
   return "endurance";
 }
 
@@ -30,14 +39,14 @@ export function getSessionType(load) {
   return "anaerobic";
 }
 
+const SESSION_PRIORITY = ["anaerobic", "vo2max", "threshold", "upperTempo", "lowerTempo", "endurance", "rest"];
+
 export function getSessionTypeFromWorkouts(workouts, load) {
   if (workouts.length === 0) return load > 0 ? getSessionType(load) : "rest";
-  const pri = ["anaerobic", "vo2max", "threshold", "upperTempo", "lowerTempo", "endurance", "rest"];
   let best = "rest";
   for (const w of workouts) {
-    // Intervals.icu events have icu_intensity — use that for more accurate classification
     const t = w.icu_intensity ? classifyByIntensity(w.icu_intensity) : classifyWorkout(w.summary || w.name || "");
-    if (pri.indexOf(t) < pri.indexOf(best)) best = t;
+    if (SESSION_PRIORITY.indexOf(t) < SESSION_PRIORITY.indexOf(best)) best = t;
   }
   return best;
 }

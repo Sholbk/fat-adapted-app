@@ -33,7 +33,9 @@ function getIcsUrl(raw) {
   if (!raw) return null;
   try {
     const parsed = new URL(raw);
+    if (parsed.protocol !== "https:") return null;
     if (parsed.hostname !== "app.athletica.ai") return null;
+    if (parsed.port && parsed.port !== "443") return null;
   } catch { return null; }
   const bust = `&_t=${Date.now()}`;
   return import.meta.env.DEV ? raw : `/api/ics-proxy?url=${encodeURIComponent(raw)}${bust}`;

@@ -3,7 +3,7 @@ import crypto from "crypto";
 const CONSUMER_KEY = process.env.FATSECRET_CONSUMER_KEY;
 const CONSUMER_SECRET = process.env.FATSECRET_CONSUMER_SECRET;
 const API_URL = "https://platform.fatsecret.com/rest/server.api";
-const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fuelflow-app.netlify.app";
+const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fastfuel.training";
 
 function percentEncode(str) {
   return encodeURIComponent(str).replace(/[!'()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());

@@ -12,9 +12,21 @@ export default async (req) => {
     });
   }
 
-  // Validate URL against allowed hosts
+  // Validate URL against allowed hosts — HTTPS only, no custom ports
   try {
     const parsed = new URL(icsUrl);
+    if (parsed.protocol !== "https:") {
+      return new Response(JSON.stringify({ error: "HTTPS required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (parsed.port && parsed.port !== "443") {
+      return new Response(JSON.stringify({ error: "Non-standard port not allowed" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     if (!ALLOWED_HOSTS.includes(parsed.hostname)) {
       return new Response(JSON.stringify({ error: "Host not allowed" }), {
         status: 403,

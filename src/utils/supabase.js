@@ -103,7 +103,9 @@ export async function restoreFromCloud(userId) {
 
     const snapshot = data.data;
     Object.entries(snapshot).forEach(([key, value]) => {
-      localStorage.setItem(key, value);
+      if (typeof key === "string" && key.startsWith("ff") && typeof value === "string") {
+        localStorage.setItem(key, value);
+      }
     });
     return true;
   } catch (e) {

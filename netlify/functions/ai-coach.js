@@ -82,10 +82,21 @@ ${weekData.map(d => {
   // Build multi-turn messages array
   const apiMessages = [];
 
+  const VALID_ROLES = new Set(["user", "assistant"]);
+  const MAX_MESSAGE_LENGTH = 2000;
+  const MAX_MESSAGES = 50;
+
   if (messages && messages.length > 0) {
     // Conversation continuation — context was in the first message
-    for (const m of messages) {
-      apiMessages.push({ role: m.role, content: m.content });
+    const trimmed = messages.slice(-MAX_MESSAGES);
+    for (const m of trimmed) {
+      if (!m.role || !VALID_ROLES.has(m.role)) {
+        return respond({ error: "Invalid message role" }, 400);
+      }
+      if (!m.content || typeof m.content !== "string") {
+        return respond({ error: "Invalid message content" }, 400);
+      }
+      apiMessages.push({ role: m.role, content: m.content.slice(0, MAX_MESSAGE_LENGTH) });
     }
   } else {
     // First message — include full data context
@@ -113,7 +124,7 @@ ${weekData.map(d => {
 
     if (!res.ok) {
       const err = await res.text();
-      console.error("Anthropic API error:", err);
+      console.error("Anthropic API error: Status", res.status);
       return respond({ error: "AI service error" }, 502);
     }
 

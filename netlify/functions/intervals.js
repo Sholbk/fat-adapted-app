@@ -1,5 +1,3 @@
-const DEFAULT_API_KEY = process.env.INTERVALS_API_KEY;
-const DEFAULT_ATHLETE_ID = process.env.INTERVALS_ATHLETE_ID;
 const ALLOWED_ORIGIN = process.env.SITE_URL || "https://fastfuel.training";
 
 const ALLOWED_ENDPOINTS = ["wellness", "events", "activities"];
@@ -28,9 +26,9 @@ export default async (req) => {
     });
   }
 
-  // Per-user keys from headers, fall back to env defaults
-  const apiKey = req.headers.get("X-Intervals-Key") || DEFAULT_API_KEY;
-  const athleteId = req.headers.get("X-Intervals-Athlete") || DEFAULT_ATHLETE_ID;
+  // Require per-user keys from headers — no fallback to env defaults
+  const apiKey = req.headers.get("X-Intervals-Key");
+  const athleteId = req.headers.get("X-Intervals-Athlete");
 
   if (!apiKey || !athleteId) return respond({ error: "Intervals.icu not configured. Add your API key in Settings." }, 400);
 
