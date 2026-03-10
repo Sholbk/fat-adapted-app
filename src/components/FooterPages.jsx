@@ -295,6 +295,44 @@ export function ResourcesContent() {
         <li>Electrolyte management (especially sodium) is critical during transition and ongoing</li>
       </ul>
 
+      {/* ── Periodization Research ── */}
+      <h3 style={{ marginTop: "2.5rem", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "1.5rem" }}>Periodization: Research & Key Figures</h3>
+      <p>FastFuel's phase-based training structure (Base, Build, Peak, Race, Transition) draws on the periodization principles developed by several key researchers and coaches. Joe Friel adapted these foundational concepts for endurance sports, merging them into structured, phase-based training to maximize performance while managing fatigue.</p>
+
+      <h4>Tudor Bompa</h4>
+      <p>Regarded as the father of modern periodization. Bompa developed the foundational, traditional linear periodization models that underpin virtually all structured training plans. His framework of progressive overload through planned phases (general preparation, specific preparation, competition, transition) forms the basis of how endurance athletes structure their seasons.</p>
+      <div className="fp-ref">
+        <p><em>Periodization: Theory and Methodology of Training</em> (Bompa & Buzzichelli)</p>
+      </div>
+
+      <h4>Dr. Vladimir Issurin</h4>
+      <p>Issurin's research on "block" periodization provides an alternative to traditional linear models. Block periodization concentrates training stimuli into shorter, focused blocks — often used for specific, shorter-duration peak performances. This approach influences how Build and Peak phases are structured for targeted race preparation.</p>
+      <div className="fp-ref">
+        <p><em>Block Periodization: Breakthrough in Sports Training</em> (Issurin, 2008)</p>
+        <p>"Block periodization versus traditional training theory: a review" — <em>Journal of Sports Medicine and Physical Fitness</em>, 2008</p>
+      </div>
+
+      <h4>Andrew Coggan, PhD</h4>
+      <p>Co-author of <em>Training and Racing with a Power Meter</em>. Coggan's research on power zones and Functional Threshold Power (FTP) is central to how training intensity is quantified and periodized. His power-based training levels (Active Recovery through Neuromuscular Power) directly map to the zone system used in structured periodization.</p>
+      <div className="fp-ref">
+        <p><em>Training and Racing with a Power Meter</em> (Allen & Coggan)</p>
+      </div>
+
+      <h4>Stephen Seiler, PhD</h4>
+      <p>Known for research on the "80/20" intensity distribution (polarized training). Seiler's work demonstrates that elite endurance athletes spend approximately 80% of training time at low intensity and 20% at high intensity — avoiding the moderate "black hole." This principle is referenced in how athletes should structure training intensity across a periodized plan, particularly during Base phases.</p>
+      <div className="fp-ref">
+        <p>"What is best practice for training intensity and duration distribution in endurance athletes?" — <em>International Journal of Sports Physiology and Performance</em>, 2010</p>
+        <p>Fast Talk Laboratories — Stephen Seiler research archive</p>
+      </div>
+
+      <h4>Joe Friel</h4>
+      <p>Friel merges concepts from Bompa, Issurin, Coggan, and Seiler to create structured, phase-based training plans for endurance athletes. His periodization framework (Preparation, Base 1-3, Build 1-2, Peak, Race, Transition) is widely adopted in triathlon and cycling coaching.</p>
+      <div className="fp-ref">
+        <p><em>The Triathlete's Training Bible</em> (Friel)</p>
+        <p><em>The Cyclist's Training Bible</em> (Friel)</p>
+        <p><em>Fast After 50</em> (Friel)</p>
+      </div>
+
       {/* ── Additional Peer-Reviewed Resources ── */}
       <h3 style={{ marginTop: "2rem" }}>Additional Peer-Reviewed Resources</h3>
       <div className="fp-ref">

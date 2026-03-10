@@ -12,7 +12,7 @@ const ZONE_MAP = [
   { zone: "Z7", name: "Sprint", hrRange: "> 120% MAP", rpe: "10", group: "HIT", color: "#800030", key: "anaerobic" },
 ];
 
-// Friel periodization phases — weeks counted back from A race
+// Periodization phases — weeks counted back from A race
 // Total ~26 weeks: Prep(3) + Base1(4) + Base2(4) + Base3(4) + Build1(4) + Build2(4) + Peak(2) + Race(1)
 const FRIEL_PHASES = [
   { key: "transition", label: "Transition", color: "#999",
@@ -177,7 +177,7 @@ export default function PhaseOfTraining({ session, sType, wellness, settings, se
         {/* RIGHT — Training Phase */}
         <div className="sf-col">
           <h3>Training Phase</h3>
-          <p className="sf-attribution">Based on Joe Friel's periodization method</p>
+          <p className="sf-attribution">Based on endurance periodization principles</p>
 
           {/* Current phase highlight */}
           <div className="friel-current">
@@ -251,7 +251,7 @@ export default function PhaseOfTraining({ session, sType, wellness, settings, se
                 className={`friel-phase-btn ${p.key === currentPhase ? "active" : ""}`}
                 onClick={() => !aRace && handlePhaseChange(p.key)}
                 style={aRace ? { cursor: "default", opacity: p.key === currentPhase ? 1 : 0.6 } : {}}
-                title={aRace ? `Auto-calculated from A race` : `Select ${p.label}`}
+                title={aRace ? "Auto-calculated from A race" : `Select ${p.label}`}
               >
                 <span className="friel-phase-dot" style={{ background: p.color }} />
                 <span className="friel-phase-label">{p.label}</span>
