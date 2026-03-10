@@ -12,7 +12,13 @@ export const isSupabaseConfigured = () => !!supabase;
 // Auth helpers
 export async function signUp(email, password) {
   if (!supabase) return { error: { message: "Supabase not configured" } };
-  return supabase.auth.signUp({ email, password });
+  return supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin,
+    },
+  });
 }
 
 export async function signIn(email, password) {
