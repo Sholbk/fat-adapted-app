@@ -228,16 +228,19 @@ function printShoppingListPDF(grouped, weekLabel, planType) {
 
 export default function MealIdeas({ date, macros, fuelRecTotal, session, sType, refresh, showToast, setPage }) {
   const mf = macros.fat, mp = macros.protein, mc = macros.carbs, mcal = macros.cal;
-  const lowCarb = ["rest", "endurance", "lowerTempo"].includes(sType);
-  const midCarb = sType === "upperTempo";
+  // Meal plans are ALWAYS non-training fuel (fat-adapted baseline).
+  // Training carbs are separate and handled in the Training Fuel section.
+  const plans = MEAL_PLANS.lowCarb;
   const dist = DIST_PCTS.map(d => ({ ...d, fat: Math.round(mf * d.pct), protein: Math.round(mp * d.pct), carbs: Math.round(mc * d.pct), cal: Math.round(mcal * d.pct) }));
-  const plans = lowCarb ? MEAL_PLANS.lowCarb : midCarb ? MEAL_PLANS.midCarb : MEAL_PLANS.highCarb;
 
   return (
     <div className="page-content">
       <h2>Meal Plan — {new Date(date + "T12:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</h2>
       <p className="page-sub">
-        Based on your <strong style={{ color: session.color }}>{session.label}</strong> session — {mcal} kcal | Fat {mf}g | Protein {mp}g | Carbs {mc}g
+        Non-Training Fuel — {mcal} kcal | Fat {mf}g | Protein {mp}g | Carbs {mc}g
+      </p>
+      <p className="page-sub" style={{ fontSize: "0.75rem", marginTop: "-0.25rem" }}>
+        Training carbs are separate — see Training Fuel on the Daily Log.
       </p>
       <div className="meal-plan-grid">
         {dist.map((d, i) => {
@@ -288,7 +291,7 @@ export default function MealIdeas({ date, macros, fuelRecTotal, session, sType, 
           const endDate = new Date(startDate);
           endDate.setDate(endDate.getDate() + 6);
           const weekLabel = `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
-          const planType = lowCarb ? "Low Carb" : midCarb ? "Mid Carb" : "High Carb";
+          const planType = "Fat-Adapted";
           const grouped = buildShoppingList(plans, 7);
           if (!printShoppingListPDF(grouped, weekLabel, planType)) {
             showToast("Please allow pop-ups to generate the shopping list");

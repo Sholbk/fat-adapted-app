@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SESSION_CONFIG, PHASE_CONFIG } from "../utils/macros.js";
 import { classifyWorkout, classifyByIntensity } from "../utils/classification.js";
 import { MEALS, getLog, setLog, getMood, setMood, getNotes, setNotes, sum } from "../utils/storage.js";
@@ -18,8 +18,10 @@ const ZONE_COLORS = ["#1e8ad3", "#10bc10", "#90c010", "#e8c010", "#e87010", "#fe
 
 export default function DailyLog({ date, macros, session, sType, fuelRec, fuelRecTotal, dayWorkouts, wellness, planned, mealData, mealTotals, trainEntries, trainTotals, all, addMeal, rmMeal, addTrain, rmTrain, refresh, showToast, settings, currentPhase }) {
   const wd = wellness.find(w => w.id === date) || {};
-const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
+  const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
   const phaseInfo = PHASE_CONFIG[currentPhase] || PHASE_CONFIG.base1;
+  const [notes, setNotesLocal] = useState(() => getNotes(date));
+  useEffect(() => { setNotesLocal(getNotes(date)); }, [date]);
 
   return (
     <>
@@ -177,9 +179,12 @@ const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
       <div className="meal-card">
         <div className="meal-head"><h3>How Do You Feel?</h3></div>
 
-        {wd.id && (
+        {wd.id && (() => {
+          const hasMetrics = wd.weight > 0 || wd.bodyFat > 0 || wd.restingHR > 0 || wd.sleepSecs > 0 || wd.sleepScore > 0 || wd.hrv > 0 || wd.vo2max > 0 || wd.spO2 > 0 || wd.steps > 0;
+          return (
           <div className="garmin-metrics">
             <div className="garmin-metrics-title">Today's Health Metrics</div>
+            {!hasMetrics && <p className="garmin-no-data">Waiting for Garmin data to sync via Intervals.icu. Check back later today.</p>}
             <div className="garmin-metrics-grid">
               {wd.weight > 0 && (
                 <div className="garmin-metric">
@@ -260,7 +265,8 @@ const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
               )}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         <div className="mood-picker">
           {[
@@ -276,7 +282,7 @@ const load = wd.atlLoad ?? wd.ctlLoad ?? 0;
             </button>
           ))}
         </div>
-        <textarea className="daily-notes" placeholder="Energy levels, mood, digestion, anything on your mind..." value={getNotes(date)} onChange={e => { setNotes(date, e.target.value); }} />
+        <textarea className="daily-notes" placeholder="Energy levels, mood, digestion, anything on your mind..." value={notes} onChange={e => { setNotesLocal(e.target.value); setNotes(date, e.target.value); }} />
         <button className="mood-save-btn" onClick={() => { refresh(); showToast("Notes saved"); }}>Save</button>
       </div>
     </>
