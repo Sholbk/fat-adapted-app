@@ -82,8 +82,9 @@ Generate creative, varied meals. DO NOT use the same standard keto meals every t
     });
 
     if (!res.ok) {
-      console.error("Anthropic API error: Status", res.status);
-      return respond({ error: "AI service error" }, 502);
+      const errBody = await res.text().catch(() => "");
+      console.error("Anthropic API error:", res.status, errBody);
+      return respond({ error: `AI service error (${res.status})` }, 502);
     }
 
     const data = await res.json();
