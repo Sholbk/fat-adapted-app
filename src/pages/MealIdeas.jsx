@@ -1,83 +1,33 @@
+import { useState, useEffect } from "react";
 import { MEALS, getLog, setLog } from "../utils/storage.js";
 import { fmt } from "../utils/parsing.js";
+import { generateMealPlan, getCachedMeals, cacheMeals } from "../utils/aiMeals.js";
 
-const MEAL_PLANS = {
-  lowCarb: [
-    { foods: [
-      { name: "Eggs (3) cooked in butter", f: 21, p: 18, c: 2 },
-      { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
-      { name: "Smoked salmon (3 oz)", f: 4, p: 16, c: 0 },
-      { name: "Coffee with MCT oil", f: 14, p: 0, c: 0 },
-    ]},
-    { foods: [
-      { name: "Grilled chicken thighs (6 oz)", f: 14, p: 42, c: 0 },
-      { name: "Mixed greens with olive oil (2 tbsp)", f: 28, p: 2, c: 4 },
-      { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
-      { name: "Cheese (1 oz)", f: 9, p: 7, c: 0 },
-    ]},
-    { foods: [
-      { name: "Grass-fed ribeye steak (8 oz)", f: 28, p: 50, c: 0 },
-      { name: "Roasted broccoli with coconut oil", f: 14, p: 4, c: 8 },
-      { name: "Side salad with olive oil", f: 14, p: 2, c: 3 },
-      { name: "Bone broth (1 cup)", f: 1, p: 10, c: 1 },
-    ]},
-    { foods: [
-      { name: "Macadamia nuts (1.5 oz)", f: 32, p: 3, c: 4 },
-      { name: "String cheese (2)", f: 12, p: 14, c: 2 },
-      { name: "Olives (10)", f: 5, p: 0, c: 2 },
-    ]},
-  ],
-  midCarb: [
-    { foods: [
-      { name: "Eggs (3) scrambled with veggies", f: 18, p: 20, c: 4 },
-      { name: "Oatmeal (1/2 cup) with berries", f: 3, p: 5, c: 20 },
-      { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
-      { name: "Turkey sausage (2 links)", f: 8, p: 14, c: 2 },
-    ]},
-    { foods: [
-      { name: "Grilled salmon (6 oz)", f: 18, p: 40, c: 0 },
-      { name: "Sweet potato (1 medium)", f: 0, p: 4, c: 26 },
-      { name: "Mixed greens with olive oil", f: 14, p: 2, c: 4 },
-      { name: "Quinoa (1/2 cup cooked)", f: 2, p: 4, c: 20 },
-    ]},
-    { foods: [
-      { name: "Chicken breast (6 oz)", f: 4, p: 48, c: 0 },
-      { name: "Brown rice (3/4 cup cooked)", f: 1, p: 4, c: 34 },
-      { name: "Roasted vegetables with olive oil", f: 14, p: 3, c: 10 },
-      { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
-    ]},
-    { foods: [
-      { name: "Greek yogurt (1 cup)", f: 5, p: 20, c: 8 },
-      { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
-      { name: "Banana (1/2)", f: 0, p: 1, c: 14 },
-    ]},
-  ],
-  highCarb: [
-    { foods: [
-      { name: "Oatmeal (1 cup) with banana & honey", f: 4, p: 8, c: 52 },
-      { name: "Eggs (3) scrambled", f: 15, p: 18, c: 2 },
-      { name: "Toast with nut butter (1 tbsp)", f: 12, p: 7, c: 15 },
-      { name: "Orange juice (8 oz)", f: 0, p: 2, c: 26 },
-    ]},
-    { foods: [
-      { name: "Rice bowl with salmon (6 oz)", f: 18, p: 40, c: 45 },
-      { name: "Sweet potato (1 large)", f: 0, p: 4, c: 38 },
-      { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
-      { name: "Mixed greens with olive oil", f: 14, p: 2, c: 4 },
-    ]},
-    { foods: [
-      { name: "Pasta (2 cups) with chicken (6 oz)", f: 8, p: 52, c: 60 },
-      { name: "Olive oil & parmesan", f: 18, p: 4, c: 2 },
-      { name: "Roasted vegetables", f: 5, p: 3, c: 12 },
-      { name: "Bread roll with butter", f: 8, p: 4, c: 22 },
-    ]},
-    { foods: [
-      { name: "Rice cakes (3) with nut butter", f: 12, p: 7, c: 28 },
-      { name: "Banana", f: 0, p: 1, c: 27 },
-      { name: "Greek yogurt (1/2 cup)", f: 3, p: 12, c: 4 },
-    ]},
-  ],
-};
+const FALLBACK_PLANS = [
+  { meal: "Breakfast", foods: [
+    { name: "Eggs (3) cooked in butter", f: 21, p: 18, c: 2 },
+    { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
+    { name: "Smoked salmon (3 oz)", f: 4, p: 16, c: 0 },
+    { name: "Coffee with MCT oil", f: 14, p: 0, c: 0 },
+  ]},
+  { meal: "Lunch", foods: [
+    { name: "Grilled chicken thighs (6 oz)", f: 14, p: 42, c: 0 },
+    { name: "Mixed greens with olive oil (2 tbsp)", f: 28, p: 2, c: 4 },
+    { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
+    { name: "Cheese (1 oz)", f: 9, p: 7, c: 0 },
+  ]},
+  { meal: "Dinner", foods: [
+    { name: "Grass-fed ribeye steak (8 oz)", f: 28, p: 50, c: 0 },
+    { name: "Roasted broccoli with coconut oil", f: 14, p: 4, c: 8 },
+    { name: "Side salad with olive oil", f: 14, p: 2, c: 3 },
+    { name: "Bone broth (1 cup)", f: 1, p: 10, c: 1 },
+  ]},
+  { meal: "Snack", foods: [
+    { name: "Macadamia nuts (1.5 oz)", f: 32, p: 3, c: 4 },
+    { name: "String cheese (2)", f: 12, p: 14, c: 2 },
+    { name: "Olives (10)", f: 5, p: 0, c: 2 },
+  ]},
+];
 
 const MEAL_NAMES = ["breakfast", "lunch", "dinner", "snack"];
 const DIST_PCTS = [
@@ -87,14 +37,25 @@ const DIST_PCTS = [
   { meal: "Snack", pct: 0.15 },
 ];
 
+const MOOD_SUGGESTIONS = [
+  "Something light & fresh",
+  "Comfort food",
+  "Mediterranean",
+  "Asian-inspired",
+  "Tex-Mex",
+  "Quick & easy",
+  "High protein",
+  "Seafood",
+];
+
 const CATEGORIES = {
-  "Proteins": ["egg", "salmon", "chicken", "steak", "ribeye", "turkey", "sausage", "beef", "fish", "tuna", "pork", "shrimp"],
-  "Dairy": ["cheese", "yogurt", "butter", "parmesan", "cream", "milk"],
-  "Produce": ["avocado", "greens", "broccoli", "salad", "vegetables", "veggies", "sweet potato", "banana", "berries", "olive", "orange", "tomato", "onion", "lettuce"],
-  "Grains & Starches": ["oatmeal", "rice", "quinoa", "bread", "toast", "pasta", "rice cake"],
-  "Nuts & Seeds": ["almond", "macadamia", "nut butter", "peanut", "walnut", "pecan"],
-  "Oils & Fats": ["olive oil", "coconut oil", "mct oil"],
-  "Pantry": ["bone broth", "coffee", "honey", "juice"],
+  "Proteins": ["egg", "salmon", "chicken", "steak", "ribeye", "turkey", "sausage", "beef", "fish", "tuna", "pork", "shrimp", "lamb", "duck", "bison", "venison", "prawn", "crab", "lobster", "sardine", "mackerel", "trout", "cod", "mahi"],
+  "Dairy": ["cheese", "yogurt", "butter", "parmesan", "cream", "milk", "mozzarella", "feta", "gouda", "brie", "ricotta", "ghee", "sour cream", "crème"],
+  "Produce": ["avocado", "greens", "broccoli", "salad", "vegetables", "veggies", "sweet potato", "banana", "berries", "olive", "orange", "tomato", "onion", "lettuce", "spinach", "kale", "zucchini", "mushroom", "pepper", "cucumber", "asparagus", "cauliflower", "cabbage", "radish", "celery", "lime", "lemon", "jalapeño", "cilantro", "basil", "arugula"],
+  "Grains & Starches": ["oatmeal", "rice", "quinoa", "bread", "toast", "pasta", "rice cake", "tortilla", "wrap"],
+  "Nuts & Seeds": ["almond", "macadamia", "nut butter", "peanut", "walnut", "pecan", "cashew", "pistachio", "hemp", "chia", "flax", "pumpkin seed", "sunflower seed", "tahini"],
+  "Oils & Fats": ["olive oil", "coconut oil", "mct oil", "avocado oil", "sesame oil"],
+  "Pantry": ["bone broth", "coffee", "honey", "juice", "cocoa", "coconut milk", "soy sauce", "fish sauce", "curry", "pesto"],
 };
 
 function categorizeItem(name) {
@@ -106,15 +67,11 @@ function categorizeItem(name) {
 }
 
 function parseFood(foodName) {
-  // Strip prep methods to get the core ingredient
-  const cleaned = foodName.replace(/\s*(cooked in|scrambled with|scrambled)\b.*$/i, "").trim();
-
-  // Try to extract quantity and unit from parenthetical: "Eggs (3)", "Salmon (6 oz)", "Avocado (1/2)"
+  const cleaned = foodName.replace(/\s*(cooked in|scrambled with|scrambled|sautéed in|drizzled with|tossed in|topped with)\b.*$/i, "").trim();
   const parenMatch = cleaned.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
   if (parenMatch) {
     const baseName = parenMatch[1].trim();
     const inside = parenMatch[2].trim();
-    // "6 oz", "1 cup", "2 tbsp", "1/2 cup", "3/4 cup cooked", "1 medium", "1 large"
     const qtyUnit = inside.match(/^([\d.]+(?:\/[\d.]+)?)\s*(.*)$/);
     if (qtyUnit) {
       const num = qtyUnit[1].includes("/") ? qtyUnit[1].split("/").reduce((a, b) => a / b) : parseFloat(qtyUnit[1]);
@@ -123,38 +80,29 @@ function parseFood(foodName) {
     }
     return { name: baseName, qty: 1, unit: "items" };
   }
-
-  // No parenthetical — treat as 1 item
-  // Handle "Coffee with MCT oil" → "Coffee" + "MCT oil"
   return { name: cleaned, qty: 1, unit: "items" };
 }
 
 function formatQty(qty, unit) {
   const q = qty % 1 === 0 ? qty.toString() : qty.toFixed(1).replace(/\.0$/, "");
   if (!unit || unit === "items") return q;
-  // Pluralize simple units
   const u = qty > 1 && !unit.endsWith("s") && !unit.endsWith("oz") && !unit.endsWith("tbsp") ? unit + "s" : unit;
   return `${q} ${u}`;
 }
 
 function buildShoppingList(plans, days) {
-  // key = normalized ingredient name, value = { qty, unit }
   const items = new Map();
-
   for (const meal of plans) {
     for (const food of meal.foods) {
       const parsed = parseFood(food.name);
       const key = parsed.name.toLowerCase();
       if (items.has(key)) {
-        const existing = items.get(key);
-        existing.qty += parsed.qty * days;
+        items.get(key).qty += parsed.qty * days;
       } else {
         items.set(key, { name: parsed.name, qty: parsed.qty * days, unit: parsed.unit });
       }
     }
   }
-
-  // Group by category
   const grouped = {};
   for (const [, item] of items) {
     const cat = categorizeItem(item.name);
@@ -228,10 +176,49 @@ function printShoppingListPDF(grouped, weekLabel, planType) {
 
 export default function MealIdeas({ date, macros, fuelRecTotal, session, sType, refresh, showToast, setPage }) {
   const mf = macros.fat, mp = macros.protein, mc = macros.carbs, mcal = macros.cal;
-  // Meal plans are ALWAYS non-training fuel (fat-adapted baseline).
-  // Training carbs are separate and handled in the Training Fuel section.
-  const plans = MEAL_PLANS.lowCarb;
   const dist = DIST_PCTS.map(d => ({ ...d, fat: Math.round(mf * d.pct), protein: Math.round(mp * d.pct), carbs: Math.round(mc * d.pct), cal: Math.round(mcal * d.pct) }));
+
+  const [moodInput, setMoodInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [aiPlans, setAiPlans] = useState(null);
+  const [activeMood, setActiveMood] = useState("");
+
+  // Load cached AI meals for this date on mount
+  useEffect(() => {
+    const cached = getCachedMeals(date);
+    if (cached) {
+      setAiPlans(cached.meals);
+      setActiveMood(cached.mood || "");
+    } else {
+      setAiPlans(null);
+      setActiveMood("");
+    }
+  }, [date]);
+
+  async function handleGenerate(mood) {
+    const moodText = mood || moodInput.trim() || "anything — surprise me";
+    setLoading(true);
+    setError("");
+    setActiveMood(moodText);
+    try {
+      const meals = await generateMealPlan(macros, moodText, date);
+      setAiPlans(meals);
+    } catch (e) {
+      setError(e.message || "Failed to generate meals");
+    }
+    setLoading(false);
+  }
+
+  function handleMoodChip(mood) {
+    if (loading) return;
+    setMoodInput(mood);
+    handleGenerate(mood);
+  }
+
+  // Use AI plans if available, otherwise fallback
+  const plans = aiPlans || FALLBACK_PLANS;
+  const isAI = !!aiPlans;
 
   return (
     <div className="page-content">
@@ -242,6 +229,43 @@ export default function MealIdeas({ date, macros, fuelRecTotal, session, sType, 
       <p className="page-sub" style={{ fontSize: "0.75rem", marginTop: "-0.25rem" }}>
         Training carbs are separate — see Training Fuel on the Daily Log.
       </p>
+
+      {/* AI Mood Prompt */}
+      <div className="ai-mood-card">
+        <div className="ai-mood-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M12 2a4 4 0 014 4c0 1.5-.8 2.8-2 3.5V11h-4V9.5C8.8 8.8 8 7.5 8 6a4 4 0 014-4z"/><path d="M10 14h4"/><path d="M10 17h4"/><path d="M9 11h6v7a2 2 0 01-2 2h-2a2 2 0 01-2-2v-7z"/></svg>
+          <span>What are you in the mood for?</span>
+        </div>
+        <div className="ai-mood-chips">
+          {MOOD_SUGGESTIONS.map(m => (
+            <button
+              key={m}
+              className={`ai-mood-chip${activeMood === m ? " active" : ""}`}
+              onClick={() => handleMoodChip(m)}
+              disabled={loading}
+            >{m}</button>
+          ))}
+        </div>
+        <div className="ai-mood-input-row">
+          <input
+            type="text"
+            className="ai-mood-input"
+            placeholder="Or type your own... (e.g., &quot;Italian&quot;, &quot;grilled everything&quot;, &quot;no dairy&quot;)"
+            value={moodInput}
+            onChange={e => setMoodInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !loading) handleGenerate(); }}
+            disabled={loading}
+          />
+          <button
+            className="ai-mood-btn"
+            onClick={() => handleGenerate()}
+            disabled={loading}
+          >{loading ? "Generating..." : "Generate"}</button>
+        </div>
+        {error && <p className="ai-mood-error">{error}</p>}
+        {isAI && <p className="ai-mood-label">AI-generated for: <strong>{activeMood}</strong></p>}
+      </div>
+
       <div className="meal-plan-grid">
         {dist.map((d, i) => {
           const plan = plans[i];
@@ -250,7 +274,7 @@ export default function MealIdeas({ date, macros, fuelRecTotal, session, sType, 
           return (
             <div key={d.meal} className="meal-plan-card">
               <div className="mp-head">
-                <h3>{d.meal}</h3>
+                <h3>{plan.meal || d.meal}</h3>
                 <span className="mp-target">Target: {d.cal} kcal | F:{d.fat}g P:{d.protein}g C:{d.carbs}g</span>
               </div>
               <div className="mp-foods">
@@ -286,12 +310,17 @@ export default function MealIdeas({ date, macros, fuelRecTotal, session, sType, 
           showToast(`Added ${added} foods from meal plan`);
           setPage("log");
         }}>Use this plan for today</button>
+        {isAI && (
+          <button className="use-plan-btn" style={{ background: "var(--ff-blue)" }} onClick={() => handleGenerate(activeMood)}>
+            Regenerate
+          </button>
+        )}
         <button className="shopping-list-btn" onClick={() => {
           const startDate = new Date(date + "T12:00");
           const endDate = new Date(startDate);
           endDate.setDate(endDate.getDate() + 6);
           const weekLabel = `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
-          const planType = "Fat-Adapted";
+          const planType = isAI ? "AI Fat-Adapted" : "Fat-Adapted";
           const grouped = buildShoppingList(plans, 7);
           if (!printShoppingListPDF(grouped, weekLabel, planType)) {
             showToast("Please allow pop-ups to generate the shopping list");

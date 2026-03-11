@@ -599,6 +599,51 @@
 .dark .shopping-list-btn:hover { background: #1e8ad3; color: #fff; }
 @media (max-width: 600px) { .mp-actions { flex-direction: column; } }
 
+/* ── AI Mood Meal Generator ── */
+.ai-mood-card {
+  background: var(--ff-card); border: 1px solid var(--ff-border); border-radius: 12px;
+  padding: 1rem 1.25rem; margin-bottom: 1rem;
+}
+.ai-mood-header {
+  display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700;
+  color: var(--ff-blue-deep); margin-bottom: 0.75rem;
+}
+.ai-mood-header svg { color: var(--ff-blue); }
+.ai-mood-chips {
+  display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem;
+}
+.ai-mood-chip {
+  padding: 0.35rem 0.75rem; border-radius: 20px; border: 1px solid var(--ff-border);
+  background: #f5f5f5; color: var(--ff-text); font-size: 0.75rem; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.ai-mood-chip:hover { background: var(--ff-blue); color: #fff; border-color: var(--ff-blue); }
+.ai-mood-chip.active { background: var(--ff-blue-deep); color: #fff; border-color: var(--ff-blue-deep); }
+.ai-mood-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.ai-mood-input-row { display: flex; gap: 0.5rem; }
+.ai-mood-input {
+  flex: 1; padding: 0.55rem 0.75rem; border: 1px solid var(--ff-border); border-radius: 8px;
+  font-size: 0.8rem; font-family: inherit; color: var(--ff-text); background: #fff;
+}
+.ai-mood-input:focus { outline: none; border-color: var(--ff-blue); }
+.ai-mood-btn {
+  padding: 0.55rem 1.25rem; border: none; border-radius: 8px; background: var(--ff-blue-deep);
+  color: #fff; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: background 0.15s; white-space: nowrap;
+}
+.ai-mood-btn:hover { background: var(--ff-blue); }
+.ai-mood-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.ai-mood-error { color: #d32f2f; font-size: 0.75rem; margin-top: 0.5rem; }
+.ai-mood-label { font-size: 0.7rem; color: var(--ff-text-muted); margin-top: 0.5rem; }
+.ai-mood-label strong { color: var(--ff-blue-deep); }
+
+.dark .ai-mood-card { background: var(--ff-card); }
+.dark .ai-mood-chip { background: #2a2a4a; color: #ccc; border-color: #3a3a5a; }
+.dark .ai-mood-chip:hover { background: var(--ff-blue); color: #fff; }
+.dark .ai-mood-chip.active { background: var(--ff-blue-deep); color: #fff; }
+.dark .ai-mood-input { background: #1a1a2e; color: #e0e0e0; border-color: #3a3a5a; }
+.dark .ai-mood-input:focus { border-color: var(--ff-blue); }
+
 /* ── Weekly Summary ── */
 .weekly-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
 .weekly-header h2 { margin-bottom: 0; }
