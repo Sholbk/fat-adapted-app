@@ -3,31 +3,194 @@ import { MEALS, getLog, setLog } from "../utils/storage.js";
 import { fmt } from "../utils/parsing.js";
 import { generateMealPlan, getCachedMeals, cacheMeals } from "../utils/aiMeals.js";
 
-const FALLBACK_PLANS = [
-  { meal: "Breakfast", foods: [
-    { name: "Eggs (3) cooked in butter", f: 21, p: 18, c: 2 },
-    { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
-    { name: "Smoked salmon (3 oz)", f: 4, p: 16, c: 0 },
-    { name: "Coffee with MCT oil", f: 14, p: 0, c: 0 },
-  ]},
-  { meal: "Lunch", foods: [
-    { name: "Grilled chicken thighs (6 oz)", f: 14, p: 42, c: 0 },
-    { name: "Mixed greens with olive oil (2 tbsp)", f: 28, p: 2, c: 4 },
-    { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
-    { name: "Cheese (1 oz)", f: 9, p: 7, c: 0 },
-  ]},
-  { meal: "Dinner", foods: [
-    { name: "Grass-fed ribeye steak (8 oz)", f: 28, p: 50, c: 0 },
-    { name: "Roasted broccoli with coconut oil", f: 14, p: 4, c: 8 },
-    { name: "Side salad with olive oil", f: 14, p: 2, c: 3 },
-    { name: "Bone broth (1 cup)", f: 1, p: 10, c: 1 },
-  ]},
-  { meal: "Snack", foods: [
-    { name: "Macadamia nuts (1.5 oz)", f: 32, p: 3, c: 4 },
-    { name: "String cheese (2)", f: 12, p: 14, c: 2 },
-    { name: "Olives (10)", f: 5, p: 0, c: 2 },
-  ]},
+// 7 rotating daily plans — one per day of the week for built-in variety
+const DAILY_PLANS = [
+  // Sunday
+  [
+    { meal: "Breakfast", foods: [
+      { name: "Eggs (3) cooked in butter", f: 21, p: 18, c: 2 },
+      { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
+      { name: "Smoked salmon (3 oz)", f: 4, p: 16, c: 0 },
+      { name: "Coffee with MCT oil", f: 14, p: 0, c: 0 },
+    ]},
+    { meal: "Lunch", foods: [
+      { name: "Grilled chicken thighs (6 oz)", f: 14, p: 42, c: 0 },
+      { name: "Mixed greens with olive oil (2 tbsp)", f: 28, p: 2, c: 4 },
+      { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
+      { name: "Cheese (1 oz)", f: 9, p: 7, c: 0 },
+    ]},
+    { meal: "Dinner", foods: [
+      { name: "Grass-fed ribeye steak (8 oz)", f: 28, p: 50, c: 0 },
+      { name: "Roasted broccoli with coconut oil", f: 14, p: 4, c: 8 },
+      { name: "Side salad with olive oil", f: 14, p: 2, c: 3 },
+      { name: "Bone broth (1 cup)", f: 1, p: 10, c: 1 },
+    ]},
+    { meal: "Snack", foods: [
+      { name: "Macadamia nuts (1.5 oz)", f: 32, p: 3, c: 4 },
+      { name: "String cheese (2)", f: 12, p: 14, c: 2 },
+      { name: "Olives (10)", f: 5, p: 0, c: 2 },
+    ]},
+  ],
+  // Monday
+  [
+    { meal: "Breakfast", foods: [
+      { name: "Greek omelet (3 eggs, feta, spinach)", f: 22, p: 22, c: 3 },
+      { name: "Bacon (3 slices)", f: 14, p: 9, c: 0 },
+      { name: "Sliced tomato with olive oil", f: 7, p: 1, c: 4 },
+      { name: "Bulletproof coffee", f: 14, p: 0, c: 0 },
+    ]},
+    { meal: "Lunch", foods: [
+      { name: "Tuna salad (6 oz) with mayo", f: 22, p: 40, c: 2 },
+      { name: "Celery sticks (4)", f: 0, p: 1, c: 3 },
+      { name: "Walnuts (1 oz)", f: 18, p: 4, c: 4 },
+      { name: "Cucumber slices with cream cheese", f: 10, p: 2, c: 3 },
+    ]},
+    { meal: "Dinner", foods: [
+      { name: "Baked salmon (6 oz) with herb butter", f: 24, p: 40, c: 0 },
+      { name: "Sautéed asparagus in ghee", f: 12, p: 4, c: 4 },
+      { name: "Cauliflower mash with butter", f: 10, p: 3, c: 6 },
+      { name: "Side Caesar salad (no croutons)", f: 14, p: 3, c: 3 },
+    ]},
+    { meal: "Snack", foods: [
+      { name: "Pork rinds (1 oz)", f: 9, p: 17, c: 0 },
+      { name: "Guacamole (1/4 cup)", f: 12, p: 1, c: 4 },
+      { name: "Dark chocolate (1 oz, 85%)", f: 12, p: 2, c: 7 },
+    ]},
+  ],
+  // Tuesday
+  [
+    { meal: "Breakfast", foods: [
+      { name: "Sausage patties (2)", f: 22, p: 14, c: 1 },
+      { name: "Scrambled eggs (3) with cheddar", f: 20, p: 22, c: 2 },
+      { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
+      { name: "Coffee with heavy cream", f: 10, p: 0, c: 1 },
+    ]},
+    { meal: "Lunch", foods: [
+      { name: "Lettuce-wrap burger (6 oz patty)", f: 18, p: 36, c: 1 },
+      { name: "Swiss cheese (1 slice)", f: 8, p: 8, c: 0 },
+      { name: "Pickle spears (3)", f: 0, p: 0, c: 2 },
+      { name: "Side of coleslaw with olive oil dressing", f: 18, p: 2, c: 6 },
+    ]},
+    { meal: "Dinner", foods: [
+      { name: "Pork chops (6 oz) pan-fried in butter", f: 20, p: 42, c: 0 },
+      { name: "Roasted Brussels sprouts with bacon", f: 16, p: 6, c: 6 },
+      { name: "Sautéed mushrooms in garlic butter", f: 12, p: 3, c: 4 },
+      { name: "Mixed green salad with ranch", f: 14, p: 1, c: 3 },
+    ]},
+    { meal: "Snack", foods: [
+      { name: "Pepperoni slices (1 oz)", f: 12, p: 6, c: 1 },
+      { name: "Cream cheese stuffed celery (3)", f: 10, p: 2, c: 3 },
+      { name: "Pecans (1 oz)", f: 20, p: 3, c: 4 },
+    ]},
+  ],
+  // Wednesday
+  [
+    { meal: "Breakfast", foods: [
+      { name: "Smoked trout (4 oz) on cucumber rounds", f: 8, p: 24, c: 2 },
+      { name: "Cream cheese (2 tbsp)", f: 10, p: 2, c: 1 },
+      { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
+      { name: "Matcha latte with coconut cream", f: 14, p: 1, c: 2 },
+    ]},
+    { meal: "Lunch", foods: [
+      { name: "Chicken Caesar salad (6 oz grilled chicken)", f: 14, p: 42, c: 4 },
+      { name: "Parmesan crisps (1 oz)", f: 8, p: 10, c: 1 },
+      { name: "Olive oil & lemon dressing (2 tbsp)", f: 28, p: 0, c: 1 },
+    ]},
+    { meal: "Dinner", foods: [
+      { name: "Lamb chops (6 oz)", f: 22, p: 38, c: 0 },
+      { name: "Roasted zucchini with olive oil", f: 14, p: 2, c: 4 },
+      { name: "Tahini drizzle (1 tbsp)", f: 8, p: 3, c: 3 },
+      { name: "Greek salad (no pita)", f: 12, p: 4, c: 6 },
+    ]},
+    { meal: "Snack", foods: [
+      { name: "Brie cheese (1.5 oz)", f: 14, p: 9, c: 0 },
+      { name: "Almonds (1 oz)", f: 14, p: 6, c: 3 },
+      { name: "Blackberries (1/4 cup)", f: 0, p: 1, c: 5 },
+    ]},
+  ],
+  // Thursday
+  [
+    { meal: "Breakfast", foods: [
+      { name: "Egg muffins (3) with spinach & cheese", f: 18, p: 21, c: 2 },
+      { name: "Turkey sausage links (2)", f: 8, p: 14, c: 2 },
+      { name: "Coconut oil coffee", f: 14, p: 0, c: 0 },
+      { name: "Berries (1/4 cup) with whipped cream", f: 6, p: 1, c: 5 },
+    ]},
+    { meal: "Lunch", foods: [
+      { name: "Shrimp (6 oz) sautéed in garlic butter", f: 18, p: 36, c: 2 },
+      { name: "Zucchini noodles with pesto (2 tbsp)", f: 18, p: 3, c: 3 },
+      { name: "Cherry tomatoes (1/2 cup)", f: 0, p: 1, c: 4 },
+      { name: "Feta cheese (1 oz)", f: 6, p: 4, c: 1 },
+    ]},
+    { meal: "Dinner", foods: [
+      { name: "Roasted duck breast (6 oz)", f: 16, p: 40, c: 0 },
+      { name: "Braised red cabbage with butter", f: 10, p: 2, c: 6 },
+      { name: "Mashed turnips with cream", f: 8, p: 2, c: 5 },
+      { name: "Arugula salad with lemon vinaigrette", f: 14, p: 1, c: 3 },
+    ]},
+    { meal: "Snack", foods: [
+      { name: "Smoked almonds (1.5 oz)", f: 22, p: 9, c: 4 },
+      { name: "Beef jerky (1 oz)", f: 3, p: 13, c: 3 },
+      { name: "Coconut chips (1 oz)", f: 12, p: 1, c: 5 },
+    ]},
+  ],
+  // Friday
+  [
+    { meal: "Breakfast", foods: [
+      { name: "Chia pudding (2 tbsp chia, coconut cream)", f: 18, p: 5, c: 6 },
+      { name: "Hard-boiled eggs (3)", f: 15, p: 18, c: 0 },
+      { name: "Prosciutto (2 oz)", f: 8, p: 14, c: 0 },
+      { name: "Coffee with MCT oil", f: 14, p: 0, c: 0 },
+    ]},
+    { meal: "Lunch", foods: [
+      { name: "Cobb salad (chicken, bacon, egg, avocado)", f: 32, p: 38, c: 6 },
+      { name: "Blue cheese dressing (2 tbsp)", f: 16, p: 1, c: 1 },
+      { name: "Sunflower seeds (1 oz)", f: 14, p: 6, c: 4 },
+    ]},
+    { meal: "Dinner", foods: [
+      { name: "Mahi-mahi (6 oz) pan-seared in coconut oil", f: 16, p: 42, c: 0 },
+      { name: "Coconut curry sauce (1/4 cup)", f: 12, p: 1, c: 4 },
+      { name: "Steamed bok choy with sesame oil", f: 8, p: 3, c: 3 },
+      { name: "Cauliflower rice (1 cup)", f: 5, p: 2, c: 5 },
+    ]},
+    { meal: "Snack", foods: [
+      { name: "Gouda cheese (1.5 oz)", f: 12, p: 11, c: 1 },
+      { name: "Marcona almonds (1 oz)", f: 16, p: 5, c: 3 },
+      { name: "Olives (10)", f: 5, p: 0, c: 2 },
+    ]},
+  ],
+  // Saturday
+  [
+    { meal: "Breakfast", foods: [
+      { name: "Eggs Benedict on portobello caps (2)", f: 24, p: 20, c: 4 },
+      { name: "Hollandaise sauce (2 tbsp)", f: 12, p: 1, c: 0 },
+      { name: "Avocado (1/2)", f: 15, p: 2, c: 6 },
+      { name: "Bulletproof coffee", f: 14, p: 0, c: 0 },
+    ]},
+    { meal: "Lunch", foods: [
+      { name: "Thai coconut soup with chicken (6 oz)", f: 22, p: 36, c: 6 },
+      { name: "Bean sprouts & cilantro garnish", f: 0, p: 2, c: 3 },
+      { name: "Lime wedge & fish sauce", f: 0, p: 1, c: 1 },
+      { name: "Macadamia nuts (1 oz)", f: 22, p: 2, c: 4 },
+    ]},
+    { meal: "Dinner", foods: [
+      { name: "Grilled NY strip steak (8 oz)", f: 22, p: 50, c: 0 },
+      { name: "Creamed spinach", f: 14, p: 4, c: 4 },
+      { name: "Roasted radishes with butter", f: 8, p: 1, c: 4 },
+      { name: "Bone broth (1 cup)", f: 1, p: 10, c: 1 },
+    ]},
+    { meal: "Snack", foods: [
+      { name: "Prosciutto-wrapped mozzarella (2 pieces)", f: 14, p: 14, c: 1 },
+      { name: "Pistachios (1 oz)", f: 13, p: 6, c: 5 },
+      { name: "Dark chocolate (1 oz, 85%)", f: 12, p: 2, c: 7 },
+    ]},
+  ],
 ];
+
+function getFallbackPlan(date) {
+  const dayOfWeek = new Date(date + "T12:00").getDay(); // 0=Sun, 6=Sat
+  return DAILY_PLANS[dayOfWeek];
+}
 
 const MEAL_NAMES = ["breakfast", "lunch", "dinner", "snack"];
 const DIST_PCTS = [
@@ -217,7 +380,7 @@ export default function MealIdeas({ date, macros, fuelRecTotal, session, sType, 
   }
 
   // Use AI plans if available, otherwise fallback
-  const plans = aiPlans || FALLBACK_PLANS;
+  const plans = aiPlans || getFallbackPlan(date);
   const isAI = !!aiPlans;
 
   return (
